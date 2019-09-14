@@ -51,12 +51,12 @@ class Collection implements QuotaInterface
     /**
      * {@inheritDoc}
      */
-    public function getRemainingSize(int $size, int $user, int $group): int
+    public function getRemainingSize(int $used, int $user, int $group): int
     {
         foreach ($this->quotas as $quota) {
-            $size = $quota->getRemainingSize($size, $user, $group);
-            if ($size !== self::UNLIMITED) {
-                return $size;
+            $remaining = $quota->getRemainingSize($used, $user, $group);
+            if ($remaining !== self::UNLIMITED) {
+                return $remaining;
             }
         }
 
@@ -66,12 +66,12 @@ class Collection implements QuotaInterface
     /**
      * {@inheritDoc}
      */
-    public function getRemainingFileCount(int $fileCount, int $user, int $group): int
+    public function getRemainingFileCount(int $used, int $user, int $group): int
     {
         foreach ($this->quotas as $quota) {
-            $count = $quota->getRemainingFileCount($fileCount, $user, $group);
-            if ($count !== self::UNLIMITED) {
-                return $count;
+            $remaining = $quota->getRemainingFileCount($used, $user, $group);
+            if ($remaining !== self::UNLIMITED) {
+                return $remaining;
             }
         }
 

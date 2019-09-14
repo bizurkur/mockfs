@@ -29,24 +29,24 @@ interface QuotaInterface
      *
      * Returns -1 for unlimited space.
      *
-     * @param int $size Number of bytes already used.
+     * @param int $used Number of bytes already used.
      * @param int $user User ID to check.
      * @param int $group Group ID to check.
      *
      * @return int
      */
-    public function getRemainingSize(int $size, int $user, int $group): int;
+    public function getRemainingSize(int $used, int $user, int $group): int;
 
     /**
      * Gets the remaining number of files that can be created.
      *
      * Returns -1 for unlimited files.
      *
-     * @param int $fileCount Number of files already created.
+     * @param int $used Number of files already used.
      * @param int $user User ID to check.
      * @param int $group Group ID to check.
      *
      * @return int
      */
-    public function getRemainingFileCount(int $fileCount, int $user, int $group): int;
+    public function getRemainingFileCount(int $used, int $user, int $group): int;
 }

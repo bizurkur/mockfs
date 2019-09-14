@@ -41,7 +41,7 @@ class Quota implements QuotaInterface
      */
     public function __construct(
         int $size,
-        int $fileCount = self::UNLIMITED,
+        int $fileCount,
         ?int $user = null,
         ?int $group = null
     ) {
@@ -62,13 +62,13 @@ class Quota implements QuotaInterface
         }
 
         // Check if it applies to the given group.
-        return $this->group !== null && $this->group !== $group;
+        return $this->group === null || $this->group === $group;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRemainingSize(int $size, int $user, int $group): int
+    public function getRemainingSize(int $used, int $user, int $group): int
     {
         if ($this->size === self::UNLIMITED) {
             return self::UNLIMITED;
@@ -78,13 +78,13 @@ class Quota implements QuotaInterface
             return self::UNLIMITED;
         }
 
-        return max(0, $this->size - $size);
+        return max(0, $this->size - $used);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getRemainingFileCount(int $fileCount, int $user, int $group): int
+    public function getRemainingFileCount(int $used, int $user, int $group): int
     {
         if ($this->fileCount === self::UNLIMITED) {
             return self::UNLIMITED;
@@ -94,6 +94,6 @@ class Quota implements QuotaInterface
             return self::UNLIMITED;
         }
 
-        return max(0, $this->fileCount - $fileCount);
+        return max(0, $this->fileCount - $used);
     }
 }
