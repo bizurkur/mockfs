@@ -1,0 +1,5 @@
+vendor/
+phpcs.xml
+phpunit.xml
+phpstan.neon
+infection.json

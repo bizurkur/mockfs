@@ -1,0 +1,66 @@
+<?php declare(strict_types = 1);
+
+namespace MockFileSystem\Components;
+
+use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\ReferenceableInterface;
+use MockFileSystem\Components\SummarizableInterface;
+use MockFileSystem\Exception\NotFoundException;
+
+/**
+ * Represents a container of files.
+ */
+interface ContainerInterface extends ReferenceableInterface, SummarizableInterface
+{
+    /**
+     * Finds the given file, if applicable.
+     *
+     * @param string $path
+     *
+     * @return FileInterface|null
+     */
+    public function find(string $path): ?FileInterface;
+
+    /**
+     * Gets all of the children.
+     *
+     * @return FileInterface[]
+     */
+    public function getChildren(): array;
+
+    /**
+     * Adds the given child.
+     *
+     * @param FileInterface $child
+     */
+    public function addChild(FileInterface $child): void;
+
+    /**
+     * Checks if the given child exists.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function hasChild(string $name): bool;
+
+    /**
+     * Gets the given child.
+     *
+     * @param string $name
+     *
+     * @return FileInterface
+     *
+     * @throws NotFoundException If the child is not found.
+     */
+    public function getChild(string $name): FileInterface;
+
+    /**
+     * Removes the given child.
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function removeChild(string $name): bool;
+}

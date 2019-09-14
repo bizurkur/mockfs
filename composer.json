@@ -1,0 +1,41 @@
+{
+    "name": "bizurkur/mockfs",
+    "type": "library",
+    "description": "Mock File System",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Luke Kingsley",
+            "email": "bizurkur@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.2.0",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "bizurkur/coding-standard": "^1.0",
+        "codacy/coverage": "^1.4",
+        "infection/infection": "^0.12.0",
+        "jakub-onderka/php-parallel-lint": "^1.0",
+        "localheinz/composer-normalize": "^1.1",
+        "phing/phing": "^2.16",
+        "phpstan/phpstan": "^0.11.15",
+        "phpstan/phpstan-deprecation-rules": "^0.11.2",
+        "phpstan/phpstan-phpunit": "^0.11.2",
+        "phpstan/phpstan-strict-rules": "^0.11.1",
+        "phpunit/phpunit": "^8.0",
+        "squizlabs/php_codesniffer": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "MockFileSystem\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MockFileSystem\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable"
+}
