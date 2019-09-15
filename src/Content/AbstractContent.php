@@ -63,8 +63,9 @@ abstract class AbstractContent implements ContentInterface
             return false;
         }
 
-        if ($position < 0) {
-            // TODO: Verify this matches real seek behavior
+        if ($position < 0 || $position > $this->getSize()) {
+            $this->position = 0;
+
             return false;
         }
 

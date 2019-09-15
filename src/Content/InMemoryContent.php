@@ -28,7 +28,7 @@ class InMemoryContent extends AbstractContent
     public function read(int $count): string
     {
         $data = mb_substr($this->content, $this->position, $count);
-        $this->position += mb_strlen($data);
+        $this->position += strlen($data);
 
         return $data;
     }
@@ -38,11 +38,11 @@ class InMemoryContent extends AbstractContent
      */
     public function write(string $data): int
     {
-        $bytes = mb_strlen($data);
+        $bytes = strlen($data);
 
         $this->content = mb_substr($this->content, 0, $this->position)
             .$data
-            .mb_substr($this->content, $this->position + $bytes);
+            .mb_substr($this->content, $this->position + mb_strlen($data));
 
         $this->position += $bytes;
 
@@ -70,6 +70,6 @@ class InMemoryContent extends AbstractContent
      */
     public function getSize(): int
     {
-        return mb_strlen($this->content);
+        return strlen($this->content);
     }
 }

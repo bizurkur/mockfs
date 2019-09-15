@@ -20,7 +20,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testReadAndWrite(string $prefix): void
     {
-        $url = $prefix.'/'.uniqid();
+        $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
         $content = uniqid();
 
@@ -34,7 +34,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testWriteSameFileFromTwoHandles(string $prefix): void
     {
-        $url = $prefix.'/'.uniqid();
+        $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
         $contentA = uniqid('a');
         $contentB = uniqid('b');
@@ -61,8 +61,8 @@ class StreamWrapperTest extends TestCase
      */
     public function testWriteDifferentFileFromTwoHandles(string $prefix): void
     {
-        $urlA = $prefix.'/'.uniqid('a');
-        $urlB = $prefix.'/'.uniqid('b');
+        $urlA = $prefix.'/'.uniqid('mfs_a');
+        $urlB = $prefix.'/'.uniqid('mfs_b');
         $this->cleanup($urlA);
         $this->cleanup($urlB);
         $contentA = uniqid('a');
@@ -91,7 +91,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testReadSameFileFromTwoHandles(string $prefix): void
     {
-        $url = $prefix.'/'.uniqid();
+        $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
         $content = uniqid();
         file_put_contents($url, $content);
@@ -119,8 +119,8 @@ class StreamWrapperTest extends TestCase
      */
     public function testReadDifferentFileFromTwoHandles(string $prefix): void
     {
-        $urlA = $prefix.'/'.uniqid();
-        $urlB = $prefix.'/'.uniqid();
+        $urlA = $prefix.'/'.uniqid('mfs_');
+        $urlB = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($urlA);
         $this->cleanup($urlB);
         $contentA = uniqid('a');
@@ -151,8 +151,8 @@ class StreamWrapperTest extends TestCase
      */
     public function testRename(string $prefix): void
     {
-        $src = $prefix.'/'.uniqid('src');
-        $dest = $prefix.'/'.uniqid('dest');
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest');
         $this->cleanup($src);
         $this->cleanup($dest);
 
@@ -174,15 +174,22 @@ class StreamWrapperTest extends TestCase
         ];
     }
 
+    /**
+     * Cleans up temporary files.
+     *
+     * @param string $file
+     */
     private function cleanup(string $file): void
     {
         register_shutdown_function(
             function () use ($file) {
-                if (!@file_exists($file)) {
+                error_reporting(0);
+
+                if (!file_exists($file)) {
                     return;
                 }
 
-                @unlink($file);
+                unlink($file);
             }
         );
     }
