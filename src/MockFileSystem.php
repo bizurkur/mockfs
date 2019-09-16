@@ -321,6 +321,28 @@ class MockFileSystem
     }
 
     /**
+     * Gets the directory for path.
+     *
+     * @param string $path
+     *
+     * @return DirectoryInterface
+     *
+     * @throws NotFoundException If the path is not a directory.
+     */
+    public static function getDirectory(string $path): DirectoryInterface
+    {
+        /** @var DirectoryInterface|null $parent */
+        $parent = self::findByType($path, FileInterface::TYPE_DIR);
+        if ($parent === null) {
+            throw new NotFoundException(
+                sprintf('Directory "%s" does not exist.', $path)
+            );
+        }
+
+        return $parent;
+    }
+
+    /**
      * Normalizes a path to remove relative references.
      *
      * Also normalizes slashes in the path, if configured.
@@ -364,28 +386,6 @@ class MockFileSystem
         }
 
         return implode($sep, $files);
-    }
-
-    /**
-     * Gets the directory for path.
-     *
-     * @param string $path
-     *
-     * @return DirectoryInterface
-     *
-     * @throws NotFoundException If the path is not a directory.
-     */
-    private static function getDirectory(string $path): DirectoryInterface
-    {
-        /** @var DirectoryInterface|null $parent */
-        $parent = self::findByType($path, FileInterface::TYPE_DIR);
-        if ($parent === null) {
-            throw new NotFoundException(
-                sprintf('Directory "%s" does not exist.', $path)
-            );
-        }
-
-        return $parent;
     }
 
     /**

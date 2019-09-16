@@ -87,9 +87,9 @@ abstract class AbstractFile implements FileInterface
         }
 
         $now = time();
-        $this->lastAccessTime = $now;
-        $this->lastModifyTime = $now;
-        $this->lastChangeTime = $now;
+        $this->setLastAccessTime($now);
+        $this->setLastModifyTime($now);
+        $this->setLastChangeTime($now);
     }
 
     /**
@@ -141,7 +141,7 @@ abstract class AbstractFile implements FileInterface
      */
     public function setPermissions(int $permissions): void
     {
-        $this->lastChangeTime = time();
+        $this->setLastChangeTime();
         $this->permissions = $permissions;
     }
 
@@ -158,7 +158,7 @@ abstract class AbstractFile implements FileInterface
      */
     public function setUser(int $user): void
     {
-        $this->lastChangeTime = time();
+        $this->setLastChangeTime();
         $this->user = $user;
     }
 
@@ -175,7 +175,7 @@ abstract class AbstractFile implements FileInterface
      */
     public function setGroup(int $group): void
     {
-        $this->lastChangeTime = time();
+        $this->setLastChangeTime();
         $this->group = $group;
     }
 
@@ -329,14 +329,74 @@ abstract class AbstractFile implements FileInterface
             'gid' => $this->getGroup(),
             'rdev' => 0,
             'size' => $this->getSize(),
-            'atime' => $this->lastAccessTime,
-            'mtime' => $this->lastModifyTime,
-            'ctime' => $this->lastChangeTime,
+            'atime' => $this->getLastAccessTime(),
+            'mtime' => $this->getLastModifyTime(),
+            'ctime' => $this->getLastChangeTime(),
             'blksize' => -1,
             'blocks' => -1,
         ];
 
         return array_merge(array_values($stat), $stat);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastAccessTime(): int
+    {
+        return $this->lastAccessTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastModifyTime(): int
+    {
+        return $this->lastModifyTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastChangeTime(): int
+    {
+        return $this->lastChangeTime;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastAccessTime(?int $time = null): void
+    {
+        if ($time === null) {
+            $time = time();
+        }
+
+        $this->lastAccessTime = $time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastModifyTime(?int $time = null): void
+    {
+        if ($time === null) {
+            $time = time();
+        }
+
+        $this->lastModifyTime = $time;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastChangeTime(?int $time = null): void
+    {
+        if ($time === null) {
+            $time = time();
+        }
+
+        $this->lastChangeTime = $time;
     }
 
     /**

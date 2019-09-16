@@ -199,6 +199,54 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function getLastAccessTime(): int
+    {
+        return $this->base->getLastAccessTime();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastModifyTime(): int
+    {
+        return $this->base->getLastModifyTime();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getLastChangeTime(): int
+    {
+        return $this->base->getLastChangeTime();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastAccessTime(?int $time = null): void
+    {
+        $this->base->setLastAccessTime($time);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastModifyTime(?int $time = null): void
+    {
+        $this->base->setLastModifyTime($time);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setLastChangeTime(?int $time = null): void
+    {
+        $this->base->setLastChangeTime($time);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function open(): void
     {
         $this->base->open();

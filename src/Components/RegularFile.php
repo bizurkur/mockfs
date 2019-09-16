@@ -56,7 +56,7 @@ class RegularFile extends AbstractFile implements RegularFileInterface
      */
     public function open(): void
     {
-        $this->lastAccessTime = time();
+        $this->setLastAccessTime();
         $this->content->open();
     }
 
@@ -74,7 +74,7 @@ class RegularFile extends AbstractFile implements RegularFileInterface
      */
     public function read(int $count): string
     {
-        $this->lastAccessTime = time();
+        $this->setLastAccessTime();
 
         return $this->content->read($count);
     }
@@ -84,7 +84,7 @@ class RegularFile extends AbstractFile implements RegularFileInterface
      */
     public function write(string $data): int
     {
-        $this->lastModifyTime = time();
+        $this->setLastModifyTime();
 
         return $this->content->write($data);
     }
@@ -94,7 +94,7 @@ class RegularFile extends AbstractFile implements RegularFileInterface
      */
     public function truncate(int $size): bool
     {
-        $this->lastModifyTime = time();
+        $this->setLastModifyTime();
 
         return $this->content->truncate($size);
     }

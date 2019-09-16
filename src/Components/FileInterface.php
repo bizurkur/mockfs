@@ -189,4 +189,46 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * @return int[]
      */
     public function stat(): array;
+
+    /**
+     * Gets the time the file was last accessed.
+     *
+     * @return int
+     */
+    public function getLastAccessTime(): int;
+
+    /**
+     * Gets the time the file was last modified.
+     *
+     * @return int
+     */
+    public function getLastModifyTime(): int;
+
+    /**
+     * Gets the time the file attributes were last changed.
+     *
+     * @return int
+     */
+    public function getLastChangeTime(): int;
+
+    /**
+     * Sets the time the file was last accessed.
+     *
+     * @param int|null $time
+     */
+    public function setLastAccessTime(?int $time = null): void;
+
+    /**
+     * Sets the time the file was last modified.
+     *
+     * @param int|null $time
+     */
+    public function setLastModifyTime(?int $time = null): void;
+
+    /**
+     * Sets the time the file attributes were last changed.
+     *
+     * @param int|null $time
+     */
+    public function setLastChangeTime(?int $time = null): void;
 }

@@ -127,26 +127,8 @@ class StreamWrapper
                 return false;
             }
 
-            try {
-                $file = MockFileSystem::createFile($path);
-            } catch (BaseException $exception) {
-                if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
-                    trigger_error($exception->getMessage(), \E_USER_WARNING);
-                }
-
-                return false;
-            }
-
-            /** @var FileInterface $parent */
-            $parent = $file->getParent();
-            if (!$this->isWritable($parent)) {
-                if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
-                    trigger_error(
-                        sprintf('Directory "%s" is not writable.', $parent->getPath()),
-                        \E_USER_WARNING
-                    );
-                }
-
+            $file = $this->createFile($path, $options);
+            if ($file === null) {
                 return false;
             }
         } elseif ($this->mode === self::MODE_CREATE_NEW) {
@@ -354,12 +336,60 @@ class StreamWrapper
     //     // @see flock()
     //     return false;
     // }
-    //
-    // public function stream_metadata(string $path, int $option, $value): bool
-    // {
-    //     return true;
-    // }
-    //
+
+    /**
+     * Changes stream metadata, e.g. owner or permissions.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.stream-metadata.php
+     *
+     * @param string $path
+     * @param int $option
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    public function stream_metadata(string $path, int $option, $value): bool
+    {
+        $file = MockFileSystem::find($path);
+
+        if ($option === \STREAM_META_TOUCH) {
+            $file = $file ?? $this->createFile($path);
+            if ($file === null) {
+                return false;
+            }
+
+            $now = time();
+            $file->setLastModifyTime($value[0] ?? $now);
+            $file->setLastAccessTime($value[1] ?? $now);
+
+            return true;
+        }
+
+        if ($file === null || !$this->isOwner($file)) {
+            return false;
+        }
+
+        if ($option === \STREAM_META_OWNER) {
+            $file->setUser($value);
+
+            return true;
+        }
+
+        if ($option === \STREAM_META_GROUP) {
+            $file->setGroup($value);
+
+            return true;
+        }
+
+        if ($option === \STREAM_META_ACCESS) {
+            $file->setPermissions($value);
+
+            return true;
+        }
+
+        return false;
+    }
+
     // public function stream_set_option(int $option, int $arg1, int $arg2): bool
     // {
     //     return true;
@@ -429,7 +459,7 @@ class StreamWrapper
      */
     public function stream_cast(int $castAs)
     {
-        // TODO: Look more into if this can be done
+        // TODO: Look more into if this can be done, e.g. with $this->context
         return false;
     }
 
@@ -658,5 +688,62 @@ class StreamWrapper
         $used = $fileSystem->getSummary($user, $group)->getFileCount();
 
         return $config->getQuota()->getRemainingFileCount($used, $user, $group);
+    }
+
+    private function createFile(string $path, int $options = 0): ?FileInterface
+    {
+        $parts = MockFileSystem::getFileParts($path);
+
+        /** @var DirectoryInterface|null $parent */
+        try {
+            $parent = MockFileSystem::getDirectory($parts['dirname']);
+        } catch (BaseException $exception) {
+            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
+                trigger_error($exception->getMessage(), \E_USER_WARNING);
+            }
+
+            return null;
+        }
+
+        if ($parent === null) {
+            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
+                trigger_error(
+                    sprintf('Path "%s" does not exist.', $parts['dirname']),
+                    \E_USER_WARNING
+                );
+            }
+
+            return null;
+        }
+
+        if (!$this->isWritable($parent)) {
+            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
+                trigger_error(
+                    sprintf('Directory "%s" is not writable.', $parent->getPath()),
+                    \E_USER_WARNING
+                );
+            }
+
+            return null;
+        }
+
+        try {
+            $file = MockFileSystem::createFile($path);
+        } catch (BaseException $exception) {
+            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
+                trigger_error($exception->getMessage(), \E_USER_WARNING);
+            }
+
+            return null;
+        }
+
+        return $file;
+    }
+
+    private function isOwner(FileInterface $file): bool
+    {
+        $user = $this->getFileSystem()->getConfig()->getUser();
+
+        return $file->getUser() === $user;
     }
 }
