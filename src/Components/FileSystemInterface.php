@@ -2,7 +2,6 @@
 
 namespace MockFileSystem\Components;
 
-use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Config;
 
@@ -11,7 +10,7 @@ use MockFileSystem\Config;
  *
  * @see https://en.wikipedia.org/wiki/File_system
  */
-interface FileSystemInterface extends ChildInterface, ContainerInterface
+interface FileSystemInterface extends ContainerInterface
 {
     /**
      * Gets the configuration settings used by the file system.

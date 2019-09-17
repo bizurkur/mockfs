@@ -56,7 +56,9 @@ class FileSystem implements FileSystemInterface
      */
     public function setParent(?ContainerInterface $parent): void
     {
-        throw new LogicException('The file system cannot have a parent.');
+        if ($parent !== null) {
+            throw new LogicException('The file system cannot have a parent.');
+        }
     }
 
     /**
@@ -72,9 +74,7 @@ class FileSystem implements FileSystemInterface
      */
     public function getUrl(): string
     {
-        $prefix = StreamWrapper::PROTOCOL.'://';
-
-        return $prefix.$this->getPath();
+        return StreamWrapper::PROTOCOL.'://';
     }
 
     /**
@@ -82,31 +82,31 @@ class FileSystem implements FileSystemInterface
      */
     public function find(string $path): ?FileInterface
     {
-        $sep = $this->config->getSeparator();
-        $clean = $path;
+        $clean = trim($path);
 
+        $sep = $this->config->getSeparator();
         if ($this->config->getNormalizeSlashes()) {
             $clean = str_replace(['\\', '/'], $sep, $clean);
         }
 
-        $parts = explode($sep, $clean, 2);
-        if ($parts === false) {
-            return null;
+        foreach ($this->partitions as $partition) {
+            $prefix = $partition->getPath();
+            $length = mb_strlen($prefix);
+            $dirPath = mb_substr($clean.$sep, 0, $length);
+            $filePath = mb_substr($clean, $length);
+
+            if (strcmp($prefix, $dirPath) === 0) {
+                return $partition->find($filePath);
+            }
+
+            if ($this->config->getIgnoreCase()
+                && strcmp(mb_strtoupper($prefix), mb_strtoupper($dirPath)) === 0
+            ) {
+                return $partition->find($filePath);
+            }
         }
 
-        $name = $parts[0].$sep;
-        if (!$this->hasChild($name)) {
-            return null;
-        }
-
-        /** @var PartitionInterface $partition */
-        $partition = $this->getChild($name);
-
-        if (isset($parts[1])) {
-            return $partition->find($parts[1]);
-        }
-
-        return $partition;
+        return null;
     }
 
     /**

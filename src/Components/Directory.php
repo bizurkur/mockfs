@@ -58,20 +58,40 @@ class Directory extends AbstractFile implements DirectoryInterface
      */
     public function find(string $path): ?FileInterface
     {
+        $clean = trim($path);
+        if (empty($path)) {
+            return $this;
+        }
+
         // TODO: Clean up this entire method.
         $config = $this->getConfig();
         $sep = $config->getSeparator();
-        $clean = $path;
 
         if ($config->getNormalizeSlashes()) {
             $clean = str_replace(['\\', '/'], $sep, $clean);
         }
 
-        $file = $this->getStartDir($clean);
+        $prefix = $this->getPath();
+        if (strcmp(mb_substr($prefix, -mb_strlen($sep)), $sep) !== 0) {
+            $prefix .= $sep;
+        }
+
+        $length = mb_strlen($prefix);
+        $dirPath = mb_substr($clean.$sep, 0, $length);
+
+        if (strcmp($prefix, $dirPath) === 0) {
+            $clean = mb_substr($clean, $length);
+        } elseif ($config->getIgnoreCase()
+            && strcmp(mb_strtoupper($prefix), mb_strtoupper($dirPath)) === 0
+        ) {
+            $clean = mb_substr($clean, $length);
+        }
+
+        $file = $this;
         $clean = trim($clean, $sep);
 
         if (empty($clean)) {
-            return $file;
+            return $this;
         }
 
         $parts = explode($sep, $clean);
@@ -217,37 +237,6 @@ class Directory extends AbstractFile implements DirectoryInterface
         }
 
         return $name;
-    }
-
-    /**
-     * Gets the relative starting point for a path.
-     *
-     * The path is expected to already be normalized, if applicable.
-     *
-     * @param string $path
-     *
-     * @return FileInterface
-     */
-    private function getStartDir(string $path): FileInterface
-    {
-        $sep = $this->getConfig()->getSeparator();
-
-        foreach ($this->getRoot()->getChildren() as $partition) {
-            $rootPath = $partition->getPath();
-            $filePath = mb_substr($path.$sep, 0, mb_strlen($rootPath));
-
-            if (strcmp($rootPath, $filePath) === 0) {
-                return $partition;
-            }
-
-            if ($this->getConfig()->getIgnoreCase()
-                && strcmp(mb_strtoupper($rootPath), mb_strtoupper($filePath)) === 0
-            ) {
-                return $partition;
-            }
-        }
-
-        return $this;
     }
 
     /**

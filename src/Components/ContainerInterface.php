@@ -2,6 +2,7 @@
 
 namespace MockFileSystem\Components;
 
+use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\ReferenceableInterface;
 use MockFileSystem\Components\SummarizableInterface;
@@ -10,7 +11,7 @@ use MockFileSystem\Exception\NotFoundException;
 /**
  * Represents a container of files.
  */
-interface ContainerInterface extends ReferenceableInterface, SummarizableInterface
+interface ContainerInterface extends ChildInterface, ReferenceableInterface, SummarizableInterface
 {
     /**
      * Finds the given file, if applicable.

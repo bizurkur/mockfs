@@ -408,6 +408,10 @@ abstract class AbstractFile implements FileInterface
      */
     private function validateName(string $name): void
     {
+        if ($name === '.' || $name === '..') {
+            throw new InvalidArgumentException('Name cannot be "." or ".."');
+        }
+
         $config = $this->getConfig();
 
         $blacklist = array_merge(
