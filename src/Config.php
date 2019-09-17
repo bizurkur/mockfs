@@ -265,6 +265,10 @@ class Config
      */
     private function setSeparator(string $separator): void
     {
+        if (empty($separator)) {
+            throw new InvalidArgumentException('Separator cannot be empty');
+        }
+
         $this->separator = $separator;
     }
 
