@@ -321,6 +321,31 @@ class MockFileSystem
     }
 
     /**
+     * Splits the path into segmented sections.
+     *
+     * Each directory or file is an item in the array, e.g.:
+     *
+     *  - /home/foo/file.txt -> ['', 'home', 'foo', 'file.txt']
+     *
+     * @param string $path
+     *
+     * @return string[]
+     */
+    public static function explodePath(string $path): array
+    {
+        $clean = self::getPath($path);
+
+        $sep = self::getFileSystem()->getConfig()->getSeparator();
+
+        $parts = explode($sep, $clean);
+        if ($parts === false) {
+            return [];
+        }
+
+        return $parts;
+    }
+
+    /**
      * Gets the directory for path.
      *
      * @param string $path

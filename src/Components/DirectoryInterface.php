@@ -18,4 +18,11 @@ interface DirectoryInterface extends ContainerInterface, FileInterface
      * @return int
      */
     public function getFileCount(): int;
+
+    /**
+     * Gets the directory children as an iterator.
+     *
+     * @return \Iterator
+     */
+    public function getIterator(): \Iterator;
 }

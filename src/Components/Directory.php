@@ -105,6 +105,7 @@ class Directory extends AbstractFile implements DirectoryInterface
             }
 
             if ($part === '..') {
+                /** @var FileInterface|null $parent */
                 $parent = $file->getParent();
                 if ($parent !== null) {
                     $file = $parent;
@@ -113,14 +114,33 @@ class Directory extends AbstractFile implements DirectoryInterface
                 continue;
             }
 
+            if (!$file instanceof DirectoryInterface) {
+                return null;
+            }
+
             if (!$file->hasChild($part)) {
                 return null;
             }
 
+            /** @var FileInterface $file */
             $file = $file->getChild($part);
         }
 
         return $file;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getIterator(): \Iterator
+    {
+        $children = $this->children;
+
+        if ($this->getConfig()->getIncludeDotFiles()) {
+            array_unshift($children, new Directory('.'), new Directory('..'));
+        }
+
+        return new \ArrayIterator($children);
     }
 
     /**

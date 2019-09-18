@@ -3,9 +3,9 @@
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
-
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\StreamWrapper;
+use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
 
 class StreamWrapperTest extends TestCase
@@ -15,6 +15,475 @@ class StreamWrapperTest extends TestCase
         parent::setUp();
 
         MockFileSystem::create();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        MockFileSystem::destroy();
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeAndRemoveDir(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+
+        mkdir($url);
+
+        self::assertTrue(is_dir($url), 'Failed to make directory');
+
+        rmdir($url);
+
+        self::assertFalse(file_exists($url), 'Failed to remove directory');
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeRecursiveDir(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($child, 0777, true);
+
+        self::assertTrue(is_dir($child), 'Failed to make directory');
+
+        rmdir($child);
+        rmdir($base);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     * @runInSeparateProcess
+     */
+    public function testMakeDirGivesCorrectPermissions(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $umask = 0022;
+
+        umask($umask);
+        MockFileSystem::umask($umask);
+
+        mkdir($url, 0777);
+
+        $actual = fileperms($url);
+        $actual &= ~FileInterface::TYPE_DIR;
+
+        self::assertEquals(0755, $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenParentDoesNotExistCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        self::assertFalse(mkdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenParentDoesNotExistReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+
+        self::assertFalse(@mkdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenNoWritePermissionCreatesError(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base, 0500);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): Permission denied');
+
+        self::assertFalse(mkdir($child));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenNoWritePermissionReturnsFalse(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base, 0500);
+
+        self::assertFalse(@mkdir($child));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenFileExistsCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): File exists');
+
+        self::assertFalse(mkdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenFileExistsReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::assertFalse(@mkdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenPathContainsFileCreatesError(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base);
+        file_put_contents($child, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): Not a directory');
+
+        self::assertFalse(mkdir($child.'/'.uniqid()));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testMakeDirWhenPathContainsFileReturnsFalse(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base);
+        file_put_contents($child, uniqid());
+
+        self::assertFalse(@mkdir($child.'/'.uniqid()));
+    }
+
+    public function testMakeDirWhenNoPartitionCreatesError(): void
+    {
+        $base = StreamWrapper::PROTOCOL.'://';
+        MockFileSystem::getFileSystem()->removeChild('/');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        self::assertFalse(mkdir($base));
+    }
+
+    public function testMakeDirWhenNoPartitionReturnsFalse(): void
+    {
+        $base = StreamWrapper::PROTOCOL.'://';
+        MockFileSystem::getFileSystem()->removeChild('/');
+
+        self::assertFalse(@mkdir($base));
+    }
+
+    public function testMakeDirWhenPartitionNotExistsCreatesError(): void
+    {
+        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        MockFileSystem::getFileSystem()->removeChild('/');
+        MockFileSystem::createPartition('c:');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        self::assertFalse(mkdir($base));
+    }
+
+    public function testMakeDirWhenPartitionNotExistsReturnsFalse(): void
+    {
+        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        MockFileSystem::getFileSystem()->removeChild('/');
+        MockFileSystem::createPartition('c:');
+
+        self::assertFalse(@mkdir($base));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenNotExistsCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$url.'): No such file or directory');
+
+        self::assertFalse(rmdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenNotExistsReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        self::assertFalse(@rmdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenPathIsNotDirCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$url.'): Not a directory');
+
+        self::assertFalse(rmdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenPathIsNotDirReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::assertFalse(@rmdir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenDirNotEmptyCreatesError(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base);
+        file_put_contents($child, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$base.'): Directory not empty');
+
+        self::assertFalse(rmdir($base));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenDirNotEmptyReturnsFalse(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base);
+        file_put_contents($child, uniqid());
+
+        self::assertFalse(@rmdir($base));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenNotWritableCreatesError(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base, 0700);
+        mkdir($child);
+        chmod($base, 0500);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$child.'): Permission denied');
+
+        self::assertFalse(rmdir($child));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRemoveDirWhenNotWritableReturnsFalse(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base, 0700);
+        mkdir($child);
+        chmod($base, 0500);
+
+        self::assertFalse(@rmdir($child));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testOpenDirWhenNotExistsCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: No such file or directory');
+
+        opendir($url);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testOpenDirWhenNotExistsReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        $handle = @opendir($url);
+
+        self::assertFalse($handle);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testOpenDirWhenNotReadableCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        mkdir($url, 0000);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: Permission denied');
+
+        opendir($url);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testOpenDirWhenNotReadableReturnsFalse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        mkdir($url, 0000);
+
+        self::assertFalse(@opendir($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testReadDir(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $childA = uniqid('a');
+        $childB = uniqid('b');
+        $this->cleanup($base.'/'.$childA);
+        $this->cleanup($base.'/'.$childB);
+        $this->cleanup($base);
+        mkdir($base);
+        mkdir($base.'/'.$childA);
+        file_put_contents($base.'/'.$childB, uniqid());
+
+        $handle = opendir($base);
+        if ($handle === false) {
+            self::fail('Failed to open dir handle');
+        }
+
+        $actual = [];
+        while (($entry = readdir($handle)) !== false) {
+            $actual[] = $entry;
+        }
+
+        // 2nd loop should do nothing
+        while (($entry = readdir($handle)) !== false) {
+            $actual[] = $entry;
+        }
+
+        closedir($handle);
+
+        sort($actual);
+        self::assertEquals(['.', '..', $childA, $childB], $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testReadDirWithRewind(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $childA = uniqid('a');
+        $childB = uniqid('b');
+        $this->cleanup($base.'/'.$childA);
+        $this->cleanup($base.'/'.$childB);
+        $this->cleanup($base);
+        mkdir($base);
+        mkdir($base.'/'.$childA);
+        file_put_contents($base.'/'.$childB, uniqid());
+
+        $handle = opendir($base);
+        if ($handle === false) {
+            self::fail('Failed to open dir handle');
+        }
+
+        $actual = [];
+        while (($entry = readdir($handle)) !== false) {
+            $actual[] = $entry;
+        }
+
+        rewinddir($handle);
+        while (($entry = readdir($handle)) !== false) {
+            $actual[] = $entry;
+        }
+
+        closedir($handle);
+
+        $expected = ['.', '..', $childA, $childB, '.', '..', $childA, $childB];
+        sort($actual);
+        sort($expected);
+        self::assertEquals($expected, $actual);
     }
 
     /**
@@ -189,15 +658,13 @@ class StreamWrapperTest extends TestCase
      */
     public function testTouchWhenPathNotExists(string $prefix): void
     {
-        $level = error_reporting();
-        error_reporting(0);
-
         $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
         $this->cleanup($url);
 
-        self::assertFalse(touch($url));
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('touch(): Unable to create file '.$url);
 
-        error_reporting($level);
+        self::assertFalse(touch($url));
     }
 
     /**
@@ -282,13 +749,15 @@ class StreamWrapperTest extends TestCase
     {
         register_shutdown_function(
             function () use ($file) {
-                error_reporting(0);
-
-                if (!file_exists($file)) {
+                if (!@file_exists($file)) {
                     return;
                 }
 
-                unlink($file);
+                if (is_file($file)) {
+                    @unlink($file);
+                } else {
+                    @rmdir($file);
+                }
             }
         );
     }

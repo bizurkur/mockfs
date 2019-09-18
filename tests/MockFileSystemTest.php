@@ -89,6 +89,7 @@ class MockFileSystemTest extends TestCase
             'umask' => 0000,
             'separator' => '/',
             'ignoreCase' => false,
+            'includeDotFiles' => true,
             'normalizeSlashes' => false,
             'blacklist' => [],
             'user' => null,
@@ -111,6 +112,10 @@ class MockFileSystemTest extends TestCase
             'ignoreCase' => [
                 'options' => ['ignoreCase' => true],
                 'expected' => array_replace($default, ['ignoreCase' => true]),
+            ],
+            'includeDotFiles' => [
+                'options' => ['includeDotFiles' => false],
+                'expected' => array_replace($default, ['includeDotFiles' => false]),
             ],
             'normalizeSlashes' => [
                 'options' => ['normalizeSlashes' => true],

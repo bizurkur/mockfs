@@ -3,6 +3,7 @@
 namespace MockFileSystem;
 
 use MockFileSystem\Components\ContainerInterface;
+use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
@@ -28,6 +29,11 @@ class StreamWrapper
     public const MODE_CREATE_NEW = 'x';
 
     /**
+     * @var \Iterator|null
+     */
+    private $dir = null;
+
+    /**
      * @var RegularFileInterface|null
      */
     private $file = null;
@@ -47,35 +53,230 @@ class StreamWrapper
      */
     private $canWrite = false;
 
-    // public function dir_closedir(): bool
-    // {
-    //     return true;
-    // }
-    //
-    // public function dir_opendir(string $path, int $options): bool
-    // {
-    //     return true;
-    // }
-    //
-    // public function dir_readdir(): string
-    // {
-    //     return '';
-    // }
-    //
-    // public function dir_rewinddir(): bool
-    // {
-    //     return true;
-    // }
-    //
-    // public function mkdir(string $path, int $mode, int $options): bool
-    // {
-    //     return true;
-    // }
-    //
-    // public function rmdir(string $path, int $options): bool
-    // {
-    //     return true;
-    // }
+    /**
+     * Opens a directory for iteration.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.dir-opendir.php
+     *
+     * @param string $path
+     * @param int $options
+     *
+     * @return bool
+     */
+    public function dir_opendir(string $path, int $options): bool
+    {
+        /** @var DirectoryInterface|null $dir */
+        $dir = MockFileSystem::findByType($path, FileInterface::TYPE_DIR);
+        if ($dir === null) {
+            trigger_error(
+                sprintf('opendir(%s): failed to open dir: No such file or directory', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        if (!$this->isReadable($dir)) {
+            trigger_error(
+                sprintf('opendir(%s): failed to open dir: Permission denied', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        $this->dir = $dir->getIterator();
+
+        return true;
+    }
+
+    /**
+     * Closes a directory.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.dir-closedir.php
+     *
+     * @return bool
+     */
+    public function dir_closedir(): bool
+    {
+        $this->dir = null;
+
+        return true;
+    }
+
+    /**
+     * Reads an entry from the directory.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.dir-readdir.php
+     *
+     * @return string|false
+     */
+    public function dir_readdir()
+    {
+        if ($this->dir === null) {
+            return false;
+        }
+
+        $file = $this->dir->current();
+        if (!$file instanceof FileInterface) {
+            return false;
+        }
+
+        $this->dir->next();
+
+        return $file->getName();
+    }
+
+    /**
+     * Rewinds the directory iterator.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.dir-rewinddir.php
+     *
+     * @return bool
+     */
+    public function dir_rewinddir(): bool
+    {
+        if ($this->dir === null) {
+            return false;
+        }
+
+        $this->dir->rewind();
+
+        return true;
+    }
+
+    /**
+     * Makes a directory.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.mkdir.php
+     * @see https://www.php.net/manual/en/function.mkdir.php
+     *
+     * @param string $path
+     * @param int $mode
+     * @param int $options
+     *
+     * @return bool
+     */
+    public function mkdir(string $path, int $mode, int $options): bool
+    {
+        $permissions = $mode & ~MockFileSystem::umask();
+
+        $file = MockFileSystem::find($path);
+        if ($file !== null) {
+            trigger_error('mkdir(): File exists', \E_USER_WARNING);
+
+            return false;
+        }
+
+        $parts = MockFileSystem::explodePath($path);
+        if (count($parts) < 2) {
+            trigger_error('mkdir(): No such file or directory', \E_USER_WARNING);
+
+            return false;
+        }
+
+        /** @var DirectoryInterface|null $parent */
+        $parent = MockFileSystem::findByType($parts[0], FileInterface::TYPE_DIR);
+        if ($parent === null) {
+            trigger_error('mkdir(): No such file or directory', \E_USER_WARNING);
+
+            return false;
+        }
+
+        $recursive = ($options & \STREAM_MKDIR_RECURSIVE) === \STREAM_MKDIR_RECURSIVE;
+
+        $count = count($parts);
+        for ($i = 1; $i < $count; $i++) {
+            if (!$this->isWritable($parent)) {
+                trigger_error('mkdir(): Permission denied', \E_USER_WARNING);
+
+                return false;
+            }
+
+            $file = $parent->find($parts[$i]);
+            if ($file instanceof DirectoryInterface) {
+                $parent = $file;
+
+                continue;
+            }
+
+            if ($file !== null) {
+                trigger_error('mkdir(): Not a directory', \E_USER_WARNING);
+
+                return false;
+            }
+
+            if (!$recursive && $i !== $count - 1) {
+                trigger_error('mkdir(): No such file or directory', \E_USER_WARNING);
+
+                return false;
+            }
+
+            $dir = new Directory($parts[$i], $permissions);
+            $parent->addChild($dir);
+            $parent = $dir;
+        }
+
+        return true;
+    }
+
+    /**
+     * Removes a directory.
+     *
+     * @see https://www.php.net/manual/en/streamwrapper.rmdir.php
+     * @see https://www.php.net/manual/en/function.rmdir.php
+     *
+     * @param string $path
+     * @param int $options
+     *
+     * @return bool
+     */
+    public function rmdir(string $path, int $options): bool
+    {
+        $file = MockFileSystem::find($path);
+        if ($file === null) {
+            trigger_error(
+                sprintf('rmdir(%s): No such file or directory', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        if (!$file instanceof DirectoryInterface) {
+            trigger_error(
+                sprintf('rmdir(%s): Not a directory', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        if (count($file->getChildren()) > 0) {
+            trigger_error(
+                sprintf('rmdir(%s): Directory not empty', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        /** @var DirectoryInterface $parent */
+        $parent = $file->getParent();
+        if (!$this->isWritable($parent)) {
+            trigger_error(
+                sprintf('rmdir(%s): Permission denied', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        $parent->removeChild($file->getName());
+        clearstatcache();
+
+        return true;
+    }
 
     /**
      * Opens a stream.
@@ -355,6 +556,11 @@ class StreamWrapper
         if ($option === \STREAM_META_TOUCH) {
             $file = $file ?? $this->createFile($path);
             if ($file === null) {
+                trigger_error(
+                    sprintf('touch(): Unable to create file %s', $path),
+                    \E_USER_WARNING
+                );
+
                 return false;
             }
 
@@ -690,21 +896,12 @@ class StreamWrapper
         return $config->getQuota()->getRemainingFileCount($used, $user, $group);
     }
 
-    private function createFile(string $path, int $options = 0): ?FileInterface
+    private function createFile(string $path, int $options = 0): ?RegularFileInterface
     {
         $parts = MockFileSystem::getFileParts($path);
 
         /** @var DirectoryInterface|null $parent */
-        try {
-            $parent = MockFileSystem::getDirectory($parts['dirname']);
-        } catch (BaseException $exception) {
-            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
-                trigger_error($exception->getMessage(), \E_USER_WARNING);
-            }
-
-            return null;
-        }
-
+        $parent = MockFileSystem::findByType($parts['dirname'], FileInterface::TYPE_DIR);
         if ($parent === null) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error(

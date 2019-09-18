@@ -49,6 +49,11 @@ class Config
     /**
      * @var bool
      */
+    private $includeDotFiles = true;
+
+    /**
+     * @var bool
+     */
     private $normalizeSlashes = false;
 
     /**
@@ -104,6 +109,7 @@ class Config
             'umask' => $this->umask,
             'separator' => $this->separator,
             'ignoreCase' => $this->ignoreCase,
+            'includeDotFiles' => $this->includeDotFiles,
             'normalizeSlashes' => $this->normalizeSlashes,
             'blacklist' => $this->blacklist,
             'user' => $this->user,
@@ -186,6 +192,16 @@ class Config
     public function getIgnoreCase(): bool
     {
         return $this->ignoreCase;
+    }
+
+    /**
+     * Gets whether to include dot files when iterating through directories.
+     *
+     * @return bool
+     */
+    public function getIncludeDotFiles(): bool
+    {
+        return $this->includeDotFiles;
     }
 
     /**
@@ -284,6 +300,20 @@ class Config
     private function setIgnoreCase(bool $ignoreCase): void
     {
         $this->ignoreCase = $ignoreCase;
+    }
+
+    /**
+     * Sets whether to include dot files when iterating through directories.
+     *
+     * This is not meant to be set after construction.
+     *
+     * @internal
+     *
+     * @param bool $includeDotFiles
+     */
+    private function setIncludeDotFiles(bool $includeDotFiles): void
+    {
+        $this->includeDotFiles = $includeDotFiles;
     }
 
     /**
