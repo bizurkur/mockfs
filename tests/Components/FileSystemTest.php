@@ -346,9 +346,6 @@ class FileSystemTest extends TestCase
 
     public function testFindWithError(): void
     {
-        $level = error_reporting();
-        error_reporting(0);
-
         $config = $this->createConfiguredMock(
             Config::class,
             ['getSeparator' => '']
@@ -365,8 +362,6 @@ class FileSystemTest extends TestCase
         $actual = $this->fixture->find($name);
 
         self::assertNull($actual);
-
-        error_reporting($level);
     }
 
     public function testFindWithNormalizedSlashes(): void

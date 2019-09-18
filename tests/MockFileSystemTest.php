@@ -13,11 +13,12 @@ use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\StreamWrapper;
+use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
 
 class MockFileSystemTest extends TestCase
 {
-    protected function tearDown(): void
+    protected function setUp(): void
     {
         parent::setUp();
 
@@ -26,6 +27,13 @@ class MockFileSystemTest extends TestCase
             stream_wrapper_unregister(StreamWrapper::PROTOCOL);
             MockFileSystem::destroy();
         }
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+
+        MockFileSystem::destroy();
     }
 
     public function testCreateRegistersStreamWrapper(): void
@@ -47,19 +55,24 @@ class MockFileSystemTest extends TestCase
         self::assertContains(StreamWrapper::PROTOCOL, $actual);
     }
 
-    public function testCreateFailsToRegisterStreamWrapper(): void
+    public function testCreateFailsToRegisterStreamWrapperCreatesError(): void
     {
-        $level = error_reporting();
-        error_reporting(0);
+        stream_wrapper_register(StreamWrapper::PROTOCOL, StreamWrapper::class);
 
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('stream_wrapper_register(): Protocol '.StreamWrapper::PROTOCOL.':// is already defined.');
+
+        MockFileSystem::create();
+    }
+
+    public function testCreateFailsToRegisterStreamWrapperThrowsException(): void
+    {
         stream_wrapper_register(StreamWrapper::PROTOCOL, StreamWrapper::class);
 
         self::expectException(RuntimeException::class);
         self::expectExceptionMessage('Unable to register '.StreamWrapper::PROTOCOL.':// protocol.');
 
-        MockFileSystem::create();
-
-        error_reporting($level);
+        @MockFileSystem::create();
     }
 
     public function testCreateReturnsFileSystem(): void
