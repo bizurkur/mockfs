@@ -53,6 +53,8 @@ class StreamWrapper
      */
     private $canWrite = false;
 
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * Opens a directory for iteration.
      *
@@ -89,6 +91,8 @@ class StreamWrapper
 
         return true;
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * Closes a directory.
@@ -220,6 +224,8 @@ class StreamWrapper
         return true;
     }
 
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * Removes a directory.
      *
@@ -277,6 +283,8 @@ class StreamWrapper
 
         return true;
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * Opens a stream.
@@ -652,6 +660,8 @@ class StreamWrapper
         return $this->file->truncate($newSize);
     }
 
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * Retrieves the underlaying resource.
      *
@@ -668,6 +678,8 @@ class StreamWrapper
         // TODO: Look more into if this can be done, e.g. with $this->context
         return false;
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * Renames a file or directory.

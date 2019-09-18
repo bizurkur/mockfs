@@ -16,6 +16,7 @@ use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
 
+// phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class MockFileSystemTest extends TestCase
 {
     protected function setUp(): void
@@ -60,7 +61,9 @@ class MockFileSystemTest extends TestCase
         stream_wrapper_register(StreamWrapper::PROTOCOL, StreamWrapper::class);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('stream_wrapper_register(): Protocol '.StreamWrapper::PROTOCOL.':// is already defined.');
+        self::expectExceptionMessage(
+            'stream_wrapper_register(): Protocol '.StreamWrapper::PROTOCOL.':// is already defined.'
+        );
 
         MockFileSystem::create();
     }

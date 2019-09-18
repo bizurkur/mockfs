@@ -14,6 +14,8 @@ use MockFileSystem\Content\AbstractContent;
  */
 class NullContent extends AbstractContent
 {
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * {@inheritDoc}
      */
@@ -21,6 +23,8 @@ class NullContent extends AbstractContent
     {
         return '';
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * {@inheritDoc}
@@ -30,6 +34,8 @@ class NullContent extends AbstractContent
         return mb_strlen($data);
     }
 
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * {@inheritDoc}
      */
@@ -37,6 +43,8 @@ class NullContent extends AbstractContent
     {
         return true;
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * {@inheritDoc}

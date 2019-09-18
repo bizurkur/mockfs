@@ -22,6 +22,8 @@ class FullContent extends AbstractContent
         return str_repeat("\0", $count);
     }
 
+    // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
+
     /**
      * {@inheritDoc}
      */
@@ -37,6 +39,8 @@ class FullContent extends AbstractContent
     {
         return false;
     }
+
+    // phpcs:enable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 
     /**
      * {@inheritDoc}

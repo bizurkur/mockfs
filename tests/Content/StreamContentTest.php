@@ -8,6 +8,7 @@ use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Tests\Content\ContentTestCase;
 use PHPUnit\Framework\Error\Warning;
 
+// phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class StreamContentTest extends ContentTestCase
 {
     protected function setUp(): void

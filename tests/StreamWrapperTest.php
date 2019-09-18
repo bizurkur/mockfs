@@ -8,6 +8,7 @@ use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
 
+// phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class StreamWrapperTest extends TestCase
 {
     protected function setUp(): void

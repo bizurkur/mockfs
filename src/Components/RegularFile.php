@@ -65,7 +65,6 @@ class RegularFile extends AbstractFile implements RegularFileInterface
      */
     public function close(): void
     {
-        // TODO: release locks
         $this->content->close();
     }
 
