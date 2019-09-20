@@ -9,6 +9,7 @@ use MockFileSystem\Config;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
 use MockFileSystem\Exception\RuntimeException;
+use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\StreamWrapper;
 
 /**
@@ -397,6 +398,80 @@ abstract class AbstractFile implements FileInterface
         }
 
         $this->lastChangeTime = $time;
+    }
+
+    /**
+     * Checks if there's enough free disk space for the child file.
+     *
+     * If no child is given, returns the remaining disk space.
+     *
+     * This uses the current user to determine if there are any quotas that apply.
+     *
+     * @param FileInterface|null $child
+     *
+     * @return int Returns -1 for unlimited space.
+     */
+    protected function getFreeDiskSpace(?FileInterface $child = null): int
+    {
+        $config = $this->getConfig();
+        $quota = $config->getQuota();
+        $user = $config->getUser();
+        $group = $config->getGroup();
+
+        if (!$quota->appliesTo($user, $group)) {
+            return QuotaInterface::UNLIMITED;
+        }
+
+        $summary = $this->getRoot()->getSummary($user, $group);
+        $usedCount = $summary->getFileCount();
+        $usedSize = $summary->getSize();
+        $remainingCount = $quota->getRemainingFileCount($usedCount, $user, $group);
+        $remainingSize = $quota->getRemainingSize($usedSize, $user, $group);
+
+        if ($remainingCount === 0 || $remainingSize === 0) {
+            return 0;
+        }
+
+        if ($child === null) {
+            return $remainingSize;
+        }
+
+        if (!$child instanceof ContainerInterface) {
+            return max(0, $remainingSize - $child->getSize());
+        }
+
+        $childSummary = $child->getSummary();
+
+        if ($remainingCount !== QuotaInterface::UNLIMITED
+            && $childSummary->getFileCount() > $remainingCount
+        ) {
+            return 0;
+        }
+
+        if ($remainingSize !== QuotaInterface::UNLIMITED) {
+            return max(0, $remainingSize - $childSummary->getSize());
+        }
+
+        return QuotaInterface::UNLIMITED;
+    }
+
+    /**
+     * Gets the root container.
+     *
+     * @return ContainerInterface
+     */
+    private function getRoot(): ContainerInterface
+    {
+        $root = $this;
+        while ($root) {
+            $parent = $root->getParent();
+            if ($parent === null) {
+                break;
+            }
+            $root = $parent;
+        }
+
+        return $root;
     }
 
     /**

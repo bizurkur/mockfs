@@ -6,6 +6,7 @@ use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Quota\QuotaInterface;
 
@@ -158,11 +159,8 @@ class Directory extends AbstractFile implements DirectoryInterface
     {
         $child->setConfig($this->getConfig());
 
-        // TODO: Decide if quota check should be here
-        if (!$this->hasEnoughDiskSpace($child)) {
-            trigger_error('Not enough disk space', \E_USER_WARNING);
-
-            return;
+        if ($this->getFreeDiskSpace($child) === 0) {
+            throw new NoDiskSpaceException('Not enough disk space');
         }
 
         $child->setParent($this);
@@ -257,70 +255,5 @@ class Directory extends AbstractFile implements DirectoryInterface
         }
 
         return $name;
-    }
-
-    /**
-     * Gets the root container.
-     *
-     * @return ContainerInterface
-     */
-    private function getRoot(): ContainerInterface
-    {
-        $root = $this;
-        while ($root) {
-            $parent = $root->getParent();
-            if ($parent === null) {
-                break;
-            }
-            $root = $parent;
-        }
-
-        return $root;
-    }
-
-    /**
-     * Checks if there's enough free disk space for the child file.
-     *
-     * This uses the current user to determine if there are any quotas that apply.
-     *
-     * @param FileInterface $child
-     *
-     * @return bool
-     */
-    private function hasEnoughDiskSpace(FileInterface $child): bool
-    {
-        $config = $this->getConfig();
-        $quota = $config->getQuota();
-        $user = $config->getUser();
-        $group = $config->getGroup();
-
-        if (!$quota->appliesTo($user, $group)) {
-            return true;
-        }
-
-        $summary = $this->getRoot()->getSummary($user, $group);
-        $usedCount = $summary->getFileCount();
-        $usedSize = $summary->getSize();
-        $remainingCount = $quota->getRemainingFileCount($usedCount, $user, $group);
-        $remainingSize = $quota->getRemainingSize($usedSize, $user, $group);
-
-        if ($remainingCount === 0 || $remainingSize === 0) {
-            return false;
-        }
-
-        if (!$child instanceof ContainerInterface) {
-            return $remainingSize >= $child->getSize();
-        }
-
-        $childSummary = $child->getSummary();
-
-        if ($remainingCount !== QuotaInterface::UNLIMITED
-            && $childSummary->getFileCount() > $remainingCount
-        ) {
-            return false;
-        }
-
-        return $remainingSize !== QuotaInterface::UNLIMITED
-            && $childSummary->getSize() > $remainingSize;
     }
 }

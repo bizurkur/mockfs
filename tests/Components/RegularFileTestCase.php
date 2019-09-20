@@ -4,6 +4,8 @@ namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\RegularFileInterface;
+use MockFileSystem\Config;
+
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -105,6 +107,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $data = uniqid();
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $content->expects(self::once())
             ->method('write')
@@ -118,6 +121,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $response = rand();
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $content->method('write')->willReturn($response);
 
@@ -130,6 +134,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
     {
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $this->fixture->write(uniqid());
 
@@ -141,6 +146,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $size = rand();
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $content->expects(self::once())
             ->method('truncate')
@@ -154,6 +160,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $response = (bool) rand(0, 1);
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $content->method('truncate')->willReturn($response);
 
@@ -166,6 +173,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
     {
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setConfig(new Config());
 
         $this->fixture->truncate(rand());
 

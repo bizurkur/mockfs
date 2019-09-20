@@ -85,6 +85,12 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     {
         $this->setLastModifyTime();
 
+        $remaining = $this->getFreeDiskSpace();
+        if ($remaining >= 0) {
+            $remaining += $this->content->tell() - $this->content->getSize();
+            $data = mb_substr($data, 0, $remaining);
+        }
+
         return $this->content->write($data);
     }
 
@@ -94,6 +100,11 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     public function truncate(int $size): bool
     {
         $this->setLastModifyTime();
+
+        $remaining = $this->getFreeDiskSpace();
+        if ($remaining >= 0 && $size > $remaining) {
+            return false;
+        }
 
         return $this->content->truncate($size);
     }

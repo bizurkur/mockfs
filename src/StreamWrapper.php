@@ -327,15 +327,6 @@ class StreamWrapper
                 return false;
             }
 
-            $remaining = $this->getRemainingFileCount();
-            if ($remaining === 0) {
-                if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
-                    trigger_error('No more free disk space', \E_USER_WARNING);
-                }
-
-                return false;
-            }
-
             $file = $this->createFile($path, $options);
             if ($file === null) {
                 return false;
@@ -454,11 +445,6 @@ class StreamWrapper
 
         if (!$this->isWritable($this->file)) {
             return 0;
-        }
-
-        $remaining = $this->getRemainingSize();
-        if ($remaining >= 0) {
-            $data = mb_substr($data, 0, $remaining);
         }
 
         if ($this->mode === self::MODE_APPEND) {
@@ -648,13 +634,6 @@ class StreamWrapper
 
         if (!$this->isWritable($this->file)) {
             return false;
-        }
-
-        if ($newSize > $this->file->getSize()) {
-            $remaining = $this->getRemainingSize();
-            if ($newSize > $remaining) {
-                return false;
-            }
         }
 
         return $this->file->truncate($newSize);
@@ -880,32 +859,6 @@ class StreamWrapper
         $config = $file->getConfig();
 
         return $file->isWritable($config->getUser(), $config->getGroup());
-    }
-
-    private function getRemainingSize(): int
-    {
-        // TODO: Decide if quota stuff should be here or not
-        $fileSystem = $this->getFileSystem();
-        $config = $fileSystem->getConfig();
-        $user = $config->getUser();
-        $group = $config->getGroup();
-
-        $used = $fileSystem->getSummary($user, $group)->getSize();
-
-        return $config->getQuota()->getRemainingSize($used, $user, $group);
-    }
-
-    private function getRemainingFileCount(): int
-    {
-        // TODO: Decide if quota stuff should be here or not
-        $fileSystem = $this->getFileSystem();
-        $config = $fileSystem->getConfig();
-        $user = $config->getUser();
-        $group = $config->getGroup();
-
-        $used = $fileSystem->getSummary($user, $group)->getFileCount();
-
-        return $config->getQuota()->getRemainingFileCount($used, $user, $group);
     }
 
     private function createFile(string $path, int $options = 0): ?RegularFileInterface
