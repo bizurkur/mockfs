@@ -294,6 +294,24 @@ class CollectionTest extends TestCase
         self::assertEquals(QuotaInterface::UNLIMITED, $actual);
     }
 
+    public function testCount(): void
+    {
+        $quotaA = $this->createQuota();
+        $quotaB = $this->createQuota();
+
+        $fixture = new Collection([$quotaA]);
+        $fixture->addQuota($quotaB);
+
+        self::assertEquals(2, $fixture->count());
+    }
+
+    public function testCountEmpty(): void
+    {
+        $fixture = new Collection();
+
+        self::assertEquals(0, $fixture->count());
+    }
+
     /**
      * @return QuotaInterface&MockObject
      */
