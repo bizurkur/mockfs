@@ -43,6 +43,28 @@ class CollectionTest extends TestCase
         self::assertEquals(QuotaInterface::UNLIMITED, $actual);
     }
 
+    public function testGetQuotas(): void
+    {
+        $quotaA = $this->createQuota();
+        $quotaB = $this->createQuota();
+
+        $fixture = new Collection([$quotaA]);
+        $fixture->addQuota($quotaB);
+
+        $actual = $fixture->getQuotas();
+
+        self::assertEquals([$quotaA, $quotaB], $actual);
+    }
+
+    public function testGetQuotasWhenEmpty(): void
+    {
+        $fixture = new Collection();
+
+        $actual = $fixture->getQuotas();
+
+        self::assertEquals([], $actual);
+    }
+
     public function testAppliesToCallsAppliesTo(): void
     {
         $quotaA = $this->createQuota();

@@ -15,6 +15,56 @@ class QuotaTest extends TestCase
         self::assertInstanceOf(QuotaInterface::class, $fixture);
     }
 
+    public function testGetSize(): void
+    {
+        $size = rand();
+
+        $fixture = new Quota($size, rand());
+
+        self::assertEquals($size, $fixture->getSize());
+    }
+
+    public function testGetFileCount(): void
+    {
+        $count = rand();
+
+        $fixture = new Quota(rand(), $count);
+
+        self::assertEquals($count, $fixture->getFileCount());
+    }
+
+    public function testGetUserNull(): void
+    {
+        $fixture = new Quota(rand(), rand());
+
+        self::assertNull($fixture->getUser());
+    }
+
+    public function testGetUser(): void
+    {
+        $user = rand();
+
+        $fixture = new Quota(rand(), rand(), $user);
+
+        self::assertEquals($user, $fixture->getUser());
+    }
+
+    public function testGetGroupNull(): void
+    {
+        $fixture = new Quota(rand(), rand());
+
+        self::assertNull($fixture->getGroup());
+    }
+
+    public function testGetGroup(): void
+    {
+        $group = rand();
+
+        $fixture = new Quota(rand(), rand(), null, $group);
+
+        self::assertEquals($group, $fixture->getGroup());
+    }
+
     /**
      * @dataProvider sampleAppliesTo
      */

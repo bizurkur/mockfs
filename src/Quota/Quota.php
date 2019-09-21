@@ -52,6 +52,50 @@ class Quota implements QuotaInterface
     }
 
     /**
+     * Gets the total file size limit.
+     *
+     * @return int
+     */
+    public function getSize(): int
+    {
+        return $this->size;
+    }
+
+    /**
+     * Gets the total file count limit.
+     *
+     * @return int
+     */
+    public function getFileCount(): int
+    {
+        return $this->fileCount;
+    }
+
+    /**
+     * Gets the user this applies to.
+     *
+     * Returns null for all users.
+     *
+     * @return int|null
+     */
+    public function getUser(): ?int
+    {
+        return $this->user;
+    }
+
+    /**
+     * Gets the group this applies to.
+     *
+     * Returns null for all groups.
+     *
+     * @return int|null
+     */
+    public function getGroup(): ?int
+    {
+        return $this->group;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function appliesTo(int $user, int $group): bool

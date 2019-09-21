@@ -35,6 +35,16 @@ class Collection implements QuotaInterface
     }
 
     /**
+     * Gets the quotas in the collection.
+     *
+     * @return QuotaInterface[]
+     */
+    public function getQuotas(): array
+    {
+        return $this->quotas;
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function appliesTo(int $user, int $group): bool
