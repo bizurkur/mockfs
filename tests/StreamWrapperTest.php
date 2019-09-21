@@ -8,6 +8,7 @@ use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
 
+// TODO: Split this into end-to-end tests and unit tests
 // phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class StreamWrapperTest extends TestCase
 {
@@ -91,13 +92,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
 
-        self::assertFalse(mkdir($url));
+        mkdir($url);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testMakeDirWhenParentDoesNotExistReturnsFalse(string $prefix): void
+    public function testMakeDirWhenParentDoesNotExistResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
 
@@ -119,13 +120,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): Permission denied');
 
-        self::assertFalse(mkdir($child));
+        mkdir($child);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testMakeDirWhenNoWritePermissionReturnsFalse(string $prefix): void
+    public function testMakeDirWhenNoWritePermissionResponse(string $prefix): void
     {
         $base = $prefix.'/'.uniqid('mfs_');
         $child = $base.'/'.uniqid();
@@ -149,13 +150,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): File exists');
 
-        self::assertFalse(mkdir($url));
+        mkdir($url);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testMakeDirWhenFileExistsReturnsFalse(string $prefix): void
+    public function testMakeDirWhenFileExistsResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
@@ -180,13 +181,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): Not a directory');
 
-        self::assertFalse(mkdir($child.'/'.uniqid()));
+        mkdir($child.'/'.uniqid());
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testMakeDirWhenPathContainsFileReturnsFalse(string $prefix): void
+    public function testMakeDirWhenPathContainsFileResponse(string $prefix): void
     {
         $base = $prefix.'/'.uniqid('mfs_');
         $child = $base.'/'.uniqid();
@@ -207,10 +208,10 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
 
-        self::assertFalse(mkdir($base));
+        mkdir($base);
     }
 
-    public function testMakeDirWhenNoPartitionReturnsFalse(): void
+    public function testMakeDirWhenNoPartitionResponse(): void
     {
         $base = StreamWrapper::PROTOCOL.'://';
         MockFileSystem::getFileSystem()->removeChild('/');
@@ -227,10 +228,10 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
 
-        self::assertFalse(mkdir($base));
+        mkdir($base);
     }
 
-    public function testMakeDirWhenPartitionNotExistsReturnsFalse(): void
+    public function testMakeDirWhenPartitionNotExistsResponse(): void
     {
         $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         MockFileSystem::getFileSystem()->removeChild('/');
@@ -249,13 +250,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('rmdir('.$url.'): No such file or directory');
 
-        self::assertFalse(rmdir($url));
+        rmdir($url);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testRemoveDirWhenNotExistsReturnsFalse(string $prefix): void
+    public function testRemoveDirWhenNotExistsResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_');
 
@@ -274,13 +275,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('rmdir('.$url.'): Not a directory');
 
-        self::assertFalse(rmdir($url));
+        rmdir($url);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testRemoveDirWhenPathIsNotDirReturnsFalse(string $prefix): void
+    public function testRemoveDirWhenPathIsNotDirResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
@@ -305,13 +306,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('rmdir('.$base.'): Directory not empty');
 
-        self::assertFalse(rmdir($base));
+        rmdir($base);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testRemoveDirWhenDirNotEmptyReturnsFalse(string $prefix): void
+    public function testRemoveDirWhenDirNotEmptyResponse(string $prefix): void
     {
         $base = $prefix.'/'.uniqid('mfs_');
         $child = $base.'/'.uniqid();
@@ -341,13 +342,13 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('rmdir('.$child.'): Permission denied');
 
-        self::assertFalse(rmdir($child));
+        rmdir($child);
     }
 
     /**
      * @dataProvider samplePrefixes
      */
-    public function testRemoveDirWhenNotWritableReturnsFalse(string $prefix): void
+    public function testRemoveDirWhenNotWritableResponse(string $prefix): void
     {
         $base = $prefix.'/'.uniqid('mfs_');
         $child = $base.'/'.uniqid();
@@ -377,7 +378,7 @@ class StreamWrapperTest extends TestCase
     /**
      * @dataProvider samplePrefixes
      */
-    public function testOpenDirWhenNotExistsReturnsFalse(string $prefix): void
+    public function testOpenDirWhenNotExistsResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_');
 
@@ -404,7 +405,7 @@ class StreamWrapperTest extends TestCase
     /**
      * @dataProvider samplePrefixes
      */
-    public function testOpenDirWhenNotReadableReturnsFalse(string $prefix): void
+    public function testOpenDirWhenNotReadableResponse(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_');
         $this->cleanup($url);
@@ -488,6 +489,280 @@ class StreamWrapperTest extends TestCase
     }
 
     /**
+     * @dataProvider sampleInvalidModes
+     */
+    public function testFileOpenInvalidModeCreatesError(string $mode): void
+    {
+        $url = uniqid('mfs_');
+        $path = uniqid();
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Illegal mode "'.$mode.'"');
+
+        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+    }
+
+    public function sampleInvalidModes(): array
+    {
+        return [
+            'unknown mode' => ['q'],
+            'unknown modifier' => ['rq'],
+            'extra characters' => ['rbq'],
+        ];
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenInvalidModeResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+
+        self::assertFalse(@fopen($url, 'q'));
+    }
+
+    // TODO: Test this
+    // /**
+    //  * @dataProvider samplePrefixes
+    //  */
+    // public function testFileOpenForReadOnNonExistentFileCreatesError(string $prefix): void
+    // {
+    //     $url = $prefix.'/'.uniqid('mfs_');
+    //     $this->cleanup($url);
+    //
+    //     self::expectException(Warning::class);
+    //     self::expectExceptionMessage('fopen('.$url.'): failed to open stream: No such file or directory');
+    //
+    //     fopen($url, 'r');
+    // }
+
+    public function testFileOpenForReadOnNonExistentFileCreatesError(): void
+    {
+        $url = uniqid('mfs_');
+        $path = uniqid();
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Cannot open non-existent file "'.$url.'" for reading.');
+
+        $fixture->stream_open($url, 'r', \STREAM_REPORT_ERRORS, $path);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenForReadOnNonExistentFileResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+
+        self::assertFalse(@fopen($url, 'r'));
+    }
+
+    /**
+     * @dataProvider sampleCreateNewModes
+     */
+    public function testFileOpenForCreateNewWhenExistsCreatesError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('File "'.$url.'" already exists; cannot open in mode '.$mode);
+
+        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+    }
+
+    /**
+     * @dataProvider sampleCreateNewModes
+     */
+    public function testFileOpenForCreateNewWhenExistsDoesNotCreateError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+
+        $fixture = new StreamWrapper();
+
+        $actual = $fixture->stream_open($url, $mode, 0, $path);
+
+        self::assertFalse($actual);
+    }
+
+    public function sampleCreateNewModes(): array
+    {
+        return [
+            ['x'],
+            ['x+'],
+            ['xb'],
+            ['xb+'],
+        ];
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenForCreateNewWhenExistsResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::assertFalse(@fopen($url, 'x'));
+    }
+
+    /**
+     * @dataProvider sampleReadModes
+     */
+    public function testFileOpenForReadWhenNotReadableCreatesError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+        chmod($url, 0200);
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('File "'.$url.'" is not readable.');
+
+        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+    }
+
+    /**
+     * @dataProvider sampleReadModes
+     */
+    public function testFileOpenForReadWhenNotReadableDoesNotCreateError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+        chmod($url, 0200);
+
+        $fixture = new StreamWrapper();
+
+        $actual = $fixture->stream_open($url, $mode, 0, $path);
+
+        self::assertFalse($actual);
+    }
+
+    public function sampleReadModes(): array
+    {
+        return [
+            ['r'],
+            ['r+'],
+            ['rb'],
+            ['rb+'],
+            ['w+'],
+            ['wb+'],
+        ];
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenForReadWhenNotReadableResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+        chmod($url, 0200);
+
+        self::assertFalse(@fopen($url, 'r'));
+    }
+
+    /**
+     * @dataProvider sampleWriteModes
+     */
+    public function testFileOpenForWriteWhenNotWritableCreatesError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+        chmod($url, 0500);
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('File "'.$url.'" is not writeable.');
+
+        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+    }
+
+    /**
+     * @dataProvider sampleWriteModes
+     */
+    public function testFileOpenForWriteWhenNotWritableDoesNotCreateError(string $mode): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = uniqid();
+        file_put_contents($url, uniqid());
+        chmod($url, 0500);
+
+        $fixture = new StreamWrapper();
+
+        $actual = $fixture->stream_open($url, $mode, 0, $path);
+
+        self::assertFalse($actual);
+    }
+
+    public function sampleWriteModes(): array
+    {
+        return [
+            ['w'],
+            ['w+'],
+            ['wb'],
+            ['wb+'],
+            ['r+'],
+            ['rb+'],
+        ];
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenForWriteWhenNotWritableResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+        chmod($url, 0500);
+
+        self::assertFalse(@fopen($url, 'w'));
+    }
+
+    public function testFileOpenSetsOpenPath(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = null;
+
+        $fixture = new StreamWrapper();
+
+        $actual = $fixture->stream_open($url, 'w', \STREAM_USE_PATH, $path);
+
+        self::assertEquals($url, $path);
+    }
+
+    public function testFileOpenDoesNotSetOpenPath(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = null;
+
+        $fixture = new StreamWrapper();
+
+        $actual = $fixture->stream_open($url, 'w', 0, $path);
+
+        self::assertNull($path);
+    }
+
+    /**
      * @dataProvider samplePrefixes
      */
     public function testReadAndWrite(string $prefix): void
@@ -499,6 +774,294 @@ class StreamWrapperTest extends TestCase
         file_put_contents($url, $content);
 
         self::assertEquals($content, file_get_contents($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testAppendAlwaysWritesToEnd(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $contentA = uniqid('a');
+        $contentB = uniqid('b');
+        $contentC = uniqid('c');
+
+        $handle = fopen($url, 'a+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fwrite($handle, $contentA);
+        fseek($handle, 0);
+        fwrite($handle, $contentB);
+        fseek($handle, 0);
+        fwrite($handle, $contentC);
+        fclose($handle);
+
+        self::assertEquals($contentA.$contentB.$contentC, file_get_contents($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testReadWhenNotReadMode(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fread($handle, rand(1, 100));
+        fclose($handle);
+
+        self::assertEquals('', $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testReadWhenNotReadable(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+        file_put_contents($url, $content);
+
+        $handle = fopen($url, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        chmod($url, 0000); // This should have no effect on an open stream
+        $actual = fread($handle, rand(50, 100));
+        fclose($handle);
+
+        self::assertEquals($content, $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testWriteWhenNotWriteMode(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fwrite($handle, uniqid());
+        fclose($handle);
+
+        self::assertEquals(0, $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testWriteWhenNotWritable(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        chmod($url, 0000); // This should have no effect on an open stream
+        $actual = fwrite($handle, $content);
+        fclose($handle);
+
+        self::assertEquals(strlen($content), $actual);
+    }
+
+    public function testWriteWithQuotaLimitedSpace(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+
+        MockFileSystem::addQuota(4, -1);
+
+        $actual = fwrite($handle, $content);
+        fclose($handle);
+
+        self::assertEquals(4, $actual);
+        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
+    }
+
+    public function testFilePutContentsWithQuotaLimitedSpaceCreatesError(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+
+        MockFileSystem::addQuota(4, -1);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage(
+            'file_put_contents(): Only 4 of 13 bytes written, possibly out of free disk space'
+        );
+
+        file_put_contents($url, uniqid());
+    }
+
+    public function testFilePutContentsWithQuotaLimitedSpaceResponse(): void
+    {
+        MockFileSystem::addQuota(4, -1);
+
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        @file_put_contents($url, $content);
+
+        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
+    }
+
+    public function testWriteWithQuotaUnlimitedSpace(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+
+        MockFileSystem::addQuota(-1, -1);
+
+        $actual = fwrite($handle, $content);
+        fclose($handle);
+
+        self::assertEquals(strlen($content), $actual);
+        self::assertEquals($content, file_get_contents($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testTruncateWhenNotWriteMode(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = ftruncate($handle, rand(1, 3));
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testTruncateWhenNotWritable(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        chmod($url, 0000); // This should have no effect on an open stream
+        $actual = ftruncate($handle, rand(1, 3));
+        fclose($handle);
+
+        self::assertTrue($actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testTruncateUp(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fwrite($handle, $content);
+        ftruncate($handle, strlen($content) + 3);
+        fclose($handle);
+
+        self::assertEquals($content."\0\0\0", file_get_contents($url));
+    }
+
+    public function testTruncateUpWithQuotaLimitedSpace(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+
+        MockFileSystem::addQuota(4, -1);
+
+        $actual = ftruncate($handle, rand(50, 100));
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    public function testTruncateUpWithQuotaUnlimitedSpace(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+
+        MockFileSystem::addQuota(-1, -1);
+
+        $actual = ftruncate($handle, rand(50, 100));
+        fclose($handle);
+
+        self::assertTrue($actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testTruncateDown(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fwrite($handle, $content);
+        ftruncate($handle, 4);
+        fclose($handle);
+
+        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
     }
 
     /**
@@ -556,6 +1119,85 @@ class StreamWrapperTest extends TestCase
 
         self::assertEquals($contentA, file_get_contents($urlA));
         self::assertEquals($contentB, file_get_contents($urlB));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testWriteParentDirDoesNotExist(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+
+        self::assertFalse(@fopen($url, 'w'));
+    }
+
+    public function testWriteParentDirDoesNotExistCreatesError(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
+        $path = null;
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Path "'.$url.'" does not exist.');
+
+        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testCreateFileParentNotWritable(string $prefix): void
+    {
+        $base = $prefix.'/'.uniqid('mfs_');
+        $url = $base.'/'.uniqid();
+        mkdir($base, 0500);
+
+        self::assertFalse(@fopen($url, 'w'));
+    }
+
+    public function testCreateFileParentNotWritableCreatesError(): void
+    {
+        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $url = $base.'/'.uniqid();
+        $path = null;
+        mkdir($base, 0500);
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Directory "'.$base.'" is not writable.');
+
+        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+    }
+
+    public function testCreateFileThrowsExceptionCreatesError(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = null;
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Not enough disk space');
+
+        MockFileSystem::addQuota(-1, 0);
+
+        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+    }
+
+    public function testCreateFileThrowsExceptionResponse(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $path = null;
+
+        $fixture = new StreamWrapper();
+
+        MockFileSystem::addQuota(-1, 0);
+
+        $actual = $fixture->stream_open($url, 'w', 0, $path);
+
+        self::assertFalse($actual);
     }
 
     /**
@@ -621,7 +1263,7 @@ class StreamWrapperTest extends TestCase
     /**
      * @dataProvider samplePrefixes
      */
-    public function testRename(string $prefix): void
+    public function testRenameFile(string $prefix): void
     {
         $src = $prefix.'/'.uniqid('mfs_src');
         $dest = $prefix.'/'.uniqid('mfs_dest');
@@ -631,11 +1273,245 @@ class StreamWrapperTest extends TestCase
         $content = uniqid();
         file_put_contents($src, $content);
 
-        rename($src, $dest);
-
+        self::assertTrue(rename($src, $dest));
         self::assertFalse(file_exists($src), 'Source file not removed');
-        self::assertTrue(file_exists($dest), 'Destination file not created');
+        self::assertTrue(is_file($dest), 'Destination file not created');
         self::assertEquals($content, file_get_contents($dest), 'Content not moved');
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDir(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest');
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+
+        self::assertTrue(rename($src, $dest));
+        self::assertFalse(file_exists($src), 'Source not removed');
+        self::assertTrue(is_dir($dest), 'Destination not created');
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameNonExistentSrcCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest');
+        $this->cleanup($src);
+        $this->cleanup($dest);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): No such file or directory');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameNonExistentSrcResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest');
+        $this->cleanup($src);
+        $this->cleanup($dest);
+
+        self::assertFalse(@rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameNonExistentDestCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        file_put_contents($src, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): No such file or directory');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameNonExistentDestResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        file_put_contents($src, uniqid());
+
+        self::assertFalse(@rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDestNotDirectoryCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        file_put_contents($src, uniqid());
+        file_put_contents($destBase, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): Not a directory');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDestNotDirectoryResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        file_put_contents($src, uniqid());
+        file_put_contents($destBase, uniqid());
+
+        self::assertFalse(@rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDestNotWritableCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        file_put_contents($src, uniqid());
+        mkdir($destBase, 0500);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): Permission denied');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDestNotWritableResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        file_put_contents($src, uniqid());
+        mkdir($destBase, 0500);
+
+        self::assertFalse(@rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDirWhenDestNotEmptyCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+        mkdir($dest, 0777, true);
+        file_put_contents($dest.'/'.uniqid(), uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): Directory not empty');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDirWhenDestNotEmptyResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+        mkdir($dest, 0777, true);
+        file_put_contents($dest.'/'.uniqid(), uniqid());
+
+        self::assertFalse(@rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDirWhenDestExists(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+        mkdir($dest, 0777, true);
+
+        self::assertTrue(rename($src, $dest));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDirWhenDestExistsAsFileCreatesError(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+        mkdir($destBase, 0777);
+        file_put_contents($dest, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rename('.$src.','.$dest.'): Not a directory');
+
+        rename($src, $dest);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testRenameDirWhenDestExistsAsFileResponse(string $prefix): void
+    {
+        $src = $prefix.'/'.uniqid('mfs_src');
+        $destBase = $prefix.'/'.uniqid('mfs_dest');
+        $dest = $destBase.'/'.uniqid();
+        $this->cleanup($src);
+        $this->cleanup($destBase);
+        $this->cleanup($dest);
+        mkdir($src, 0777);
+        mkdir($destBase, 0777);
+        file_put_contents($dest, uniqid());
+
+        self::assertFalse(@rename($src, $dest));
     }
 
     /**
@@ -650,6 +1526,7 @@ class StreamWrapperTest extends TestCase
         $now = time();
         $stat = stat($url);
 
+        self::assertTrue(is_file($url));
         self::assertEqualsWithDelta($now, $stat['atime'], 1);
         self::assertEqualsWithDelta($now, $stat['mtime'], 1);
     }
@@ -657,7 +1534,7 @@ class StreamWrapperTest extends TestCase
     /**
      * @dataProvider samplePrefixes
      */
-    public function testTouchWhenPathNotExists(string $prefix): void
+    public function testTouchWhenPathNotExistsCreatesError(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
         $this->cleanup($url);
@@ -666,6 +1543,17 @@ class StreamWrapperTest extends TestCase
         self::expectExceptionMessage('touch(): Unable to create file '.$url);
 
         self::assertFalse(touch($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testTouchWhenPathNotExistsResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+        $this->cleanup($url);
+
+        self::assertFalse(@touch($url));
     }
 
     /**
@@ -681,8 +1569,215 @@ class StreamWrapperTest extends TestCase
         $now = time();
         $stat = stat($url);
 
+        self::assertTrue(is_file($url));
         self::assertEqualsWithDelta($now, $stat['atime'], 1);
         self::assertEqualsWithDelta($now, $stat['mtime'], 1);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testStatWhenFileNotExistsCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('stat(): stat failed for '.$url);
+
+        stat($url);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testStatWhenFileNotExistsResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+
+        self::assertFalse(@stat($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testStatHasCorrectKeys(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $actual = stat($url);
+
+        $expected = [
+            'dev',
+            'ino',
+            'mode',
+            'nlink',
+            'uid',
+            'gid',
+            'rdev',
+            'size',
+            'atime',
+            'mtime',
+            'ctime',
+            'blksize',
+            'blocks',
+        ];
+        self::assertEquals(array_merge(array_keys($expected), $expected), array_keys($actual));
+        foreach ($expected as $index => $name) {
+            self::assertEquals($actual[$index], $actual[$name]);
+        }
+    }
+
+    public function testStatOnFile(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        $permissions = 0500;
+        $now = time();
+        file_put_contents($url, uniqid());
+        chmod($url, $permissions);
+        $config = MockFileSystem::getFileSystem()->getConfig();
+        $file = MockFileSystem::find($url);
+
+        $actual = stat($url);
+
+        $expected = [
+            0 => 0,
+            1 => spl_object_id($file),
+            2 => FileInterface::TYPE_FILE|$permissions,
+            3 => 1,
+            4 => $config->getUser(),
+            5 => $config->getGroup(),
+            6 => 0,
+            7 => 13,
+            8 => $now,
+            9 => $now,
+            10 => $now,
+            11 => -1,
+            12 => -1,
+            'dev' => 0,
+            'ino' => spl_object_id($file),
+            'mode' => FileInterface::TYPE_FILE|$permissions,
+            'nlink' => 1,
+            'uid' => $config->getUser(),
+            'gid' => $config->getGroup(),
+            'rdev' => 0,
+            'size' => 13,
+            'atime' => $now,
+            'mtime' => $now,
+            'ctime' => $now,
+            'blksize' => -1,
+            'blocks' => -1,
+        ];
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testStatOnDir(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $this->cleanup($url);
+        $permissions = 0750;
+        $now = time();
+        mkdir($url, $permissions);
+        $config = MockFileSystem::getFileSystem()->getConfig();
+        $file = MockFileSystem::find($url);
+
+        $actual = stat($url);
+
+        $expected = [
+            0 => 0,
+            1 => spl_object_id($file),
+            2 => FileInterface::TYPE_DIR|$permissions,
+            3 => 1,
+            4 => $config->getUser(),
+            5 => $config->getGroup(),
+            6 => 0,
+            7 => 0,
+            8 => $now,
+            9 => $now,
+            10 => $now,
+            11 => -1,
+            12 => -1,
+            'dev' => 0,
+            'ino' => spl_object_id($file),
+            'mode' => FileInterface::TYPE_DIR|$permissions,
+            'nlink' => 1,
+            'uid' => $config->getUser(),
+            'gid' => $config->getGroup(),
+            'rdev' => 0,
+            'size' => 0,
+            'atime' => $now,
+            'mtime' => $now,
+            'ctime' => $now,
+            'blksize' => -1,
+            'blocks' => -1,
+        ];
+        self::assertEquals($expected, $actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testUnlinkNonExistentFileCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_src');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('unlink('.$url.'): No such file or directory');
+
+        unlink($url);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testUnlinkNonExistentFileResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_src');
+
+        self::assertFalse(@unlink($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testUnlinkDirCreatesError(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_src');
+        $this->cleanup($url);
+        mkdir($url);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('unlink('.$url.'): Operation not permitted');
+
+        unlink($url);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testUnlinkDirResponse(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_src');
+        $this->cleanup($url);
+        mkdir($url);
+
+        self::assertFalse(@unlink($url));
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testUnlink(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_src');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        self::assertTrue(file_exists($url), 'File does not exist');
+        self::assertTrue(unlink($url), 'Unlink failed');
+        self::assertFalse(file_exists($url), 'File exists after unlink');
     }
 
     public function testChownWhenPathNotExists(): void
@@ -701,6 +1796,14 @@ class StreamWrapperTest extends TestCase
         self::assertEquals(123, fileowner($url));
     }
 
+    public function testChownWithStringUser(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+
+        self::assertFalse(chown($url, get_current_user()));
+    }
+
     public function testChgrpWhenPathNotExists(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
@@ -717,6 +1820,14 @@ class StreamWrapperTest extends TestCase
         self::assertEquals(123, filegroup($url));
     }
 
+    public function testChgrpWithStringGroup(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+
+        self::assertFalse(chgrp($url, get_current_user()));
+    }
+
     public function testChmodWhenPathNotExists(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
@@ -731,6 +1842,31 @@ class StreamWrapperTest extends TestCase
 
         self::assertTrue(chmod($url, 0440));
         self::assertEquals(FileInterface::TYPE_FILE|0440, fileperms($url));
+    }
+
+    public function testStreamCastCreatesError(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+
+        $read = [fopen($url, 'w')];
+        $write = null;
+        $except = null;
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('stream_select(): cannot represent a stream of type user-space as a select()able descriptor');
+
+        stream_select($read, $write, $except, 0);
+    }
+
+    public function testStreamCastResponse(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+
+        $read = [fopen($url, 'w')];
+        $write = null;
+        $except = null;
+
+        self::assertFalse(@stream_select($read, $write, $except, 0));
     }
 
     public function samplePrefixes(): array

@@ -29,12 +29,12 @@ class StreamWrapper
     public const MODE_CREATE_NEW = 'x';
 
     /**
-     * @var \Iterator|null
+     * @var \Iterator
      */
     private $dir = null;
 
     /**
-     * @var RegularFileInterface|null
+     * @var RegularFileInterface
      */
     private $file = null;
 
@@ -103,8 +103,6 @@ class StreamWrapper
      */
     public function dir_closedir(): bool
     {
-        $this->dir = null;
-
         return true;
     }
 
@@ -117,10 +115,6 @@ class StreamWrapper
      */
     public function dir_readdir()
     {
-        if ($this->dir === null) {
-            return false;
-        }
-
         $file = $this->dir->current();
         if (!$file instanceof FileInterface) {
             return false;
@@ -140,10 +134,6 @@ class StreamWrapper
      */
     public function dir_rewinddir(): bool
     {
-        if ($this->dir === null) {
-            return false;
-        }
-
         $this->dir->rewind();
 
         return true;
@@ -345,7 +335,7 @@ class StreamWrapper
         if ($this->canRead && !$this->isReadable($file)) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error(
-                    sprintf('File "%s" is not readable.', $file->getPath()),
+                    sprintf('File "%s" is not readable.', $file->getUrl()),
                     \E_USER_WARNING
                 );
             }
@@ -356,7 +346,7 @@ class StreamWrapper
         if ($this->canWrite && !$this->isWritable($file)) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error(
-                    sprintf('File "%s" is not writeable.', $file->getPath()),
+                    sprintf('File "%s" is not writeable.', $file->getUrl()),
                     \E_USER_WARNING
                 );
             }
@@ -377,7 +367,7 @@ class StreamWrapper
         }
 
         if (($options & \STREAM_USE_PATH) === \STREAM_USE_PATH) {
-            $openedPath = $this->file->getPath();
+            $openedPath = $this->file->getUrl();
         }
 
         return true;
@@ -390,12 +380,7 @@ class StreamWrapper
      */
     public function stream_close(): void
     {
-        if ($this->file === null) {
-            return;
-        }
-
         $this->file->close();
-        $this->file = null;
     }
 
     /**
@@ -409,15 +394,7 @@ class StreamWrapper
      */
     public function stream_read(int $count): string
     {
-        if ($this->file === null) {
-            return '';
-        }
-
         if (!$this->canRead) {
-            return '';
-        }
-
-        if (!$this->isReadable($this->file)) {
             return '';
         }
 
@@ -435,15 +412,7 @@ class StreamWrapper
      */
     public function stream_write(string $data): int
     {
-        if ($this->file === null) {
-            return 0;
-        }
-
         if (!$this->canWrite) {
-            return 0;
-        }
-
-        if (!$this->isWritable($this->file)) {
             return 0;
         }
 
@@ -473,10 +442,6 @@ class StreamWrapper
      */
     public function stream_seek(int $offset, int $whence = \SEEK_SET): bool
     {
-        if ($this->file === null) {
-            return false;
-        }
-
         return $this->file->seek($offset, $whence);
     }
 
@@ -489,10 +454,6 @@ class StreamWrapper
      */
     public function stream_tell(): int
     {
-        if ($this->file === null) {
-            return 0;
-        }
-
         return $this->file->tell();
     }
 
@@ -505,10 +466,6 @@ class StreamWrapper
      */
     public function stream_eof(): bool
     {
-        if ($this->file === null) {
-            return true;
-        }
-
         return $this->file->isEof();
     }
 
@@ -605,10 +562,6 @@ class StreamWrapper
      */
     public function stream_stat(): array
     {
-        if ($this->file === null) {
-            return [];
-        }
-
         return $this->file->stat();
     }
 
@@ -624,15 +577,7 @@ class StreamWrapper
      */
     public function stream_truncate(int $newSize): bool
     {
-        if ($this->file === null) {
-            return false;
-        }
-
         if (!$this->canWrite) {
-            return false;
-        }
-
-        if (!$this->isWritable($this->file)) {
             return false;
         }
 
@@ -677,18 +622,9 @@ class StreamWrapper
         $parts = MockFileSystem::getFileParts($pathTo);
         $dest = MockFileSystem::find($parts['dirname']);
 
-        if ($src === null) {
+        if ($src === null || $dest === null) {
             trigger_error(
-                sprintf('Path "%s" does not exist.', $pathFrom),
-                \E_USER_WARNING
-            );
-
-            return false;
-        }
-
-        if ($dest === null) {
-            trigger_error(
-                sprintf('Destination "%s" does not exist.', $parts['dirname']),
+                sprintf('rename(%s,%s): No such file or directory', $pathFrom, $pathTo),
                 \E_USER_WARNING
             );
 
@@ -697,7 +633,7 @@ class StreamWrapper
 
         if (!$dest instanceof DirectoryInterface) {
             trigger_error(
-                sprintf('Destination "%s" is not a directory.', $parts['dirname']),
+                sprintf('rename(%s,%s): Not a directory', $pathFrom, $pathTo),
                 \E_USER_WARNING
             );
 
@@ -706,7 +642,7 @@ class StreamWrapper
 
         if (!$this->isWritable($dest)) {
             trigger_error(
-                sprintf('Destination "%s" is not writable.', $parts['dirname']),
+                sprintf('rename(%s,%s): Permission denied', $pathFrom, $pathTo),
                 \E_USER_WARNING
             );
 
@@ -714,15 +650,30 @@ class StreamWrapper
         }
 
         if ($src->getType() === FileInterface::TYPE_DIR
-            && $dest->hasChild($src->getName())
+            && $dest->hasChild($parts['basename'])
         ) {
-            // If renaming a directory and destination exists, emit a warning.
-            trigger_error(
-                sprintf('Destination "%s" already exists.', $pathTo),
-                \E_USER_WARNING
-            );
+            $child = $dest->getChild($parts['basename']);
+            if ($child->getType() === FileInterface::TYPE_DIR
+                && count($child->getChildren()) > 0
+            ) {
+                // Destination exists and isn't empty
+                trigger_error(
+                    sprintf('rename(%s,%s): Directory not empty', $pathFrom, $pathTo),
+                    \E_USER_WARNING
+                );
 
-            return false;
+                return false;
+            }
+
+            if ($child->getType() !== FileInterface::TYPE_DIR) {
+                // Destination exists as a different file type
+                trigger_error(
+                    sprintf('rename(%s,%s): Not a directory', $pathFrom, $pathTo),
+                    \E_USER_WARNING
+                );
+
+                return false;
+            }
         }
 
         // Remove from source
@@ -770,7 +721,10 @@ class StreamWrapper
             return false;
         }
 
-        return $file->unlink();
+        $status = $file->unlink();
+        clearstatcache();
+
+        return $status;
     }
 
     /**
@@ -790,7 +744,7 @@ class StreamWrapper
         if ($file === null) {
             if (($flags & \STREAM_URL_STAT_QUIET) !== \STREAM_URL_STAT_QUIET) {
                 trigger_error(
-                    sprintf('No such file or directory: %s', $path),
+                    sprintf('stat(): stat failed for %s', $path),
                     \E_USER_WARNING
                 );
             }
@@ -805,6 +759,13 @@ class StreamWrapper
         return $file->stat();
     }
 
+    /**
+     * Parses the file open mode.
+     *
+     * @param string $mode
+     *
+     * @return bool
+     */
     private function parseMode(string $mode): bool
     {
         $extended = mb_substr($mode, -1) === '+';
@@ -842,25 +803,14 @@ class StreamWrapper
         return true;
     }
 
-    private function getFileSystem(): FileSystemInterface
-    {
-        return MockFileSystem::getFileSystem();
-    }
-
-    private function isReadable(FileInterface $file): bool
-    {
-        $config = $file->getConfig();
-
-        return $file->isReadable($config->getUser(), $config->getGroup());
-    }
-
-    private function isWritable(FileInterface $file): bool
-    {
-        $config = $file->getConfig();
-
-        return $file->isWritable($config->getUser(), $config->getGroup());
-    }
-
+    /**
+     * Creates a new file.
+     *
+     * @param string $path
+     * @param int $options
+     *
+     * @return RegularFileInterface|null
+     */
     private function createFile(string $path, int $options = 0): ?RegularFileInterface
     {
         $parts = MockFileSystem::getFileParts($path);
@@ -870,7 +820,7 @@ class StreamWrapper
         if ($parent === null) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error(
-                    sprintf('Path "%s" does not exist.', $parts['dirname']),
+                    sprintf('Path "%s" does not exist.', $path),
                     \E_USER_WARNING
                 );
             }
@@ -881,7 +831,7 @@ class StreamWrapper
         if (!$this->isWritable($parent)) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error(
-                    sprintf('Directory "%s" is not writable.', $parent->getPath()),
+                    sprintf('Directory "%s" is not writable.', $parent->getUrl()),
                     \E_USER_WARNING
                 );
             }
@@ -902,10 +852,43 @@ class StreamWrapper
         return $file;
     }
 
+    /**
+     * Checks if the given file is readable for the current user.
+     *
+     * @param FileInterface $file
+     *
+     * @return bool
+     */
+    private function isReadable(FileInterface $file): bool
+    {
+        $config = $file->getConfig();
+
+        return $file->isReadable($config->getUser(), $config->getGroup());
+    }
+
+    /**
+     * Checks if the given file is writable for the current user.
+     *
+     * @param FileInterface $file
+     *
+     * @return bool
+     */
+    private function isWritable(FileInterface $file): bool
+    {
+        $config = $file->getConfig();
+
+        return $file->isWritable($config->getUser(), $config->getGroup());
+    }
+
+    /**
+     * Checks if the given file is owned by the current user.
+     *
+     * @param FileInterface $file
+     *
+     * @return bool
+     */
     private function isOwner(FileInterface $file): bool
     {
-        $user = $this->getFileSystem()->getConfig()->getUser();
-
-        return $file->getUser() === $user;
+        return $file->getUser() === $file->getConfig()->getUser();
     }
 }

@@ -19,22 +19,15 @@ use PHPUnit\Framework\TestCase;
 // phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class MockFileSystemTest extends TestCase
 {
-    protected function setUp(): void
+    protected function tearDown(): void
     {
-        parent::setUp();
+        parent::tearDown();
 
         $wrappers = stream_get_wrappers();
         if (in_array(StreamWrapper::PROTOCOL, $wrappers, true)) {
             stream_wrapper_unregister(StreamWrapper::PROTOCOL);
             MockFileSystem::destroy();
         }
-    }
-
-    protected function tearDown(): void
-    {
-        parent::tearDown();
-
-        MockFileSystem::destroy();
     }
 
     public function testCreateRegistersStreamWrapper(): void
