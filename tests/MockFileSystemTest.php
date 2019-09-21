@@ -12,6 +12,7 @@ use MockFileSystem\Content\InMemoryContent;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
+use MockFileSystem\Quota\Collection;
 use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
@@ -580,8 +581,312 @@ class MockFileSystemTest extends TestCase
         MockFileSystem::createBlock(uniqid());
     }
 
+    public function testAddQuotaToCollection(): void
+    {
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
 
+        $spy = $this->once();
+        $quota->expects($spy)
+            ->method('addQuota')
+            ->with($this->isInstanceOf(QuotaInterface::class));
 
+        MockFileSystem::addQuota(rand(), rand());
+    }
+
+    public function testAddQuotaToCollectionSetsSize(): void
+    {
+        $size = rand();
+
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota($size, rand());
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertEquals($size, $actual->getSize());
+    }
+
+    public function testAddQuotaToCollectionSetsFileCount(): void
+    {
+        $count = rand();
+
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota(rand(), $count);
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertEquals($count, $actual->getFileCount());
+    }
+
+    public function testAddQuotaToCollectionSetsUser(): void
+    {
+        $user = rand();
+
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota(rand(), rand(), $user);
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertEquals($user, $actual->getUser());
+    }
+
+    public function testAddQuotaToCollectionSetsUserNull(): void
+    {
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota(rand(), rand());
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertNull($actual->getUser());
+    }
+
+    public function testAddQuotaToCollectionSetsGroup(): void
+    {
+        $group = rand();
+
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota(rand(), rand(), null, $group);
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertEquals($group, $actual->getGroup());
+    }
+
+    public function testAddQuotaToCollectionSetsGroupNull(): void
+    {
+        $quota = $this->createMock(Collection::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        $spy = $this->once();
+        $quota->expects($spy)->method('addQuota');
+
+        MockFileSystem::addQuota(rand(), rand());
+
+        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        self::assertNull($actual->getGroup());
+    }
+
+    public function testAddQuotaCreatesCollection(): void
+    {
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), rand());
+
+        $actual = $fileSystem->getConfig()->getQuota();
+
+        self::assertInstanceOf(Collection::class, $actual);
+
+        $quotas = $actual->getQuotas();
+        self::assertCount(2, $quotas);
+        self::assertSame($quota, $quotas[0]);
+    }
+
+    public function testAddQuotaCreatesCollectionSetsSize(): void
+    {
+        $size = rand();
+
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota($size, rand());
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertEquals($size, $actual->getSize());
+    }
+
+    public function testAddQuotaCreatesCollectionSetsFileCount(): void
+    {
+        $count = rand();
+
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), $count);
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertEquals($count, $actual->getFileCount());
+    }
+
+    public function testAddQuotaCreatesCollectionSetsUser(): void
+    {
+        $user = rand();
+
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), rand(), $user);
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertEquals($user, $actual->getUser());
+    }
+
+    public function testAddQuotaCreatesCollectionSetsUserNull(): void
+    {
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), rand());
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertNull($actual->getUser());
+    }
+
+    public function testAddQuotaCreatesCollectionSetsGroup(): void
+    {
+        $group = rand();
+
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), rand(), null, $group);
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertEquals($group, $actual->getGroup());
+    }
+
+    public function testAddQuotaCreatesCollectionSetsGroupNull(): void
+    {
+        $quota = $this->createMock(QuotaInterface::class);
+        $fileSystem = MockFileSystem::create();
+        $fileSystem->getConfig()->setQuota($quota);
+
+        MockFileSystem::addQuota(rand(), rand());
+
+        $collection = $fileSystem->getConfig()->getQuota();
+        $actual = $collection->getQuotas()[1];
+
+        self::assertNull($actual->getGroup());
+    }
+
+    /**
+     * @dataProvider sampleExplodePaths
+     */
+    public function testExplodePath(array $options, string $path, ?string $sep, array $expected): void
+    {
+        MockFileSystem::create('', null, $options);
+
+        $actual = @MockFileSystem::explodePath($path, $sep);
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function sampleExplodePaths(): array
+    {
+        $multibyte = utf8_encode("Déjà_vu");
+
+        return [
+            'absolute, single' => [
+                'options' => [],
+                'path' => '/foo',
+                'sep' => null,
+                'expected' => ['', 'foo'],
+            ],
+            'absolute, nested' => [
+                'options' => [],
+                'path' => '/foo/bar/../bing bong/./baz/../',
+                'sep' => null,
+                'expected' => ['', 'foo', 'bing bong'],
+            ],
+            'relative, single' => [
+                'options' => [],
+                'path' => 'foo',
+                'sep' => null,
+                'expected' => ['foo'],
+            ],
+            'relative, nested' => [
+                'options' => [],
+                'path' => 'foo/bar/../bing bong/./baz/../',
+                'sep' => null,
+                'expected' => ['foo', 'bing bong'],
+            ],
+            'excessive relativeness' => [
+                'options' => [],
+                'path' => '/../../../../../../../.././././.././.././../bar',
+                'sep' => null,
+                'expected' => ['', 'bar'],
+            ],
+            'leading protocol' => [
+                'options' => [],
+                'path' => StreamWrapper::PROTOCOL.':///foo/../bar',
+                'sep' => null,
+                'expected' => ['', 'bar'],
+            ],
+            'multibyte support' => [
+                'options' => [],
+                'path' => StreamWrapper::PROTOCOL.':///'.$multibyte.'/υπέρ/../νωθρού',
+                'sep' => null,
+                'expected' => ['', $multibyte, 'νωθρού'],
+            ],
+            'dir slash not normalized' => [
+                'options' => [],
+                'path' => '/foo\\..\\bar/baz/../bur',
+                'sep' => null,
+                'expected' => ['', 'foo\\..\\bar', 'bur'],
+            ],
+            'dir slash normalized' => [
+                'options' => ['normalizeSlashes' => true],
+                'path' => '/foo\\..\\bar/baz/../bur',
+                'sep' => null,
+                'expected' => ['', 'bar', 'bur'],
+            ],
+            'custom separator' => [
+                'options' => ['separator' => '>'],
+                'path' => '/foo/bar>..>baz>hot/../cakes',
+                'sep' => null,
+                'expected' => ['/foo/bar', 'baz', 'hot/../cakes'],
+            ],
+            'explode failure' => [
+                'options' => [],
+                'path' => '/foo/bar',
+                'sep' => '',
+                'expected' => ['/foo/bar'],
+            ],
+        ];
+    }
 
     /**
      * @dataProvider samplePaths
@@ -620,7 +925,7 @@ class MockFileSystemTest extends TestCase
             'absolute, nested' => [
                 'options' => [],
                 'path' => '/foo/bar/../bing bong/./baz/../',
-                'expected' => '/foo/bing bong/',
+                'expected' => '/foo/bing bong',
             ],
             'relative, single' => [
                 'options' => [],
@@ -630,7 +935,7 @@ class MockFileSystemTest extends TestCase
             'relative, nested' => [
                 'options' => [],
                 'path' => 'foo/bar/../bing bong/./baz/../',
-                'expected' => 'foo/bing bong/',
+                'expected' => 'foo/bing bong',
             ],
             'excessive relativeness' => [
                 'options' => [],

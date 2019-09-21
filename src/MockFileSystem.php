@@ -259,18 +259,51 @@ class MockFileSystem
      * - mfs:///foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
+     * @param string|null $sep Directory separator; defaults to config.
      *
      * @return string
      */
-    public static function getPath(string $path): string
+    public static function getPath(string $path, ?string $sep = null): string
     {
-        $clean = self::normalizePath($path);
-        $prefix = StreamWrapper::PROTOCOL.'://';
-        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
-            return mb_substr($clean, mb_strlen($prefix));
+        $config = self::getFileSystem()->getConfig();
+        if ($sep === null) {
+            $sep = $config->getSeparator();
+        }
+        $clean = $path;
+
+        if ($config->getNormalizeSlashes()) {
+            $clean = str_replace(['\\', '/'], $sep, $clean);
         }
 
-        return $clean;
+        $prefix = StreamWrapper::PROTOCOL.'://';
+        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
+            $clean = mb_substr($clean, mb_strlen($prefix));
+        }
+
+        if (mb_substr($clean, -strlen($sep)) === $sep) {
+            $clean = mb_substr($clean, 0, -strlen($sep));
+        }
+
+        $parts = explode($sep, $clean);
+        if ($parts === false) {
+            return $clean;
+        }
+
+        $files = [];
+
+        foreach ($parts as $part) {
+            if ($part === '.') {
+                continue;
+            }
+
+            if ($part !== '..') {
+                $files[] = $part;
+            } elseif (count($files) > 1) {
+                array_pop($files);
+            }
+        }
+
+        return implode($sep, $files);
     }
 
     /**
@@ -282,18 +315,13 @@ class MockFileSystem
      * - /foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
+     * @param string|null $sep Directory separator; defaults to config.
      *
      * @return string
      */
-    public static function getUrl(string $path): string
+    public static function getUrl(string $path, ?string $sep = null): string
     {
-        $clean = self::normalizePath($path);
-        $prefix = StreamWrapper::PROTOCOL.'://';
-        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
-            return $clean;
-        }
-
-        return $prefix.$clean;
+        return StreamWrapper::PROTOCOL.'://'.self::getPath($path, $sep);
     }
 
     /**
@@ -328,18 +356,21 @@ class MockFileSystem
      *  - /home/foo/file.txt -> ['', 'home', 'foo', 'file.txt']
      *
      * @param string $path
+     * @param string|null $sep Directory separator; defaults to config.
      *
      * @return string[]
      */
-    public static function explodePath(string $path): array
+    public static function explodePath(string $path, ?string $sep = null): array
     {
-        $clean = self::getPath($path);
+        $clean = self::getPath($path, $sep);
 
-        $sep = self::getFileSystem()->getConfig()->getSeparator();
+        if ($sep === null) {
+            $sep = self::getFileSystem()->getConfig()->getSeparator();
+        }
 
         $parts = explode($sep, $clean);
         if ($parts === false) {
-            return [];
+            return [$clean];
         }
 
         return $parts;
@@ -365,52 +396,6 @@ class MockFileSystem
         }
 
         return $parent;
-    }
-
-    /**
-     * Normalizes a path to remove relative references.
-     *
-     * Also normalizes slashes in the path, if configured.
-     *
-     * For example:
-     * - /./tmp => /tmp
-     * - /home/example/../user -> /home/user
-     * - /var/log/messages/../../../etc -> /etc
-     *
-     * @param string $path
-     *
-     * @return string
-     */
-    private static function normalizePath(string $path): string
-    {
-        $config = self::getFileSystem()->getConfig();
-        $sep = $config->getSeparator();
-        $clean = $path;
-
-        if ($config->getNormalizeSlashes()) {
-            $clean = str_replace(['\\', '/'], $sep, $clean);
-        }
-
-        $parts = explode($sep, $clean);
-        if ($parts === false) {
-            return $clean;
-        }
-
-        $files = [];
-
-        foreach ($parts as $part) {
-            if ($part === '.') {
-                continue;
-            }
-
-            if ($part !== '..') {
-                $files[] = $part;
-            } elseif (count($files) > 1) {
-                array_pop($files);
-            }
-        }
-
-        return implode($sep, $files);
     }
 
     /**
