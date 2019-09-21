@@ -7,6 +7,7 @@ use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
+use MockFileSystem\Config;
 use MockFileSystem\Content\InMemoryContent;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
@@ -101,8 +102,8 @@ class MockFileSystemTest extends TestCase
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
             'blacklist' => [],
-            'user' => null,
-            'group' => null,
+            'user' => function_exists('posix_getuid') ? posix_getuid() : Config::ROOT_UID,
+            'group' => function_exists('posix_getgid') ? posix_getgid() : Config::ROOT_GID,
         ];
 
         return [

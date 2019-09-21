@@ -106,15 +106,15 @@ class Config
     public function toArray(): array
     {
         return [
-            'umask' => $this->umask,
-            'separator' => $this->separator,
-            'ignoreCase' => $this->ignoreCase,
-            'includeDotFiles' => $this->includeDotFiles,
-            'normalizeSlashes' => $this->normalizeSlashes,
-            'blacklist' => $this->blacklist,
-            'user' => $this->user,
-            'group' => $this->group,
-            'quota' => $this->quota,
+            'umask' => $this->getUmask(),
+            'separator' => $this->getSeparator(),
+            'ignoreCase' => $this->getIgnoreCase(),
+            'includeDotFiles' => $this->getIncludeDotFiles(),
+            'normalizeSlashes' => $this->getNormalizeSlashes(),
+            'blacklist' => $this->getBlacklist(),
+            'user' => $this->getUser(),
+            'group' => $this->getGroup(),
+            'quota' => $this->getQuota(),
         ];
     }
 

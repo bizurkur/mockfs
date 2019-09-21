@@ -77,4 +77,14 @@ class Collection implements QuotaInterface
 
         return self::UNLIMITED;
     }
+
+    /**
+     * Gets the number of quotes in the collection.
+     *
+     * @return int
+     */
+    public function count(): int
+    {
+        return count($this->quotas);
+    }
 }
