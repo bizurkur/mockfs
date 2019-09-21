@@ -3,12 +3,10 @@
 namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\AbstractFile;
-use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
-use MockFileSystem\Quota\QuotaInterface;
 
 /**
  * Class to represent a single directory.
@@ -135,7 +133,7 @@ class Directory extends AbstractFile implements DirectoryInterface
      */
     public function getIterator(): \Iterator
     {
-        $children = $this->children;
+        $children = $this->getChildren();
 
         if ($this->getConfig()->getIncludeDotFiles()) {
             array_unshift($children, new Directory('.'), new Directory('..'));
@@ -149,6 +147,8 @@ class Directory extends AbstractFile implements DirectoryInterface
      */
     public function getChildren(): array
     {
+        $this->setLastAccessTime();
+
         return array_values($this->children);
     }
 
@@ -164,6 +164,7 @@ class Directory extends AbstractFile implements DirectoryInterface
         }
 
         $child->setParent($this);
+        $this->setLastModifyTime();
 
         $name = $child->getName();
         $normalized = $this->normalizeName($name);
@@ -194,6 +195,8 @@ class Directory extends AbstractFile implements DirectoryInterface
             );
         }
 
+        $this->setLastAccessTime();
+
         return $this->children[$normalized];
     }
 
@@ -206,6 +209,8 @@ class Directory extends AbstractFile implements DirectoryInterface
 
         if (isset($this->children[$normalized])) {
             unset($this->children[$normalized]);
+
+            $this->setLastModifyTime();
 
             return true;
         }
