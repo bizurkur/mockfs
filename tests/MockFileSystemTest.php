@@ -13,9 +13,11 @@ use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\Quota\Collection;
+use MockFileSystem\Quota\Quota;
 use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 // phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
@@ -583,14 +585,15 @@ class MockFileSystemTest extends TestCase
 
     public function testAddQuotaToCollection(): void
     {
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)
             ->method('addQuota')
-            ->with($this->isInstanceOf(QuotaInterface::class));
+            ->with(self::isInstanceOf(QuotaInterface::class));
 
         MockFileSystem::addQuota(rand(), rand());
     }
@@ -599,11 +602,12 @@ class MockFileSystemTest extends TestCase
     {
         $size = rand();
 
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota($size, rand());
@@ -616,11 +620,12 @@ class MockFileSystemTest extends TestCase
     {
         $count = rand();
 
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota(rand(), $count);
@@ -633,11 +638,12 @@ class MockFileSystemTest extends TestCase
     {
         $user = rand();
 
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota(rand(), rand(), $user);
@@ -648,11 +654,12 @@ class MockFileSystemTest extends TestCase
 
     public function testAddQuotaToCollectionSetsUserNull(): void
     {
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota(rand(), rand());
@@ -665,11 +672,12 @@ class MockFileSystemTest extends TestCase
     {
         $group = rand();
 
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota(rand(), rand(), null, $group);
@@ -680,11 +688,12 @@ class MockFileSystemTest extends TestCase
 
     public function testAddQuotaToCollectionSetsGroupNull(): void
     {
+        /** @var Collection&MockObject $quota */
         $quota = $this->createMock(Collection::class);
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = $this->once();
+        $spy = self::once();
         $quota->expects($spy)->method('addQuota');
 
         MockFileSystem::addQuota(rand(), rand());
@@ -708,6 +717,7 @@ class MockFileSystemTest extends TestCase
         $quotas = $actual->getQuotas();
         self::assertCount(2, $quotas);
         self::assertSame($quota, $quotas[0]);
+        self::assertInstanceOf(Quota::class, $quotas[1]);
     }
 
     public function testAddQuotaCreatesCollectionSetsSize(): void
@@ -720,7 +730,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota($size, rand());
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertEquals($size, $actual->getSize());
@@ -736,7 +749,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), $count);
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertEquals($count, $actual->getFileCount());
@@ -752,7 +768,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand(), $user);
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertEquals($user, $actual->getUser());
@@ -766,7 +785,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand());
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertNull($actual->getUser());
@@ -782,7 +804,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand(), null, $group);
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertEquals($group, $actual->getGroup());
@@ -796,7 +821,10 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand());
 
+        /** @var Collection $collection */
         $collection = $fileSystem->getConfig()->getQuota();
+
+        /** @var Quota $actual */
         $actual = $collection->getQuotas()[1];
 
         self::assertNull($actual->getGroup());
