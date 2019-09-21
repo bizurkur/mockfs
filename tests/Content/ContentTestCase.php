@@ -230,7 +230,7 @@ abstract class ContentTestCase extends TestCase
         $this->fixture->write(str_repeat("\0", 100));
         $this->fixture->seek(rand(1, 99));
 
-        self::assertFalse($this->fixture->seek(rand(100, 199), \SEEK_SET));
+        self::assertFalse($this->fixture->seek(rand(101, 199), \SEEK_SET));
         self::assertEquals(0, $this->fixture->tell());
     }
 

@@ -1607,6 +1607,9 @@ class StreamWrapperTest extends TestCase
         file_put_contents($url, uniqid());
 
         $actual = stat($url);
+        if ($actual === false) {
+            self::fail('Stat returned false');
+        }
 
         $expected = [
             'dev',
@@ -1639,6 +1642,9 @@ class StreamWrapperTest extends TestCase
         chmod($url, $permissions);
         $config = MockFileSystem::getFileSystem()->getConfig();
         $file = MockFileSystem::find($url);
+        if ($file === null) {
+            self::fail('File not found');
+        }
 
         $actual = stat($url);
 
@@ -1682,6 +1688,9 @@ class StreamWrapperTest extends TestCase
         mkdir($url, $permissions);
         $config = MockFileSystem::getFileSystem()->getConfig();
         $file = MockFileSystem::find($url);
+        if ($file === null) {
+            self::fail('File not found');
+        }
 
         $actual = stat($url);
 
@@ -1848,7 +1857,11 @@ class StreamWrapperTest extends TestCase
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
 
-        $read = [fopen($url, 'w')];
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $read = [$handle];
         $write = null;
         $except = null;
 
@@ -1862,7 +1875,11 @@ class StreamWrapperTest extends TestCase
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
 
-        $read = [fopen($url, 'w')];
+        $handle = fopen($url, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $read = [$handle];
         $write = null;
         $except = null;
 

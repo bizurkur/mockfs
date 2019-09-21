@@ -462,7 +462,11 @@ abstract class AbstractFile implements FileInterface
      */
     private function getRoot(): ContainerInterface
     {
-        $root = $this;
+        $root = $this->getParent();
+        if ($root === null) {
+            throw new RuntimeException('File has not been attached to the filesystem');
+        }
+
         while ($root) {
             $parent = $root->getParent();
             if ($parent === null) {

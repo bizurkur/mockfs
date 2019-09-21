@@ -6,7 +6,6 @@ use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\RegularFile\MultiInstanceDecorator;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Exception\BaseException;
@@ -653,7 +652,7 @@ class StreamWrapper
             && $dest->hasChild($parts['basename'])
         ) {
             $child = $dest->getChild($parts['basename']);
-            if ($child->getType() === FileInterface::TYPE_DIR
+            if ($child instanceof ContainerInterface
                 && count($child->getChildren()) > 0
             ) {
                 // Destination exists and isn't empty
