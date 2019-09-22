@@ -227,7 +227,7 @@ class ConfigTest extends TestCase
 
     public function testGetSeparatorWhenSet(): void
     {
-        $separator = substr(uniqid(), rand(1, 8), 1);
+        $separator = substr(uniqid(), rand(1, 3), 1);
 
         $config = new Config(['separator' => $separator]);
 

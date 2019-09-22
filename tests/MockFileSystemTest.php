@@ -585,34 +585,28 @@ class MockFileSystemTest extends TestCase
 
     public function testAddQuotaToCollection(): void
     {
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)
-            ->method('addQuota')
-            ->with(self::isInstanceOf(QuotaInterface::class));
-
         MockFileSystem::addQuota(rand(), rand());
+
+        $quotas = $quota->getQuotas();
+        self::assertCount(1, $quotas);
+        self::assertContainsOnlyInstancesOf(QuotaInterface::class, $quotas);
     }
 
     public function testAddQuotaToCollectionSetsSize(): void
     {
         $size = rand();
 
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota($size, rand());
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertEquals($size, $actual->getSize());
     }
 
@@ -620,17 +614,13 @@ class MockFileSystemTest extends TestCase
     {
         $count = rand();
 
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota(rand(), $count);
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertEquals($count, $actual->getFileCount());
     }
 
@@ -638,33 +628,25 @@ class MockFileSystemTest extends TestCase
     {
         $user = rand();
 
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota(rand(), rand(), $user);
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertEquals($user, $actual->getUser());
     }
 
     public function testAddQuotaToCollectionSetsUserNull(): void
     {
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota(rand(), rand());
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertNull($actual->getUser());
     }
 
@@ -672,33 +654,25 @@ class MockFileSystemTest extends TestCase
     {
         $group = rand();
 
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota(rand(), rand(), null, $group);
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertEquals($group, $actual->getGroup());
     }
 
     public function testAddQuotaToCollectionSetsGroupNull(): void
     {
-        /** @var Collection&MockObject $quota */
-        $quota = $this->createMock(Collection::class);
+        $quota = new Collection();
         $fileSystem = MockFileSystem::create();
         $fileSystem->getConfig()->setQuota($quota);
 
-        $spy = self::once();
-        $quota->expects($spy)->method('addQuota');
-
         MockFileSystem::addQuota(rand(), rand());
 
-        $actual = $spy->getInvocations()[0]->getParameters()[0];
+        $actual = $quota->getQuotas()[0];
         self::assertNull($actual->getGroup());
     }
 

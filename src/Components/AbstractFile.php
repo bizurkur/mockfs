@@ -4,7 +4,6 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
@@ -221,13 +220,11 @@ abstract class AbstractFile implements FileInterface
      */
     public function getPath(): string
     {
-        $sep = $this->config->getSeparator();
-
-        if ($this->parent === null
-            || $this->parent instanceof FileSystemInterface
-        ) {
-            return $this->name.$sep;
+        if ($this->parent === null) {
+            return $this->name;
         }
+
+        $sep = $this->getConfig()->getSeparator();
 
         return rtrim($this->parent->getPath(), $sep).$sep.$this->name;
     }
