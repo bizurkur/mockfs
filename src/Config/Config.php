@@ -10,58 +10,23 @@ use MockFileSystem\Quota\QuotaInterface;
 /**
  * Configuration settings for the file system.
  */
-final class Config implements ConfigInterface
+class Config implements ConfigInterface
 {
     /**
-     * @var int
+     * @var mixed[]
      */
-    private $umask = 0000;
-
-    /**
-     * @var string
-     */
-    private $separator = '/';
-
-    /**
-     * @var bool
-     */
-    private $ignoreCase = false;
-
-    /**
-     * @var bool
-     */
-    private $includeDotFiles = true;
-
-    /**
-     * @var bool
-     */
-    private $normalizeSlashes = false;
-
-    /**
-     * @var string[]
-     */
-    private $blacklist = [];
-
-    /**
-     * @var int|null
-     */
-    private $user = null;
-
-    /**
-     * @var int|null
-     */
-    private $group = null;
-
-    /**
-     * @var QuotaInterface
-     */
-    private $quota = null;
+    private $options = [];
 
     /**
      * @param mixed[] $options
      */
     public function __construct(array $options = [])
     {
+        $options = array_merge(
+            $this->getDefaultOptions(),
+            $options
+        );
+
         foreach ($options as $name => $value) {
             $callback = [$this, 'set'.ucfirst($name)];
             if (!is_callable($callback)) {
@@ -72,11 +37,24 @@ final class Config implements ConfigInterface
 
             call_user_func($callback, $value);
         }
+    }
 
-        if ($this->quota === null) {
-            // An empty Collection is an unlimited quota
-            $this->quota = new Collection();
-        }
+    /**
+     * {@inheritDoc}
+     */
+    public function getDefaultOptions(): array
+    {
+        return [
+            'umask' => 0000,
+            'separator' => '/',
+            'ignoreCase' => false,
+            'includeDotFiles' => true,
+            'normalizeSlashes' => false,
+            'blacklist' => [],
+            'user' => null,
+            'group' => null,
+            'quota' => null,
+        ];
     }
 
     /**
@@ -102,7 +80,7 @@ final class Config implements ConfigInterface
      */
     public function getQuota(): QuotaInterface
     {
-        return $this->quota;
+        return $this->options['quota'];
     }
 
     /**
@@ -110,8 +88,8 @@ final class Config implements ConfigInterface
      */
     public function getUser(): int
     {
-        if ($this->user !== null) {
-            return $this->user;
+        if ($this->options['user'] !== null) {
+            return $this->options['user'];
         }
 
         return function_exists('posix_getuid') ? posix_getuid() : self::ROOT_UID;
@@ -122,8 +100,8 @@ final class Config implements ConfigInterface
      */
     public function getGroup(): int
     {
-        if ($this->group !== null) {
-            return $this->group;
+        if ($this->options['group'] !== null) {
+            return $this->options['group'];
         }
 
         return function_exists('posix_getgid') ? posix_getgid() : self::ROOT_GID;
@@ -134,7 +112,7 @@ final class Config implements ConfigInterface
      */
     public function getUmask(): int
     {
-        return $this->umask;
+        return $this->options['umask'];
     }
 
     /**
@@ -142,7 +120,7 @@ final class Config implements ConfigInterface
      */
     public function getSeparator(): string
     {
-        return $this->separator;
+        return $this->options['separator'];
     }
 
     /**
@@ -150,7 +128,7 @@ final class Config implements ConfigInterface
      */
     public function getIgnoreCase(): bool
     {
-        return $this->ignoreCase;
+        return $this->options['ignoreCase'];
     }
 
     /**
@@ -158,7 +136,7 @@ final class Config implements ConfigInterface
      */
     public function getIncludeDotFiles(): bool
     {
-        return $this->includeDotFiles;
+        return $this->options['includeDotFiles'];
     }
 
     /**
@@ -166,7 +144,7 @@ final class Config implements ConfigInterface
      */
     public function getNormalizeSlashes(): bool
     {
-        return $this->normalizeSlashes;
+        return $this->options['normalizeSlashes'];
     }
 
     /**
@@ -174,15 +152,20 @@ final class Config implements ConfigInterface
      */
     public function getBlacklist(): array
     {
-        return $this->blacklist;
+        return $this->options['blacklist'];
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setQuota(QuotaInterface $quota): void
+    public function setQuota(?QuotaInterface $quota): void
     {
-        $this->quota = $quota;
+        if ($quota === null) {
+            // An empty Collection is an unlimited quota
+            $quota = new Collection();
+        }
+
+        $this->options['quota'] = $quota;
     }
 
     /**
@@ -190,7 +173,7 @@ final class Config implements ConfigInterface
      */
     public function setUser(?int $user): void
     {
-        $this->user = $user;
+        $this->options['user'] = $user;
     }
 
     /**
@@ -198,7 +181,7 @@ final class Config implements ConfigInterface
      */
     public function setGroup(?int $group): void
     {
-        $this->group = $group;
+        $this->options['group'] = $group;
     }
 
     /**
@@ -206,7 +189,7 @@ final class Config implements ConfigInterface
      */
     public function setUmask(int $mask): void
     {
-        $this->umask = $mask & 0777;
+        $this->options['umask'] = $mask & 0777;
     }
 
     // phpcs:disable SlevomatCodingStandard.Classes.UnusedPrivateElements
@@ -226,7 +209,7 @@ final class Config implements ConfigInterface
             throw new InvalidArgumentException('Separator cannot be empty');
         }
 
-        $this->separator = $separator;
+        $this->options['separator'] = $separator;
     }
 
     /**
@@ -240,7 +223,7 @@ final class Config implements ConfigInterface
      */
     private function setIgnoreCase(bool $ignoreCase): void
     {
-        $this->ignoreCase = $ignoreCase;
+        $this->options['ignoreCase'] = $ignoreCase;
     }
 
     /**
@@ -254,7 +237,7 @@ final class Config implements ConfigInterface
      */
     private function setIncludeDotFiles(bool $includeDotFiles): void
     {
-        $this->includeDotFiles = $includeDotFiles;
+        $this->options['includeDotFiles'] = $includeDotFiles;
     }
 
     /**
@@ -268,7 +251,7 @@ final class Config implements ConfigInterface
      */
     private function setNormalizeSlashes(bool $normalizeSlashes): void
     {
-        $this->normalizeSlashes = $normalizeSlashes;
+        $this->options['normalizeSlashes'] = $normalizeSlashes;
     }
 
     /**
@@ -299,6 +282,6 @@ final class Config implements ConfigInterface
      */
     private function setBlacklist(array $blacklist): void
     {
-        $this->blacklist = $blacklist;
+        $this->options['blacklist'] = $blacklist;
     }
 }

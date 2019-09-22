@@ -18,6 +18,26 @@ class ConfigTest extends TestCase
         self::assertInstanceOf(ConfigInterface::class, $fixture);
     }
 
+    public function testGetDefaultOptions(): void
+    {
+        $fixture = new Config();
+
+        $actual = $fixture->getDefaultOptions();
+
+        $expected = [
+            'umask' => 0000,
+            'separator' => '/',
+            'ignoreCase' => false,
+            'includeDotFiles' => true,
+            'normalizeSlashes' => false,
+            'blacklist' => [],
+            'user' => null,
+            'group' => null,
+            'quota' => null,
+        ];
+        self::assertEquals($expected, $actual);
+    }
+
     public function testUnknownOptionsThrowsException(): void
     {
         $name = uniqid();

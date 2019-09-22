@@ -30,6 +30,13 @@ interface ConfigInterface
     public const ROOT_GID = 0;
 
     /**
+     * Gets the default configuration options.
+     *
+     * @return mixed[]
+     */
+    public function getDefaultOptions(): array;
+
+    /**
      * Returns the config as an array.
      *
      * @return mixed[]
