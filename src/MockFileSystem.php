@@ -11,7 +11,9 @@ use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Config\Config;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\ContentInterface;
+use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\Quota\Collection;
@@ -40,18 +42,33 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
-     * @param mixed[] $options
+     * @param mixed[]|ConfigInterface $options
      *
      * @return FileSystem
      */
     public static function create(
         string $name = '',
         ?int $permissions = null,
-        array $options = []
+        $options = []
     ): FileSystem {
+        $config = $options;
+        if (is_array($options)) {
+            $config = new Config($options);
+        }
+
+        if (!$config instanceof ConfigInterface) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Options must be an array or instance of %s; %s given',
+                    ConfigInterface::class,
+                    gettype($options)
+                )
+            );
+        }
+
         self::register();
 
-        self::$fileSystem = new FileSystem(new Config($options));
+        self::$fileSystem = new FileSystem($config);
         self::createPartition($name, $permissions);
 
         return self::$fileSystem;

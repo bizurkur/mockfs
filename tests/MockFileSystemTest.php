@@ -8,7 +8,9 @@ use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Config\Config;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\InMemoryContent;
+use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
@@ -147,6 +149,28 @@ class MockFileSystemTest extends TestCase
                 'expected' => array_replace($default, ['group' => 123]),
             ],
         ];
+    }
+
+    public function testCreateUsingConfig(): void
+    {
+        $config = $this->createConfiguredMock(ConfigInterface::class, ['getSeparator' => '/']);
+        $fileSystem = MockFileSystem::create('', null, $config);
+
+        $actual = $fileSystem->getConfig();
+
+        self::assertSame($config, $actual);
+    }
+
+    public function testCreateThrowsExceptionForInvalidConfig(): void
+    {
+        $config = uniqid();
+
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage(
+            'Options must be an array or instance of '.ConfigInterface::class.'; string given'
+        );
+
+        MockFileSystem::create('', null, $config);
     }
 
     public function testCreateUsesPartitionName(): void

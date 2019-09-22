@@ -9,6 +9,10 @@ parameters:
     paths:
         - src
         - tests
+    ignoreErrors:
+        -
+            message: '/^Parameter #3 \$options of static method MockFileSystem\\MockFileSystem::create\(\) expects array\|MockFileSystem\\Config\\ConfigInterface, string given\.$/'
+            path: tests/MockFileSystemTest.php
 
 # some of the strict rules
 services:
