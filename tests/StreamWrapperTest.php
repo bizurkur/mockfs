@@ -179,6 +179,23 @@ class StreamWrapperTest extends TestCase
         file_put_contents($child, uniqid());
 
         self::expectException(Warning::class);
+        // On Max, "not a directory" error.
+        // On Linux, "not such file or directory" error.
+
+        mkdir($child.'/'.uniqid());
+    }
+
+    public function testMakeDirWhenPathContainsFileCreatesErrorMessage(): void
+    {
+        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        $child = $base.'/'.uniqid();
+        $this->cleanup($child);
+        $this->cleanup($base);
+
+        mkdir($base);
+        file_put_contents($child, uniqid());
+
+        self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): Not a directory');
 
         mkdir($child.'/'.uniqid());
@@ -1754,6 +1771,19 @@ class StreamWrapperTest extends TestCase
     public function testUnlinkDirCreatesError(string $prefix): void
     {
         $url = $prefix.'/'.uniqid('mfs_src');
+        $this->cleanup($url);
+        mkdir($url);
+
+        self::expectException(Warning::class);
+        // On Mac, "operation not permitted" error.
+        // On Linux, "is a directory" error.
+
+        unlink($url);
+    }
+
+    public function testUnlinkDirCreatesErrorMessage(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         $this->cleanup($url);
         mkdir($url);
 
