@@ -32,7 +32,7 @@ interface ConfigInterface
     /**
      * Gets the default configuration options.
      *
-     * @return mixed[]
+     * @return array<string, mixed>
      */
     public function getDefaultOptions(): array;
 

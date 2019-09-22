@@ -606,6 +606,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota($size, rand());
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertEquals($size, $actual->getSize());
     }
@@ -620,6 +621,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), $count);
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertEquals($count, $actual->getFileCount());
     }
@@ -634,6 +636,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand(), $user);
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertEquals($user, $actual->getUser());
     }
@@ -646,6 +649,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand());
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertNull($actual->getUser());
     }
@@ -660,6 +664,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand(), null, $group);
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertEquals($group, $actual->getGroup());
     }
@@ -672,6 +677,7 @@ class MockFileSystemTest extends TestCase
 
         MockFileSystem::addQuota(rand(), rand());
 
+        /** @var Quota $actual */
         $actual = $quota->getQuotas()[0];
         self::assertNull($actual->getGroup());
     }

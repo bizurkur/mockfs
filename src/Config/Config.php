@@ -13,12 +13,12 @@ use MockFileSystem\Quota\QuotaInterface;
 class Config implements ConfigInterface
 {
     /**
-     * @var mixed[]
+     * @var array<string, mixed>
      */
     private $options = [];
 
     /**
-     * @param mixed[] $options
+     * @param array<string, mixed> $options
      */
     public function __construct(array $options = [])
     {
