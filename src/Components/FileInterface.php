@@ -4,7 +4,7 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ReferenceableInterface;
-use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\RuntimeException;
 
 /**
@@ -59,18 +59,18 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
     /**
      * Sets the configuration settings used by the file system.
      *
-     * @param Config $config
+     * @param ConfigInterface $config
      */
-    public function setConfig(Config $config): void;
+    public function setConfig(ConfigInterface $config): void;
 
     /**
      * Gets the configuration settings used by the file system.
      *
-     * @return Config
+     * @return ConfigInterface
      *
      * @throws RuntimeException When not set.
      */
-    public function getConfig(): Config;
+    public function getConfig(): ConfigInterface;
 
     /**
      * Gets the default permissions.

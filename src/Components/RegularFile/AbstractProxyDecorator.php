@@ -4,7 +4,7 @@ namespace MockFileSystem\Components\RegularFile;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\RegularFileInterface;
-use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Content\ContentInterface;
 
 /**
@@ -31,7 +31,7 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setConfig(Config $config): void
+    public function setConfig(ConfigInterface $config): void
     {
         $this->base->setConfig($config);
     }
@@ -39,7 +39,7 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function getConfig(): Config
+    public function getConfig(): ConfigInterface
     {
         return $this->base->getConfig();
     }

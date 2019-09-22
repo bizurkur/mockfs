@@ -2,6 +2,7 @@
 
 namespace MockFileSystem;
 
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Quota\Collection;
 use MockFileSystem\Quota\QuotaInterface;
@@ -9,28 +10,8 @@ use MockFileSystem\Quota\QuotaInterface;
 /**
  * Configuration settings for the file system.
  */
-class Config
+class Config implements ConfigInterface
 {
-    /**
-     * ID of root user.
-     *
-     * This is only used on a non-POSIX system (i.e. Windows) when the user has
-     * not been manually set.
-     *
-     * @var int
-     */
-    public const ROOT_UID = 0;
-
-    /**
-     * ID of root group.
-     *
-     * This is only used on a non-POSIX system (i.e. Windows) when the group has
-     * not been manually set.
-     *
-     * @var int
-     */
-    public const ROOT_GID = 0;
-
     /**
      * @var int
      */
@@ -99,9 +80,7 @@ class Config
     }
 
     /**
-     * Returns the config as an array.
-     *
-     * @return mixed[]
+     * {@inheritDoc}
      */
     public function toArray(): array
     {
@@ -119,9 +98,7 @@ class Config
     }
 
     /**
-     * Gets the quota for the file system.
-     *
-     * @return QuotaInterface
+     * {@inheritDoc}
      */
     public function getQuota(): QuotaInterface
     {
@@ -129,13 +106,7 @@ class Config
     }
 
     /**
-     * Gets the user ID.
-     *
-     * On non-POSIX system (i.e. Windows) this returns root (0).
-     *
-     * @see https://www.php.net/manual/en/function.posix-getuid.php
-     *
-     * @return int
+     * {@inheritDoc}
      */
     public function getUser(): int
     {
@@ -147,13 +118,7 @@ class Config
     }
 
     /**
-     * Gets the group ID.
-     *
-     * On non-POSIX system (i.e. Windows) this returns root (0).
-     *
-     * @see https://www.php.net/manual/en/function.posix-getgid.php
-     *
-     * @return int
+     * {@inheritDoc}
      */
     public function getGroup(): int
     {
@@ -165,9 +130,7 @@ class Config
     }
 
     /**
-     * Gets the umask.
-     *
-     * @return int
+     * {@inheritDoc}
      */
     public function getUmask(): int
     {
@@ -175,9 +138,7 @@ class Config
     }
 
     /**
-     * Gets the directory separator.
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getSeparator(): string
     {
@@ -185,9 +146,7 @@ class Config
     }
 
     /**
-     * Gets whether to ignore string case when creating/accessing files.
-     *
-     * @return bool
+     * {@inheritDoc}
      */
     public function getIgnoreCase(): bool
     {
@@ -195,9 +154,7 @@ class Config
     }
 
     /**
-     * Gets whether to include dot files when iterating through directories.
-     *
-     * @return bool
+     * {@inheritDoc}
      */
     public function getIncludeDotFiles(): bool
     {
@@ -205,9 +162,7 @@ class Config
     }
 
     /**
-     * Gets whether to normalize slashes in file paths.
-     *
-     * @return bool
+     * {@inheritDoc}
      */
     public function getNormalizeSlashes(): bool
     {
@@ -215,9 +170,7 @@ class Config
     }
 
     /**
-     * Gets the blacklist of characters that cannot be used in file names.
-     *
-     * @return string[]
+     * {@inheritDoc}
      */
     public function getBlacklist(): array
     {
@@ -225,9 +178,7 @@ class Config
     }
 
     /**
-     * Sets the quota for the file system.
-     *
-     * @param QuotaInterface $quota
+     * {@inheritDoc}
      */
     public function setQuota(QuotaInterface $quota): void
     {
@@ -235,11 +186,7 @@ class Config
     }
 
     /**
-     * Sets the user ID.
-     *
-     * Set to null to default to the real system's user ID.
-     *
-     * @param int|null $user
+     * {@inheritDoc}
      */
     public function setUser(?int $user): void
     {
@@ -247,11 +194,7 @@ class Config
     }
 
     /**
-     * Sets the group ID.
-     *
-     * Set to null to default to the real system's group ID.
-     *
-     * @param int|null $group
+     * {@inheritDoc}
      */
     public function setGroup(?int $group): void
     {
@@ -259,9 +202,7 @@ class Config
     }
 
     /**
-     * Sets the umask.
-     *
-     * @param int $mask
+     * {@inheritDoc}
      */
     public function setUmask(int $mask): void
     {

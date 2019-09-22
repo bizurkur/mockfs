@@ -6,7 +6,7 @@ use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\SummaryInterface;
-use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\LogicException;
 use MockFileSystem\Exception\NotFoundException;
@@ -23,14 +23,14 @@ class FileSystem implements FileSystemInterface
     private $partitions = [];
 
     /**
-     * @var Config
+     * @var ConfigInterface
      */
     private $config = null;
 
     /**
-     * @param Config $config
+     * @param ConfigInterface $config
      */
-    public function __construct(Config $config)
+    public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
     }
@@ -38,7 +38,7 @@ class FileSystem implements FileSystemInterface
     /**
      * {@inheritDoc}
      */
-    public function getConfig(): Config
+    public function getConfig(): ConfigInterface
     {
         return $this->config;
     }

@@ -5,7 +5,7 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
-use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
 use MockFileSystem\Exception\RuntimeException;
@@ -46,7 +46,7 @@ abstract class AbstractFile implements FileInterface
     protected $lastChangeTime = 0;
 
     /**
-     * @var Config
+     * @var ConfigInterface
      */
     private $config = null;
 
@@ -96,7 +96,7 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setConfig(Config $config): void
+    public function setConfig(ConfigInterface $config): void
     {
         $this->config = $config;
 
@@ -118,7 +118,7 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function getConfig(): Config
+    public function getConfig(): ConfigInterface
     {
         if ($this->config === null) {
             throw new RuntimeException('Config not set.');

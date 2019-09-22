@@ -9,6 +9,7 @@ use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\LogicException;
 use MockFileSystem\Exception\NotFoundException;
@@ -24,7 +25,7 @@ class FileSystemTest extends TestCase
     private $fixture = null;
 
     /**
-     * @var Config
+     * @var ConfigInterface
      */
     private $config = null;
 
@@ -347,7 +348,7 @@ class FileSystemTest extends TestCase
     public function testFindWithError(): void
     {
         $config = $this->createConfiguredMock(
-            Config::class,
+            ConfigInterface::class,
             ['getSeparator' => '']
         );
         $this->fixture = new FileSystem($config);

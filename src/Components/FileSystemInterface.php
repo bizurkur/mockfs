@@ -3,7 +3,7 @@
 namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
-use MockFileSystem\Config;
+use MockFileSystem\ConfigInterface;
 
 /**
  * Represents the entire file system.
@@ -15,7 +15,7 @@ interface FileSystemInterface extends ContainerInterface
     /**
      * Gets the configuration settings used by the file system.
      *
-     * @return Config
+     * @return ConfigInterface
      */
-    public function getConfig(): Config;
+    public function getConfig(): ConfigInterface;
 }
