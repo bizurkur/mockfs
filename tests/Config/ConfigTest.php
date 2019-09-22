@@ -1,8 +1,9 @@
 <?php declare(strict_types = 1);
 
-namespace MockFileSystem\Tests;
+namespace MockFileSystem\Tests\Config;
 
-use MockFileSystem\Config;
+use MockFileSystem\Config\Config;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Quota\Collection;
 use MockFileSystem\Quota\QuotaInterface;
@@ -10,6 +11,13 @@ use PHPUnit\Framework\TestCase;
 
 class ConfigTest extends TestCase
 {
+    public function testInstanceOf(): void
+    {
+        $fixture = new Config();
+
+        self::assertInstanceOf(ConfigInterface::class, $fixture);
+    }
+
     public function testUnknownOptionsThrowsException(): void
     {
         $name = uniqid();

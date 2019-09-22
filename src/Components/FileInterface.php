@@ -4,7 +4,7 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ReferenceableInterface;
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\RuntimeException;
 
 /**

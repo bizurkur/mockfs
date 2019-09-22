@@ -6,7 +6,7 @@ use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\SummaryInterface;
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\LogicException;
 use MockFileSystem\Exception\NotFoundException;

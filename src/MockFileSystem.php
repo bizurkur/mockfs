@@ -10,7 +10,7 @@ use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
-use MockFileSystem\Config;
+use MockFileSystem\Config\Config;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;

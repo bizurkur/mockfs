@@ -4,7 +4,7 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
 use MockFileSystem\Exception\RuntimeException;

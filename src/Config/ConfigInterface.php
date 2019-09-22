@@ -1,6 +1,6 @@
 <?php declare(strict_types = 1);
 
-namespace MockFileSystem;
+namespace MockFileSystem\Config;
 
 use MockFileSystem\Quota\QuotaInterface;
 

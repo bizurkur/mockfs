@@ -1,8 +1,8 @@
 <?php declare(strict_types = 1);
 
-namespace MockFileSystem;
+namespace MockFileSystem\Config;
 
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Quota\Collection;
 use MockFileSystem\Quota\QuotaInterface;

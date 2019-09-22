@@ -3,7 +3,7 @@
 namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\Config;
+use MockFileSystem\Config\Config;
 use MockFileSystem\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 

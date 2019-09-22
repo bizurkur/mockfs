@@ -3,7 +3,7 @@
 namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 
 /**
  * Represents the entire file system.

@@ -4,7 +4,7 @@ namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\RegularFileInterface;
-use MockFileSystem\Config;
+use MockFileSystem\Config\Config;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;

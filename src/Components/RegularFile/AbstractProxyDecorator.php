@@ -4,7 +4,7 @@ namespace MockFileSystem\Components\RegularFile;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\RegularFileInterface;
-use MockFileSystem\ConfigInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\ContentInterface;
 
 /**
