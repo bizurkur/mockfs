@@ -9,7 +9,7 @@ use MockFileSystem\Components\PartitionInterface;
 /**
  * Class to represent a partition.
  */
-class Partition extends Directory implements PartitionInterface
+final class Partition extends Directory implements PartitionInterface
 {
     /**
      * {@inheritDoc}

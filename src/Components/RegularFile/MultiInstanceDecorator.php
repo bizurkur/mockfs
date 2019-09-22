@@ -23,7 +23,7 @@ use MockFileSystem\Components\RegularFile\AbstractProxyDecorator;
  * $instanceB->tell(); // 3
  * $instanceA->tell(); // 50
  */
-class MultiInstanceDecorator extends AbstractProxyDecorator
+final class MultiInstanceDecorator extends AbstractProxyDecorator
 {
     /**
      * @var int

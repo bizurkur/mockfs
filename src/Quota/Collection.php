@@ -7,7 +7,7 @@ use MockFileSystem\Quota\QuotaInterface;
 /**
  * Class to hold a collection of quotas.
  */
-class Collection implements QuotaInterface
+final class Collection implements QuotaInterface
 {
     /**
      * @var QuotaInterface[]

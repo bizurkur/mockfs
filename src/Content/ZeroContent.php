@@ -12,7 +12,7 @@ use MockFileSystem\Content\AbstractContent;
  *
  * @see https://en.wikipedia.org/wiki//dev/zero
  */
-class ZeroContent extends AbstractContent
+final class ZeroContent extends AbstractContent
 {
     /**
      * {@inheritDoc}

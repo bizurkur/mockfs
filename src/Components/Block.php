@@ -8,7 +8,7 @@ use MockFileSystem\Content\ContentInterface;
 /**
  * Class to represent a block device.
  */
-class Block extends RegularFile
+final class Block extends RegularFile
 {
     /**
      * @param string $name

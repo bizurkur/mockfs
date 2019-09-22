@@ -21,7 +21,7 @@ use MockFileSystem\StreamWrapper;
 /**
  * Class to create the mock file system and register it as a stream.
  */
-class MockFileSystem
+final class MockFileSystem
 {
     /**
      * Whether or not the stream wrapper has been registered.

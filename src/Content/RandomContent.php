@@ -12,7 +12,7 @@ use MockFileSystem\Content\AbstractContent;
  *
  * @see https://en.wikipedia.org/wiki//dev/random
  */
-class RandomContent extends AbstractContent
+final class RandomContent extends AbstractContent
 {
     /**
      * {@inheritDoc}

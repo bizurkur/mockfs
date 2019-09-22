@@ -7,7 +7,7 @@ use MockFileSystem\Content\AbstractContent;
 /**
  * Content stored in memory.
  */
-class InMemoryContent extends AbstractContent
+final class InMemoryContent extends AbstractContent
 {
     /**
      * @var string

@@ -15,7 +15,7 @@ use MockFileSystem\StreamWrapper;
 /**
  * Class to represent the entire file system.
  */
-class FileSystem implements FileSystemInterface
+final class FileSystem implements FileSystemInterface
 {
     /**
      * @var PartitionInterface[]

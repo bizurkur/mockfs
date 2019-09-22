@@ -8,7 +8,7 @@ use MockFileSystem\Exception\InvalidArgumentException;
 /**
  * Content from a file stream.
  */
-class StreamContent extends AbstractContent
+final class StreamContent extends AbstractContent
 {
     /**
      * @var resource

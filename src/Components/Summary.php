@@ -7,7 +7,7 @@ use MockFileSystem\Components\SummaryInterface;
 /**
  * Represents a summary of files.
  */
-class Summary implements SummaryInterface
+final class Summary implements SummaryInterface
 {
     /**
      * @var int

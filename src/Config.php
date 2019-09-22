@@ -10,7 +10,7 @@ use MockFileSystem\Quota\QuotaInterface;
 /**
  * Configuration settings for the file system.
  */
-class Config implements ConfigInterface
+final class Config implements ConfigInterface
 {
     /**
      * @var int

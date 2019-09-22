@@ -11,7 +11,7 @@ use MockFileSystem\Quota\QuotaInterface;
  *
  * Can be applied to any user/group or all users.
  */
-class Quota implements QuotaInterface
+final class Quota implements QuotaInterface
 {
     /**
      * @var int

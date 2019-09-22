@@ -12,7 +12,7 @@ use MockFileSystem\Content\AbstractContent;
  *
  * @see https://en.wikipedia.org/wiki//dev/full
  */
-class FullContent extends AbstractContent
+final class FullContent extends AbstractContent
 {
     /**
      * {@inheritDoc}

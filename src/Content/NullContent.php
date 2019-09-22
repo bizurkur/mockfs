@@ -12,7 +12,7 @@ use MockFileSystem\Content\AbstractContent;
  *
  * @see https://en.wikipedia.org/wiki/Null_device
  */
-class NullContent extends AbstractContent
+final class NullContent extends AbstractContent
 {
     // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
 

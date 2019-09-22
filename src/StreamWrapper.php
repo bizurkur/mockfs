@@ -12,7 +12,7 @@ use MockFileSystem\Exception\BaseException;
 
 // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 // phpcs:disable Generic.Metrics.CyclomaticComplexity.MaxExceeded
-class StreamWrapper
+final class StreamWrapper
 {
     /**
      * Stream wrapper protocol.
