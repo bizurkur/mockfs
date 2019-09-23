@@ -504,21 +504,7 @@ final class StreamWrapper
         $file = MockFileSystem::find($path);
 
         if ($option === \STREAM_META_TOUCH) {
-            $file = $file ?? $this->createFile($path);
-            if ($file === null) {
-                trigger_error(
-                    sprintf('touch(): Unable to create file %s', $path),
-                    \E_USER_WARNING
-                );
-
-                return false;
-            }
-
-            $now = time();
-            $file->setLastModifyTime($value[0] ?? $now);
-            $file->setLastAccessTime($value[1] ?? $now);
-
-            return true;
+            return $this->touch($path, $value);
         }
 
         if ($file === null || !$this->isOwner($file)) {
@@ -598,7 +584,6 @@ final class StreamWrapper
      */
     public function stream_cast(int $castAs)
     {
-        // TODO: Look more into if this can be done, e.g. with $this->context
         return false;
     }
 
@@ -849,6 +834,35 @@ final class StreamWrapper
         }
 
         return $file;
+    }
+
+    /**
+     * Updates the timestamps on a file.
+     *
+     * If the file does not exists, it tries to create it.
+     *
+     * @param string $path
+     * @param int[] $value
+     *
+     * @return bool
+     */
+    private function touch(string $path, array $value): bool
+    {
+        $file = $file ?? $this->createFile($path);
+        if ($file === null) {
+            trigger_error(
+                sprintf('touch(): Unable to create file %s', $path),
+                \E_USER_WARNING
+            );
+
+            return false;
+        }
+
+        $now = time();
+        $file->setLastModifyTime($value[0] ?? $now);
+        $file->setLastAccessTime($value[1] ?? $now);
+
+        return true;
     }
 
     /**

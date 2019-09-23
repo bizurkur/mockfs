@@ -1896,7 +1896,9 @@ class StreamWrapperTest extends TestCase
         $except = null;
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('stream_select(): cannot represent a stream of type user-space as a select()able descriptor');
+        self::expectExceptionMessage(
+            'stream_select(): cannot represent a stream of type user-space as a select()able descriptor'
+        );
 
         stream_select($read, $write, $except, 0);
     }
