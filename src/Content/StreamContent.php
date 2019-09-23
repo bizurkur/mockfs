@@ -16,14 +16,25 @@ final class StreamContent extends AbstractContent
     private $stream = null;
 
     /**
-     * @param resource $stream
+     * @param resource|string $stream
      */
     public function __construct($stream)
     {
+        $content = null;
+        if (is_string($stream)) {
+            $content = $stream;
+            $stream = fopen('php://temp', 'rb+');
+        }
+
         if (!is_resource($stream)) {
             throw new InvalidArgumentException(
                 sprintf('Expected a resource; %s given.', gettype($stream))
             );
+        }
+
+        if ($content !== null) {
+            fwrite($stream, $content);
+            fseek($stream, 0, \SEEK_SET);
         }
 
         $this->stream = $stream;

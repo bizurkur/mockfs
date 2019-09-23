@@ -9,7 +9,7 @@ use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Config\ConfigInterface;
-use MockFileSystem\Content\InMemoryContent;
+use MockFileSystem\Content\StreamContent;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
@@ -509,7 +509,7 @@ class MockFileSystemTest extends TestCase
 
     public function testCreateFileSetsContent(): void
     {
-        $content = new InMemoryContent(uniqid());
+        $content = new StreamContent(uniqid());
 
         MockFileSystem::create();
 

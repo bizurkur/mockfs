@@ -4,8 +4,8 @@ namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFile;
-use MockFileSystem\Content\InMemoryContent;
 use MockFileSystem\Content\NullContent;
+use MockFileSystem\Content\StreamContent;
 
 class RegularFileTest extends RegularFileTestCase
 {
@@ -64,6 +64,6 @@ class RegularFileTest extends RegularFileTestCase
     {
         $fixture = new RegularFile(uniqid());
 
-        self::assertInstanceOf(InMemoryContent::class, $fixture->getContent());
+        self::assertInstanceOf(StreamContent::class, $fixture->getContent());
     }
 }

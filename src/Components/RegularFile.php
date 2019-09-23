@@ -5,7 +5,7 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\ContentInterface;
-use MockFileSystem\Content\InMemoryContent;
+use MockFileSystem\Content\StreamContent;
 
 /**
  * Class to represent a regular file.
@@ -30,7 +30,7 @@ class RegularFile extends AbstractFile implements RegularFileInterface
         parent::__construct($name, $permissions);
         $this->type = self::TYPE_FILE;
         if ($content === null) {
-            $content = new InMemoryContent();
+            $content = new StreamContent('');
         }
         $this->content = $content;
     }

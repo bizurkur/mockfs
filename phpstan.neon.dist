@@ -13,6 +13,9 @@ parameters:
         -
             message: '/^Parameter #3 \$options of static method MockFileSystem\\MockFileSystem::create\(\) expects array\|MockFileSystem\\Config\\ConfigInterface, string given\.$/'
             path: tests/MockFileSystemTest.php
+        -
+            message: '/^Parameter #1 \$stream of class MockFileSystem\\Content\\StreamContent constructor expects resource\|string, int given\.$/'
+            path: tests/Content/StreamContentTest.php
 
 # some of the strict rules
 services:

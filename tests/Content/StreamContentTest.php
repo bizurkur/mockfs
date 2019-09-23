@@ -28,13 +28,21 @@ class StreamContentTest extends ContentTestCase
         self::assertInstanceOf(AbstractContent::class, $this->fixture);
     }
 
+    public function testStringResource(): void
+    {
+        $content = uniqid();
+
+        $fixture = new StreamContent($content);
+
+        self::assertEquals($content, $fixture->read(100));
+    }
+
     public function testInvalidResource(): void
     {
         self::expectException(InvalidArgumentException::class);
-        self::expectExceptionMessage('Expected a resource; string given.');
+        self::expectExceptionMessage('Expected a resource; integer given.');
 
-        /** @var resource $stream */
-        $stream = uniqid();
+        $stream = rand();
 
         new StreamContent($stream);
     }
