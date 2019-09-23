@@ -27,7 +27,7 @@ final class RandomContent extends AbstractContent
      */
     public function write(string $data): int
     {
-        return mb_strlen($data);
+        return strlen($data);
     }
 
     // phpcs:disable SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter
