@@ -2,10 +2,13 @@
 
 namespace MockFileSystem\Tests\Components;
 
+use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFile;
+use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\NullContent;
 use MockFileSystem\Content\StreamContent;
+use MockFileSystem\Tests\Components\RegularFileTestCase;
 
 class RegularFileTest extends RegularFileTestCase
 {
@@ -18,7 +21,8 @@ class RegularFileTest extends RegularFileTestCase
 
     public function testInstanceOf(): void
     {
-        self::assertInstanceOf(RegularFile::class, $this->fixture);
+        self::assertInstanceOf(AbstractFile::class, $this->fixture);
+        self::assertInstanceOf(RegularFileInterface::class, $this->fixture);
     }
 
     public function testSetsNameOnConstruction(): void
