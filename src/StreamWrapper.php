@@ -504,7 +504,7 @@ final class StreamWrapper
         $file = MockFileSystem::find($path);
 
         if ($option === \STREAM_META_TOUCH) {
-            return $this->touch($path, $value);
+            return $this->touch($file, $path, $value);
         }
 
         if ($file === null || !$this->isOwner($file)) {
@@ -841,12 +841,13 @@ final class StreamWrapper
      *
      * If the file does not exists, it tries to create it.
      *
+     * @param FileInterface|null $file
      * @param string $path
      * @param int[] $value
      *
      * @return bool
      */
-    private function touch(string $path, array $value): bool
+    private function touch(?FileInterface $file, string $path, array $value): bool
     {
         $file = $file ?? $this->createFile($path);
         if ($file === null) {
