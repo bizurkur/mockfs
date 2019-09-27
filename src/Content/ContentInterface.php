@@ -76,6 +76,13 @@ interface ContentInterface
     public function isEof(): bool;
 
     /**
+     * Flushes the content.
+     *
+     * @return bool
+     */
+    public function flush(): bool;
+
+    /**
      * Gets the size of the file.
      *
      * @return int

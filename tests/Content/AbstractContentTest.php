@@ -105,6 +105,11 @@ class AbstractContentTest extends TestCase
         self::assertEquals($pos, $this->fixture->tell());
     }
 
+    public function testFlush(): void
+    {
+        self::assertTrue($this->fixture->flush());
+    }
+
     public function testUnlink(): void
     {
         self::assertTrue($this->fixture->unlink());

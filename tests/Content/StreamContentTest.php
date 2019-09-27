@@ -264,6 +264,14 @@ class StreamContentTest extends ContentTestCase
         self::assertEquals(0, @$this->fixture->tell());
     }
 
+    public function testFlush(): void
+    {
+        $this->fixture = new StreamContent(uniqid());
+        $actual = $this->fixture->flush();
+
+        self::assertTrue($actual);
+    }
+
     /**
      * Cleans up temporary files.
      *

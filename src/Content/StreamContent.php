@@ -118,6 +118,14 @@ final class StreamContent extends AbstractContent
     /**
      * {@inheritDoc}
      */
+    public function flush(): bool
+    {
+        return fflush($this->stream);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getSize(): int
     {
         $stat = fstat($this->stream);

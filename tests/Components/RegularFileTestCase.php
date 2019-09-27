@@ -254,6 +254,30 @@ abstract class RegularFileTestCase extends ComponentTestCase
         self::assertEquals($response, $actual);
     }
 
+    public function testFlushCallsContentFlush(): void
+    {
+        $content = $this->createContent();
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('flush');
+
+        $this->fixture->flush();
+    }
+
+    public function testFlushReturnsContentFlush(): void
+    {
+        $response = (bool) rand(0, 1);
+        $content = $this->createContent();
+        $this->fixture->setContent($content);
+
+        $content->method('flush')->willReturn($response);
+
+        $actual = $this->fixture->flush();
+
+        self::assertEquals($response, $actual);
+    }
+
     public function testUnlinkCallsContentUnlink(): void
     {
         $content = $this->createContent();

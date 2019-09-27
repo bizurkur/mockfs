@@ -93,6 +93,14 @@ abstract class AbstractContent implements ContentInterface
     /**
      * {@inheritDoc}
      */
+    public function flush(): bool
+    {
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     abstract public function getSize(): int;
 
     /**

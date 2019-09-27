@@ -1280,6 +1280,26 @@ class StreamWrapperTest extends TestCase
     /**
      * @dataProvider samplePrefixes
      */
+    public function testFlush(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        $content = uniqid();
+
+        $handle = fopen($url, 'w+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fwrite($handle, $content);
+        $actual = fflush($handle);
+        fclose($handle);
+
+        self::assertTrue($actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
     public function testRenameFile(string $prefix): void
     {
         $src = $prefix.'/'.uniqid('mfs_src');

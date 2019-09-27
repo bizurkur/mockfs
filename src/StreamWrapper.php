@@ -477,7 +477,7 @@ final class StreamWrapper
      */
     public function stream_flush(): bool
     {
-        return true;
+        return $this->file->flush();
     }
 
     // public function stream_lock(int $operation): bool

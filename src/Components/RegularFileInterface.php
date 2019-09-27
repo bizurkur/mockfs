@@ -80,6 +80,13 @@ interface RegularFileInterface extends FileInterface
     public function isEof(): bool;
 
     /**
+     * Flushes the file contents.
+     *
+     * @return bool
+     */
+    public function flush(): bool;
+
+    /**
      * Deletes the file.
      *
      * @return bool

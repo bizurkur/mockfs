@@ -136,6 +136,14 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function flush(): bool
+    {
+        return $this->content->flush();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function unlink(): bool
     {
         if (!$this->content->unlink()) {

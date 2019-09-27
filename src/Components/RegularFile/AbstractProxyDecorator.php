@@ -311,6 +311,14 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function flush(): bool
+    {
+        return $this->base->flush();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function unlink(): bool
     {
         return $this->base->unlink();
