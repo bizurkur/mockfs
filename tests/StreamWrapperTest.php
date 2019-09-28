@@ -3,6 +3,8 @@
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\RegularFileInterface;
+use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
@@ -1944,6 +1946,548 @@ class StreamWrapperTest extends TestCase
             [StreamWrapper::PROTOCOL.'://'],
             [sys_get_temp_dir()],
         ];
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFopenFail(): void
+    {
+        $this->setContext(['fopen_fail' => true]);
+
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+
+        $actual = @fopen($path, 'w');
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFopenFailMessage(): void
+    {
+        $path = uniqid('mfs_');
+        $junk = uniqid();
+        $message = uniqid();
+
+        $this->setContext(
+            [
+                'fopen_fail' => true,
+                'fopen_message' => $message,
+            ]
+        );
+
+        $fixture = new StreamWrapper();
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $junk);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFcloseFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        /** @var RegularFileInterface $file */
+        $file = MockFileSystem::find($path);
+        $content = $this->createMock(ContentInterface::class);
+        $file->setContent($content);
+
+        $this->setContext(['fclose_fail' => true]);
+
+        $handle = fopen($path, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+
+        $content->expects(self::never())->method('close');
+
+        fclose($handle);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFreadFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['fread_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fread($handle, 100);
+        fclose($handle);
+
+        self::assertEquals('', $actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFwriteFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+
+        $this->setContext(['fwrite_fail' => true]);
+
+        $handle = fopen($path, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = @fwrite($handle, uniqid());
+        fclose($handle);
+
+        self::assertEquals(0, $actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFseekFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['fseek_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fseek($handle, 2);
+        fclose($handle);
+
+        self::assertEquals(-1, $actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFtellFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['ftell_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fseek($handle, 2);
+        $actual = ftell($handle);
+        fclose($handle);
+
+        self::assertEquals(0, $actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFeofFailDefaultFalse(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['feof_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fread($handle, 100);
+        $actual = feof($handle);
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFeofFailOverrideTrue(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['feof_fail' => true, 'feof_response' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = feof($handle);
+        fclose($handle);
+
+        self::assertTrue($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFflushFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        /** @var RegularFileInterface $file */
+        $file = MockFileSystem::find($path);
+        $content = $this->createMock(ContentInterface::class);
+        $file->setContent($content);
+
+        $this->setContext(['fflush_fail' => true]);
+
+        $handle = fopen($path, 'w');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        fwrite($handle, uniqid());
+
+        $content->expects(self::never())->method('flush');
+
+        $actual = @fflush($handle);
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFstatFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['fstat_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = @fstat($handle);
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextFtruncateFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['ftruncate_fail' => true]);
+
+        $handle = fopen($path, 'r');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = @ftruncate($handle, 2);
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextRenameFail(): void
+    {
+        $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $pathB = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($pathA, uniqid());
+
+        $this->setContext(['rename_fail' => true]);
+
+        $actual = rename($pathA, $pathB);
+
+        self::assertFalse($actual);
+        self::assertTrue(file_exists($pathA));
+        self::assertFalse(file_exists($pathB));
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextRenameFailCreatesErrorMessage(): void
+    {
+        $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $pathB = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($pathA, uniqid());
+        $message = uniqid();
+
+        $this->setContext(['rename_fail' => true, 'rename_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        rename($pathA, $pathB);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextUnlinkFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['unlink_fail' => true]);
+
+        $actual = unlink($path);
+
+        self::assertFalse($actual);
+        self::assertTrue(file_exists($path));
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextUnlinkFailCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+        $message = uniqid();
+
+        $this->setContext(['unlink_fail' => true, 'unlink_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        unlink($path);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextStatFail(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['stat_fail' => true]);
+
+        $actual = @stat($path);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextStatFailCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($path, uniqid());
+        $message = uniqid();
+
+        $this->setContext(['stat_fail' => true, 'stat_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        stat($path);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextTouchFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+
+        $this->setContext(['touch_fail' => true]);
+
+        $actual = @touch($path);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextTouchFailsCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $message = uniqid();
+
+        $this->setContext(['touch_fail' => true, 'touch_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        touch($path);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextOpenDirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+
+        $this->setContext(['opendir_fail' => true]);
+
+        $actual = @opendir($path);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextOpenDirFailsCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+        $message = uniqid();
+
+        $this->setContext(['opendir_fail' => true, 'opendir_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        opendir($path);
+    }
+
+    /**
+     * @runInSeparateProcess
+     *
+     * TODO: Not sure if it's a bug in php, but even if dir_closedir() returns
+     * false the stream wrapper handle is still closed.
+     */
+    public function testContextCloseDirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+
+        $this->setContext(['closedir_fail' => true]);
+
+        $fixture = new StreamWrapper();
+        $fixture->dir_opendir($path, 0);
+        $actual = $fixture->dir_closedir();
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextReadDirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+
+        $this->setContext(['readdir_fail' => true]);
+
+        $handle = opendir($path);
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = readdir($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     *
+     * TODO: Not sure if it's a bug in php, but even if dir_rewinddir() returns
+     * false rewinddir() itself returns null (success).
+     */
+    public function testContextRewindDirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+
+        $this->setContext(['rewinddir_fail' => true]);
+
+        $fixture = new StreamWrapper();
+        $fixture->dir_opendir($path, 0);
+        $actual = $fixture->dir_rewinddir();
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextMkdirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+
+        $this->setContext(['mkdir_fail' => true]);
+
+        $actual = @mkdir($path);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextMkdirFailsCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $message = uniqid();
+
+        $this->setContext(['mkdir_fail' => true, 'mkdir_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        mkdir($path);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextRmdirFails(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+
+        $this->setContext(['rmdir_fail' => true]);
+
+        $actual = @rmdir($path);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @runInSeparateProcess
+     */
+    public function testContextRmdirFailsCreatesErrorMessage(): void
+    {
+        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        mkdir($path);
+        $message = uniqid();
+
+        $this->setContext(['rmdir_fail' => true, 'rmdir_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        rmdir($path);
+    }
+
+    private function setContext(array $options = []): void
+    {
+        stream_context_set_default([StreamWrapper::PROTOCOL => $options]);
     }
 
     /**

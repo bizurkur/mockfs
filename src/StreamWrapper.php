@@ -28,6 +28,24 @@ final class StreamWrapper
     public const MODE_CREATE_NEW = 'x';
 
     /**
+     * The stream's context.
+     *
+     * This is set by php and must be public.
+     *
+     * @see https://www.php.net/manual/en/function.stream-context-create.php
+     *
+     * @var resource
+     */
+    public $context = null;
+
+    /**
+     * Array of context options for the stream.
+     *
+     * @var mixed[]
+     */
+    private $contextOptions = null;
+
+    /**
      * @var \Iterator
      */
     private $dir = null;
@@ -66,6 +84,15 @@ final class StreamWrapper
      */
     public function dir_opendir(string $path, int $options): bool
     {
+        if ($this->getContextOption('opendir_fail')) {
+            $message = $this->getContextOption('opendir_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         /** @var DirectoryInterface|null $dir */
         $dir = MockFileSystem::findByType($path, FileInterface::TYPE_DIR);
         if ($dir === null) {
@@ -102,7 +129,9 @@ final class StreamWrapper
      */
     public function dir_closedir(): bool
     {
-        return true;
+        $fail = (bool) $this->getContextOption('closedir_fail', false);
+
+        return !$fail;
     }
 
     /**
@@ -114,6 +143,10 @@ final class StreamWrapper
      */
     public function dir_readdir()
     {
+        if ($this->getContextOption('readdir_fail')) {
+            return false;
+        }
+
         $file = $this->dir->current();
         if (!$file instanceof FileInterface) {
             return false;
@@ -133,6 +166,10 @@ final class StreamWrapper
      */
     public function dir_rewinddir(): bool
     {
+        if ($this->getContextOption('rewinddir_fail')) {
+            return false;
+        }
+
         $this->dir->rewind();
 
         return true;
@@ -152,6 +189,15 @@ final class StreamWrapper
      */
     public function mkdir(string $path, int $mode, int $options): bool
     {
+        if ($this->getContextOption('mkdir_fail')) {
+            $message = $this->getContextOption('mkdir_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $permissions = $mode & ~MockFileSystem::umask();
 
         $file = MockFileSystem::find($path);
@@ -228,6 +274,15 @@ final class StreamWrapper
      */
     public function rmdir(string $path, int $options): bool
     {
+        if ($this->getContextOption('rmdir_fail')) {
+            $message = $this->getContextOption('rmdir_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $file = MockFileSystem::find($path);
         if ($file === null) {
             trigger_error(
@@ -290,6 +345,17 @@ final class StreamWrapper
     public function stream_open(string $path, string $mode, int $options, ?string &$openedPath): bool
     {
         // TODO: Clean this mess up
+
+        if ($this->getContextOption('fopen_fail')) {
+            $message = $this->getContextOption('fopen_message');
+            if (is_string($message)
+                && ($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS
+            ) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
 
         if (!$this->parseMode($mode)) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
@@ -379,6 +445,10 @@ final class StreamWrapper
      */
     public function stream_close(): void
     {
+        if ($this->getContextOption('fclose_fail')) {
+            return;
+        }
+
         $this->file->close();
     }
 
@@ -393,6 +463,10 @@ final class StreamWrapper
      */
     public function stream_read(int $count): string
     {
+        if ($this->getContextOption('fread_fail')) {
+            return '';
+        }
+
         if (!$this->canRead) {
             return '';
         }
@@ -411,6 +485,10 @@ final class StreamWrapper
      */
     public function stream_write(string $data): int
     {
+        if ($this->getContextOption('fwrite_fail')) {
+            return 0;
+        }
+
         if (!$this->canWrite) {
             return 0;
         }
@@ -441,6 +519,10 @@ final class StreamWrapper
      */
     public function stream_seek(int $offset, int $whence = \SEEK_SET): bool
     {
+        if ($this->getContextOption('fseek_fail')) {
+            return false;
+        }
+
         return $this->file->seek($offset, $whence);
     }
 
@@ -453,6 +535,10 @@ final class StreamWrapper
      */
     public function stream_tell(): int
     {
+        if ($this->getContextOption('ftell_fail')) {
+            return 0;
+        }
+
         return $this->file->tell();
     }
 
@@ -465,6 +551,10 @@ final class StreamWrapper
      */
     public function stream_eof(): bool
     {
+        if ($this->getContextOption('feof_fail')) {
+            return (bool) $this->getContextOption('feof_response', false);
+        }
+
         return $this->file->isEof();
     }
 
@@ -477,6 +567,10 @@ final class StreamWrapper
      */
     public function stream_flush(): bool
     {
+        if ($this->getContextOption('fflush_fail')) {
+            return false;
+        }
+
         return $this->file->flush();
     }
 
@@ -543,10 +637,14 @@ final class StreamWrapper
      * @see https://www.php.net/manual/en/streamwrapper.stream-stat.php
      * @see https://www.php.net/manual/en/function.stat.php
      *
-     * @return int[]
+     * @return int[]|false
      */
-    public function stream_stat(): array
+    public function stream_stat()
     {
+        if ($this->getContextOption('fstat_fail')) {
+            return false;
+        }
+
         return $this->file->stat();
     }
 
@@ -562,6 +660,10 @@ final class StreamWrapper
      */
     public function stream_truncate(int $newSize): bool
     {
+        if ($this->getContextOption('ftruncate_fail')) {
+            return false;
+        }
+
         if (!$this->canWrite) {
             return false;
         }
@@ -602,6 +704,15 @@ final class StreamWrapper
      */
     public function rename(string $pathFrom, string $pathTo): bool
     {
+        if ($this->getContextOption('rename_fail')) {
+            $message = $this->getContextOption('rename_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $src = MockFileSystem::find($pathFrom);
         $parts = MockFileSystem::getFileParts($pathTo);
         $dest = MockFileSystem::find($parts['dirname']);
@@ -685,6 +796,15 @@ final class StreamWrapper
      */
     public function unlink(string $path): bool
     {
+        if ($this->getContextOption('unlink_fail')) {
+            $message = $this->getContextOption('unlink_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $file = MockFileSystem::find($path);
 
         if ($file === null) {
@@ -724,6 +844,17 @@ final class StreamWrapper
      */
     public function url_stat(string $path, int $flags)
     {
+        if ($this->getContextOption('stat_fail')) {
+            $message = $this->getContextOption('stat_message');
+            if (is_string($message)
+                && ($flags & \STREAM_URL_STAT_QUIET) !== \STREAM_URL_STAT_QUIET
+            ) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $file = MockFileSystem::find($path);
         if ($file === null) {
             if (($flags & \STREAM_URL_STAT_QUIET) !== \STREAM_URL_STAT_QUIET) {
@@ -849,6 +980,15 @@ final class StreamWrapper
      */
     private function touch(?FileInterface $file, string $path, array $value): bool
     {
+        if ($this->getContextOption('touch_fail')) {
+            $message = $this->getContextOption('touch_message');
+            if (is_string($message)) {
+                trigger_error($message, \E_USER_WARNING);
+            }
+
+            return false;
+        }
+
         $file = $file ?? $this->createFile($path);
         if ($file === null) {
             trigger_error(
@@ -904,5 +1044,46 @@ final class StreamWrapper
     private function isOwner(FileInterface $file): bool
     {
         return $file->getUser() === $file->getConfig()->getUser();
+    }
+
+    /**
+     * Gets the context options for this stream.
+     *
+     * @return mixed[]
+     */
+    private function getContextOptions(): array
+    {
+        if ($this->context === null) {
+            $this->context = stream_context_get_default();
+        }
+
+        if ($this->contextOptions === null) {
+            $this->contextOptions = stream_context_get_options($this->context);
+        }
+
+        if (array_key_exists(self::PROTOCOL, $this->contextOptions)) {
+            return $this->contextOptions[self::PROTOCOL];
+        }
+
+        return [];
+    }
+
+    /**
+     * Gets a specific context option for this stream.
+     *
+     * @param string $option
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+    private function getContextOption(string $option, $default = null)
+    {
+        $options = $this->getContextOptions();
+
+        if (isset($options[$option])) {
+            return $options[$option];
+        }
+
+        return $default;
     }
 }
