@@ -1,3 +1,5 @@
+docs/_site/
+docs/.jekyll-cache/
 vendor/
 phpcs.xml
 phpunit.xml

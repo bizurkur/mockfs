@@ -1,130 +1,178 @@
-# mockfs
-mockfs is a mock file system for PHP.
+---
+layout: page
+homepage: true
+---
 
-It can be used to test file operations without actually interacting with the real file system. This means there's no disk operations or cleanup of any kind that is needed. Create the mock file system, throw data in it, and when you're done the data simply disappears. This is the same concept as [vfsStream](https://github.com/bovigo/vfsStream) but expanded to provide additional functionality.
+# Overview
 
+> This is a [Jekyll theme](https://github.com/allejo/jekyll-docs-theme) based on [mistic100's modification](https://github.com/mistic100/jekyll-bootstrap-doc) of the official Bootstrap documentation from a few years back.
 
-# Advantages
+Jekyll Docs Theme is provided as a theme for writing documentation for your projects instead of having a single large README file or several markdown files stored in a not so user-friendly manner.
 
+This theme is still in development but is kept fairly stable; just note, there are a lot things yet to come.
 
-## Expandable
+# Installation
 
-Everything has an interface and can be replaced by your own implementation. Want to create a semi-persistent mock file system? Simply create a `ContentInterface` implementation that writes to a cache.
+## Remote Theme
 
+This theme supports [jekyll-remote-theme](https://github.com/benbalter/jekyll-remote-theme).
 
-## Multiple partition support
+1. Add the following to your Gemfile
 
-In mockfs, you can create multiple partitions for when you need to test more complex filesystem interactions. This also helps to enable support for emulating different operating system environments, such as creating a mock Windows filesystem.
+  ```ruby
+  gem "jekyll-remote-theme"
+  ```
 
+  and run `bundle install` to install the plugin
 
-## Configurable filesystem settings
+2. Add the following to your site's `_config.yml` to activate the plugin
 
-mockfs lets you pick your directory separator, illegal characters for file names, partition names, whether or not to be case-sensitive or normalize slashes, as well as set realistic file quotas.
+  ```yml
+  plugins:
+    - jekyll-remote-theme
+  ```
+  Note: If you are using a Jekyll version less than 3.5.0, use the `gems` key instead of `plugins`.
 
-mockfs defaults to using a Unix-style configuration, but comes with a `WindowsConfig` that tries to match what Windows does.
+3. Add the following to your site's `_config.yml` to choose your theme
 
+  ```yml
+  remote_theme: allejo/jekyll-docs-theme
+  ```
 
-## Emulate special devices
+## Gem Based
 
-mockfs has built-in support for emulating special devices such as /dev/null, /dev/full, /dev/zero, and /dev/random.
+Add this line to your Jekyll site's Gemfile:
 
-
-## Simulate failure conditions
-
-mockfs can help to simulate more complex failure conditions. For example, if you need `file_exists()` to pass but want `fopen()` to fail, mockfs has context options for that.
-
-
-## Multibyte support
-
-As with most real filesystems, multibyte file names and content are supported.
-
-
-# Install
-
-Install using composer:
-
-```sh
-composer require bizurkur/mockfs --dev
+```ruby
+gem "jekyll-docs-theme"
 ```
 
+And add this line to your Jekyll site's _config.yml:
 
-# Usage
-
-An example of the most basic usage:
-
-```php
-<?php
-
-use MockFileSystem\MockFileSystem as mockfs;
-
-// Create the filesystem
-mockfs::create();
-
-// Prefix a path with the mockfs handle
-$file = mockfs::getUrl('/test');
-
-// Treat the file as any regular file
-file_put_contents($file, 'Hello, World!');
-chmod($file, 0600);
+```yaml
+theme: jekyll-docs-theme
 ```
 
+And then execute:
 
-# Advanced
-
-## Simulate failures
-
-Sometimes you need `fopen()` or `fread()` to fail and mockfs makes simulating those conditions easier using stream contexts.
-
-```php
-<?php
-
-use MockFileSystem\MockFileSystem as mockfs;
-
-mockfs::create();
-
-$file = mockfs::getUrl('/test');
-file_put_contents($file, uniqid());
-
-// Use stream context to tell mockfs to fail on fopen()
-stream_context_set_default(
-    [
-        'mfs' => [
-            'fopen_fail' => true,
-        ]
-    ]
-);
-
-if (file_exists($file)) {
-    $handle = @fopen($file, 'r');
-    if ($handle === false) {
-        throw new \Exception("uh-oh spaghetti-o's");
-    }
-}
+```
+$ bundle
 ```
 
+Or install it yourself as:
 
-## Emulate different filesystems
+```
+$ gem install jekyll-docs-theme
+```
 
-You can use mockfs to emulate different filesystem settings. By default, it uses Unix-style filesystem settings (the "/" file separator, files are case-sensitive, and which slash you use matters).
+# Configuration Options
 
-```php
-<?php
+A sample [`_config.yml`](https://github.com/allejo/jekyll-docs-theme/blob/master/_config.yml) file is available with all of the available fields; documentation and more information for each of those fields is available below.
 
-use MockFileSystem\Config\WindowsConfig;
-use MockFileSystem\MockFileSystem as mockfs;
+## Project
 
-// Create the default "C:\\" partition
-// Set the config to use Windows presets
-mockfs::create('C:', null, new WindowsConfig());
-mockfs::addPartition('D:');
+The project object can be specified with information related to the software this; this information will appear on the homepage's jumbotron area.
 
-$fileA = mockfs::getUrl('C:\\myfile.txt');
-$fileB = mockfs::getUrl('D:\\other.file');
+```yaml
+project:
+  version: 1.0.0
+  download_url: https://github.com/USER/PROJECT/releases
+```
 
-file_put_contents($fileA, 'file A');
-file_put_contents($fileB, 'file B');
+{:.table}
+| field | description |
+| ----- | ----------- |
+| `version` | The current version of the software |
+| `download_url` | The URL to the current download |
 
-// Access the file using a different case
-var_dump(file_get_contents(strtoupper($fileA)));
-// dumps "file A"
+## Licenses
+
+The license object accepts four fields regarding information about the licensing of your software and documentation.
+
+```yaml
+license:
+  software: MIT License
+  software_url: http://opensource.org/licenses/MIT
+
+  docs: CC BY 3.0
+  docs_url: http://creativecommons.org/licenses/by/3.0/
+```
+
+{:.table}
+| field | description |
+| ----- | ----------- |
+| `software` | The license the software is distributed under |
+| `software_url` | A URL to the license text for the license specified in `software` |
+| `docs` | The license this documentation is distributed under |
+| `docs_url` | A URL to the license text for the license specified in `docs` |
+
+## Links
+
+The links object has two subobjects, `header` and `footer`; both of these objects accept an array of elements with a `title` and `url`. The links defined in the `header` object will appear in the navigation of the website and the links in the `footer` will appear at the bottom of the website.
+
+```yaml
+links:
+  header:
+    - title: GitHub
+      url: https://github.com/allejo/jekyll-docs-theme
+  footer:
+    - title: GitHub
+      url: https://github.com/allejo/jekyll-docs-theme
+    - title: Issues
+      url: https://github.com/allejo/jekyll-docs-theme/issues?state=open
+```
+
+{:.table}
+| field | description |
+| ----- | ----------- |
+| `title` | The textual representation of the URL |
+| `url` | The URL of the link |
+
+## UI
+
+The ui object will contain all the settings in regards to the aesthetics of the website
+
+```yaml
+ui:
+  header:
+    color1: "#080331"
+    color2: "#673051"
+    trianglify: true
+```
+
+{:.table}
+| field | description |
+| ----- | ----------- |
+| `color1` & `color2` | The two colors that will create the gradient of the page header |
+| `trianglify` | When set to true, the page header will be a generated triangular pattern |
+
+## Analytics
+
+```yaml
+analytics:
+    google: UA-123456-1
+```
+
+{:.table}
+| field | description |
+| ----- | ----------- |
+| `google` | The unique identifier for Google Analytics; typically looks like `U-123456-1`
+
+## Social
+
+Options for configuring buttons to "like", "tweet" or "star" this site with the respective social media websites.
+
+```yaml
+social:
+  github:
+    user: allejo
+    repo: jekyll-docs-theme
+  twitter:
+    enabled: false
+    via:
+    hash:
+    account:
+  facebook:
+    enabled: false
+    profileUrl:
 ```

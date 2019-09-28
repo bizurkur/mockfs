@@ -1,0 +1,65 @@
+url: https://bizurkur.github.io/mockfs/
+title: mockfs
+description: Mock file system for PHP
+
+project:
+    version: 0.1.0
+    download_url: https://github.com/bizurkur/mockfs/releases
+
+license:
+    software: MIT License
+    software_url: http://opensource.org/licenses/MIT
+
+    docs: CC BY 3.0
+    docs_url: http://creativecommons.org/licenses/by/3.0/
+
+social:
+    github:
+        user: bizurkur
+        repo: mockfs
+    twitter:
+        enabled: false
+        via:
+        hash:
+        account:
+    facebook:
+        enabled: false
+        profileUrl:
+
+links:
+    header:
+      - title: GitHub
+        url: https://github.com/bizurkur/mockfs
+        icon: github
+    footer:
+      - title: GitHub
+        url: https://github.com/bizurkur/mockfs
+      - title: Issues
+        url: https://github.com/bizurkur/mockfs/issues?state=open
+
+ui:
+    header:
+        color1: "#080331"
+        color2: "#673051"
+        trianglify: true
+
+# analytics:
+#     google: UA-123456-1
+
+defaults:
+  - scope:
+      path: ''
+    values:
+      layout: 'default'
+
+permalink: /:title
+
+plugins:
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+# Build settings
+markdown: kramdown
+exclude:
+    - Gemfile
+    - Gemfile.lock

@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
+@import "normalize";
+@import "rouge-github";
+@import "variables";
+@import "jekyll-theme-cayman";
+
+img {
+  max-width: 100%;
+}
+
+.bs-docs-container {
+    position: relative;
+}
+
+.bs-docs-nav {
+    .navbar-brand {
+        font-weight: bold;
+    }
+}
+
+.bs-docs-masthead {
+    padding-top: 50px;
+    padding-bottom: 40px;
+    margin-bottom: 20px;
+
+    .version {
+        color: #fff;
+    }
+}
+
+.bs-docs-header h1,
+.bs-docs-header p {
+    margin-right: 0;
+}
+
+.bs-docs-sidebar {
+    display: none;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+
+    .nav > li > a {
+        font-size: 15px;
+
+        .nav > li > a {
+            font-size: 14px;
+        }
+    }
+}
+
+.back-top-top {
+    font-size: 13px;
+}
+
+#jumbotron-header {
+    position:relative;
+
+    .home-title {
+        margin-bottom: 10px;
+    }
+
+    &:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        height: 50px;
+        width: 30%;
+        background: linear-gradient(135deg, transparent 50px, white 50px);
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    .content-anchor {
+        display: none;
+        color: #bbb;
+    }
+
+    &:hover .content-anchor {
+        display: inline;
+
+        &:hover {
+            color: #888;
+        }
+    }
+}
