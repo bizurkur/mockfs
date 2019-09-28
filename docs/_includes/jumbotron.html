@@ -1,8 +1,8 @@
 {% if page.homepage %}
     <div class="bs-docs-masthead" id="jumbotron-header">
         <div class="container">
-            <h1 class="home-title">{{ page.title | default: site.title }}</h1>
-            <p class="lead">{{ page.description | default: site.description }}</p>
+            <h1 class="home-title">{{ site.title }}</h1>
+            <p class="lead">{{ site.description }}</p>
             <p class="lead">
                 <a href="{{ site.project.download_url }}" class="btn btn-outline-inverse btn-lg btn-download">
                     <i class="fa fa-download"></i> Download

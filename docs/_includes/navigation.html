@@ -24,7 +24,8 @@
                 {% for link in site.links.header %}
                     <li>
                         <a href="{{ link.url }}">
-                            {% if link.icon %}<i class="fa fa-{{ link.icon }}"></i> {% endif %}{{ link.title }}
+                            {%- if link.icon %}<i class="fa fa-{{ link.icon }}"></i> {% endif -%}
+                            {{- link.title -}}
                         </a>
                     </li>
                 {% endfor %}

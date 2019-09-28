@@ -22,7 +22,12 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/stickyfill/1.1.4/stickyfill.min.js" integrity="sha256-01T1jhg+2Az9Xx4jzD66ORPDzJteFs7vGa3qa2hWAzY=" crossorigin="anonymous"></script>
         <script src="{{ '/assets/js/docs.min.js' | relative_url }}"></script>
 
-        {% seo %}
+        {% if page.homepage %}
+            <title>{{ site.title }} | {{ site.description }}</title>
+            {% seo title=false %}
+        {% else %}
+            {% seo title=false %}
+        {% endif %}
     </head>
 
     <body>
