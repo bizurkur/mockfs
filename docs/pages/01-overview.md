@@ -9,7 +9,7 @@ guide: true
 
 mockfs is a mock file system for PHP.
 
-It can be used to test file operations without actually interacting with the real file system. This means there's no disk operations or cleanup of any kind that is needed. Create the mock file system, throw data in it, and when you're done the data simply disappears. This is the same concept as [vfsStream](https://github.com/bovigo/vfsStream), but it's written from the ground up to be more extensible and follow more strict coding practices.
+It can be used to test file operations without actually interacting with the real file system. This means there's no disk operations or cleanup of any kind that is needed. Create the mock file system, throw data in it, and when you're done the data simply disappears. This is the same concept as [vfsStream](https://github.com/bovigo/vfsStream), but it's written from the ground up to be more extensible and have a few extra features.
 
 Best of all, mockfs can be used in any PHP testing framework.
 
@@ -51,6 +51,8 @@ Certain functions do not work with custom stream wrappers and thus they do not w
   - `tempnam()`
 
   - `realpath()`
+
+  - `link()`, `linkinfo()`, `readlink()`, `symlink()`
 
   - `ZipArchive`
 

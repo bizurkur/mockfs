@@ -5,10 +5,26 @@ permalink: /install
 guide: true
 ---
 
+## Requirements
+
+For mockfs to be installed, your system should have at least:
+
+- [PHP](https://www.php.net/downloads.php) >= 7.2
+
+- [mbstring](https://www.php.net/manual/en/book.mbstring.php) extension
+
+- [POSIX](https://www.php.net/manual/en/book.posix.php) extension (if running on a Linux OS)
+
+
 ## Composer
 
-It's recommended to install as a dev dependency using [composer](https://getcomposer.org/):
+It's recommended to install as a dev dependency using [Composer](https://getcomposer.org/):
 
 ```sh
 composer require bizurkur/mockfs --dev
 ```
+
+
+## Download
+
+If you don't want to use Composer to install, you can either [clone the repo]({{ site.repository }}) or download the [source files]({{ site.repository }}/releases) directly.

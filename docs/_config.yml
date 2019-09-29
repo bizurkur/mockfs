@@ -1,7 +1,7 @@
 url: https://bizurkur.github.io/mockfs/
 repository: https://github.com/bizurkur/mockfs
 title: mockfs
-description: Mock file system for PHP
+description: Mock filesystem for PHP
 
 project:
     version: 0.1.0

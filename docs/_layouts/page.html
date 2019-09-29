@@ -48,7 +48,7 @@ layout: default
         </div>
 
         {% unless page.sidebar == false %}
-            <div class="col-md-3 col-lg-2 col-lg-offset-1 bs-docs-sidebar hidden-print" role="complementary">
+            <div class="col-md-3 bs-docs-sidebar hidden-print" role="complementary">
                 <ul class="nav bs-docs-sidenav">
                     {% assign sorted_pages = site.pages | sort: "name" %}
                     {%- for link in site.pages -%}
