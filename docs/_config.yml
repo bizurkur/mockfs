@@ -1,4 +1,5 @@
 url: https://bizurkur.github.io/mockfs/
+repository: https://github.com/bizurkur/mockfs
 title: mockfs
 description: Mock file system for PHP
 
@@ -17,6 +18,7 @@ social:
     github:
         user: bizurkur
         repo: mockfs
+        url: https://github.com/bizurkur/mockfs
     twitter:
         enabled: false
         via:
@@ -47,6 +49,10 @@ ui:
 #     google: UA-123456-1
 
 defaults:
+  - scope:
+      path: 'assets/'
+    values:
+      hide: true
   - scope:
       path: ''
     values:

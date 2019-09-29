@@ -1,15 +1,53 @@
-@import url('https://fonts.googleapis.com/css?family=Open+Sans:400,700');
-@import "normalize";
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:100,400,700');
 @import "rouge-github";
 @import "variables";
-@import "jekyll-theme-cayman";
 
-img {
-  max-width: 100%;
+* {
+  box-sizing: border-box;
 }
 
-.bs-docs-container {
-    position: relative;
+body {
+    padding: 0;
+    margin: 0;
+    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.5;
+    color: $body-text-color;
+}
+
+#jumbotron-header {
+    position:relative;
+    background: $main-900;
+    background: linear-gradient(135deg, $main-900, $main-600);
+
+    .home-title {
+        margin-bottom: 10px;
+    }
+
+    &:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        height: 50px;
+        width: 30%;
+        background: linear-gradient(135deg, transparent 50px, white 50px);
+    }
+}
+
+h1, h2, h3, h4, h5, h6 {
+    .content-anchor {
+        display: none;
+        color: $gray-300;
+    }
+
+    &:hover .content-anchor {
+        display: inline;
+
+        &:hover {
+            color: $main-300;
+        }
+    }
 }
 
 .bs-docs-nav {
@@ -34,7 +72,7 @@ img {
 }
 
 .bs-docs-sidebar {
-    display: none;
+    display: block;
     position: -webkit-sticky;
     position: sticky;
     top: 20px;
@@ -46,41 +84,44 @@ img {
             font-size: 14px;
         }
     }
-}
 
-.back-top-top {
-    font-size: 13px;
-}
-
-#jumbotron-header {
-    position:relative;
-
-    .home-title {
-        margin-bottom: 10px;
-    }
-
-    &:after {
-        content: "";
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        height: 50px;
-        width: 30%;
-        background: linear-gradient(135deg, transparent 50px, white 50px);
+    .back-top-top {
+        font-size: 13px;
     }
 }
 
-h1, h2, h3, h4, h5, h6 {
-    .content-anchor {
-        display: none;
-        color: #bbb;
+.feature {
+    .feature-header {
+        font-size: 3rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid $main-300;
     }
+    .feature-text {
+        font-size: 2rem;
+    }
+}
 
-    &:hover .content-anchor {
-        display: inline;
+.site-footer {
+    padding-top: 2rem;
+    margin-top: 10rem;
+    margin-bottom: 2rem;
+    border-top: solid 1px $hr-border-color;
 
-        &:hover {
-            color: #888;
+    .site-footer-links {
+        margin: 0;
+        padding: 0;
+
+        li {
+            display: inline;
+            white-space: nowrap;
+
+            &::after {
+                content: " \00b7";
+                margin: 0 .5rem;
+            }
+            &:last-child::after {
+                content: none;
+            }
         }
     }
 }
