@@ -268,6 +268,19 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
+    public function addTo(ContainerInterface $container): void
+    {
+        $parent = $this->getParent();
+        if ($parent !== null && !$parent instanceof FileSystemInterface) {
+            $parent->removeChild($this->getName());
+        }
+
+        $container->addChild($this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function isReadable(int $user, int $group): bool
     {
         if ($this->user === $user) {

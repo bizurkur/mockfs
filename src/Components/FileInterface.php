@@ -3,6 +3,7 @@
 namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ChildInterface;
+use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\ReferenceableInterface;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\RuntimeException;
@@ -171,6 +172,15 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * @param string $name
      */
     public function setName(string $name): void;
+
+    /**
+     * Adds this file to the given container.
+     *
+     * This should remove the file from its current container.
+     *
+     * @param ContainerInterface $container
+     */
+    public function addTo(ContainerInterface $container): void;
 
     /**
      * Gets the size of the file.

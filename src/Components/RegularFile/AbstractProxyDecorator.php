@@ -167,6 +167,14 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function addTo(ContainerInterface $container): void
+    {
+        $this->base->addTo($container);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getPath(): string
     {
         return $this->base->getPath();
