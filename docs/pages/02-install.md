@@ -18,11 +18,13 @@ For mockfs to be installed, your system should have at least:
 
 ## Composer
 
-It's recommended to install as a dev dependency using [Composer](https://getcomposer.org/):
+It's recommended to install mockfs as a dev dependency using [Composer](https://getcomposer.org/):
 
 ```sh
 composer require bizurkur/mockfs --dev
 ```
+
+If you don't have Composer installed, be sure to check out their [download page](https://getcomposer.org/download/).
 
 
 ## Download

@@ -5,46 +5,48 @@ layout: default
 <div class="container">
     <div class="row">
         <div class="{% if page.disable_sidebar %}col-md-12{% else %}col-md-9{% endif %}" role="main">
-            <div class="bs-docs-section">{{ content }}</div>
+            <div class="bs-docs-section">
+                {{ content }}
 
-            {%- if page.guide -%}
-                {% assign prev_page = nil %}
-                {% assign next_page = nil %}
-                {% assign stop_loop = false %}
-                {% assign sorted_pages = site.pages | sort: "name" %}
-                {% for link in site.pages %}
-                    {% if link.hide != true and link.guide and link.title %}
-                        {% if stop_loop %}
-                            {% assign next_page = link %}
-                            {% break %}
+                {%- if page.guide -%}
+                    {% assign prev_page = nil %}
+                    {% assign next_page = nil %}
+                    {% assign stop_loop = false %}
+                    {% assign sorted_pages = site.pages | sort: "name" %}
+                    {% for link in site.pages %}
+                        {% if link.hide != true and link.guide and link.title %}
+                            {% if stop_loop %}
+                                {% assign next_page = link %}
+                                {% break %}
+                            {% endif %}
+                            {% if page.title == link.title %}
+                                {% assign stop_loop = true %}
+                            {% else %}
+                                {% assign prev_page = link %}
+                            {% endif %}
                         {% endif %}
-                        {% if page.title == link.title %}
-                            {% assign stop_loop = true %}
-                        {% else %}
-                            {% assign prev_page = link %}
-                        {% endif %}
-                    {% endif %}
-                {% endfor %}
+                    {% endfor %}
 
-                {%- if prev_page or next_page -%}
-                    <div class="row guide-pagination-links">
-                        <div class="col-md-6">
-                            {%- if prev_page -%}
-                                <a href="{{ prev_page.url | relative_url }}">
-                                    &larr; {{ prev_page.title }}
-                                </a>
-                            {%- endif -%}
+                    {%- if prev_page or next_page -%}
+                        <div class="row guide-pagination-links">
+                            <div class="col-xs-6">
+                                {%- if prev_page -%}
+                                    <a href="{{ prev_page.url | relative_url }}">
+                                        &larr; {{ prev_page.title }}
+                                    </a>
+                                {%- endif -%}
+                            </div>
+                            <div class="col-xs-6 text-right">
+                                {%- if next_page -%}
+                                    <a href="{{ next_page.url | relative_url }}">
+                                        {{ next_page.title }} &rarr;
+                                    </a>
+                                {%- endif -%}
+                            </div>
                         </div>
-                        <div class="col-md-6 text-right">
-                            {%- if next_page -%}
-                                <a href="{{ next_page.url | relative_url }}">
-                                    {{ next_page.title }} &rarr;
-                                </a>
-                            {%- endif -%}
-                        </div>
-                    </div>
+                    {%- endif -%}
                 {%- endif -%}
-            {%- endif -%}
+            </div>
         </div>
 
         {% unless page.sidebar == false %}

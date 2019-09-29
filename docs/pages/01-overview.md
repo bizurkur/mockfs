@@ -7,9 +7,9 @@ guide: true
 
 ## What is It?
 
-mockfs is a mock file system for PHP.
+mockfs is a mock filesystem for PHP.
 
-It can be used to test file operations without actually interacting with the real file system. This means there's no disk operations or cleanup of any kind that is needed. Create the mock file system, throw data in it, and when you're done the data simply disappears. This is the same concept as [vfsStream](https://github.com/bovigo/vfsStream), but it's written from the ground up to be more extensible and have a few extra features.
+It can be used to test file operations without actually interacting with the real filesystem. This means there's no disk operations or cleanup of any kind that is needed. Create the mock filesystem, throw data in it, and when you're done the data simply disappears. This is the same concept as [vfsStream](https://github.com/bovigo/vfsStream), but it's written from the ground up to be more extensible and have a few extra features.
 
 Best of all, mockfs can be used in any PHP testing framework.
 
@@ -46,26 +46,28 @@ Using a [custom stream wrapper](https://www.php.net/manual/en/class.streamwrappe
 
 ## Limitations
 
-Certain functions do not work with custom stream wrappers and thus they do not work with mockfs. There are no known ways around these limitations. If you need to test code using any of these functions, you will likely need to use real files:
-
-  - `tempnam()`
-
-  - `realpath()`
-
-  - `link()`, `linkinfo()`, `readlink()`, `symlink()`
-
-  - `ZipArchive`
-
 As of this time, mockfs doesn't have the code to support the following (yet):
 
-  - `flock()` - Advisory file locking
+- `flock()` - Advisory file locking
 
-  - `stream_select()` - Retrieve the underlaying resource
+- `stream_select()` - Retrieve the underlaying resource (likely will never support)
 
-  - `stream_set_blocking()` - Set blocking/non-blocking mode
+- `stream_set_blocking()` - Set blocking/non-blocking mode
 
-  - `stream_set_timeout()` - Set timeout period
+- `stream_set_timeout()` - Set timeout period
 
-  - `stream_set_write_buffer()` - Sets write file buffering
+- `stream_set_write_buffer()` - Sets write file buffering
 
-  - Symlinks
+- Symlinks (might not support ever)
+
+Additionally, certain functions do not work with custom stream wrappers and thus they do not work with mockfs. These limitations exist at the PHP level and there are no known ways around them. If you need to test code using any of these functions, you will likely need to use real files:
+
+- `tempnam()`
+
+- `realpath()`
+
+- `link()`, `linkinfo()`, `readlink()`, `symlink()`
+
+- `glob()`
+
+- `ZipArchive`

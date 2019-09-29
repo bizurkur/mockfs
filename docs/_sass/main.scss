@@ -35,21 +35,6 @@ body {
     }
 }
 
-h1, h2, h3, h4, h5, h6 {
-    .content-anchor {
-        display: none;
-        color: $gray-300;
-    }
-
-    &:hover .content-anchor {
-        display: inline;
-
-        &:hover {
-            color: $main-300;
-        }
-    }
-}
-
 .bs-docs-nav {
     .navbar-brand {
         font-weight: bold;
@@ -69,6 +54,59 @@ h1, h2, h3, h4, h5, h6 {
 .bs-docs-header h1,
 .bs-docs-header p {
     margin-right: 0;
+}
+.bs-docs-section {
+    h2 {
+        margin-top: 5rem;
+        padding-top: 5rem;
+        border-top: 1px solid $gray-300;
+
+        &:first-child {
+            margin-top: 20px;
+            padding-top: 0;
+            border-top: none;
+        }
+    }
+    h3 {
+        margin-top: 3rem;
+    }
+    h4 {
+        margin-top: 2.5rem;
+    }
+}
+
+.bs-docs-section,
+.site-footer {
+    a {
+        color: $main-300;
+        border-bottom: 1px dashed $main-300;
+
+        &:hover,
+        &:focus {
+            color: $main-600;
+            text-decoration: none;
+        }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        .content-anchor {
+            display: none;
+            color: $gray-300;
+            border-bottom: none;
+        }
+
+        &:hover .content-anchor {
+            display: inline;
+
+            &:hover {
+                color: $main-300;
+            }
+        }
+    }
+}
+
+.guide-pagination-links {
+    margin-top: 10rem;
 }
 
 .bs-docs-sidebar {
@@ -110,6 +148,7 @@ h1, h2, h3, h4, h5, h6 {
     .site-footer-links {
         margin: 0;
         padding: 0;
+        padding-bottom: 3rem;
 
         li {
             display: inline;
@@ -122,6 +161,17 @@ h1, h2, h3, h4, h5, h6 {
             &:last-child::after {
                 content: none;
             }
+        }
+
+        @media screen and (min-width: map-get($grid-breakpoints, 'lg')) {
+            padding-bottom: 0;
+        }
+    }
+    .site-footer-credit {
+        font-size: 1.2rem;
+
+        @media screen and (min-width: map-get($grid-breakpoints, 'lg')) {
+            text-align: right;
         }
     }
 }
