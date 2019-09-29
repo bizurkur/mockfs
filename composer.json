@@ -1,7 +1,7 @@
 {
     "name": "bizurkur/mockfs",
     "type": "library",
-    "description": "Mock File System",
+    "description": "Mock filesystem for PHP",
     "license": "MIT",
     "authors": [
         {
