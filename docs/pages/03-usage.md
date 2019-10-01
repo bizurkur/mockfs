@@ -96,7 +96,7 @@ use MockFileSystem\MockFileSystem as mockfs;
 
 mockfs::create('', null, ['ignoreCase' => true]);
 
-file_put_contents($mockfs::getUrl('test.txt'), 'some data');
+file_put_contents(mockfs::getUrl('test.txt'), 'some data');
 
 $data = file_get_contents(mockfs::getUrl('TeST.txt'));
 var_dump($data);
