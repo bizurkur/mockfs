@@ -26,6 +26,42 @@ class StreamWrapperTest extends TestCase
         parent::tearDown();
 
         MockFileSystem::destroy();
+
+        stream_context_set_default(
+            [
+                StreamWrapper::PROTOCOL => [
+                    'opendir_fail' => false,
+                    'opendir_message' => null,
+                    'closedir_fail' => false,
+                    'readdir_fail' => false,
+                    'rewinddir_fail' => false,
+                    'mkdir_fail' => false,
+                    'mkdir_message	' => null,
+                    'rmdir_fail' => false,
+                    'rmdir_message' => null,
+                    'fopen_fail' => false,
+                    'fopen_message' => null,
+                    'fclose_fail' => false,
+                    'fread_fail' => false,
+                    'fwrite_fail' => false,
+                    'fseek_fail' => false,
+                    'ftell_fail' => false,
+                    'feof_fail' => false,
+                    'feof_response' => false,
+                    'fflush_fail' => false,
+                    'fstat_fail' => false,
+                    'ftruncate_fail' => false,
+                    'rename_fail' => false,
+                    'rename_message' => null,
+                    'stat_fail' => false,
+                    'stat_message' => null,
+                    'touch_fail' => false,
+                    'touch_message' => null,
+                    'unlink_fail' => false,
+                    'unlink_message' => null,
+                ],
+            ]
+        );
     }
 
     /**
@@ -1948,9 +1984,6 @@ class StreamWrapperTest extends TestCase
         ];
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFopenFail(): void
     {
         $this->setContext(['fopen_fail' => true]);
@@ -1962,9 +1995,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFopenFailMessage(): void
     {
         $path = uniqid('mfs_');
@@ -1986,9 +2016,6 @@ class StreamWrapperTest extends TestCase
         $fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $junk);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFcloseFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2011,9 +2038,6 @@ class StreamWrapperTest extends TestCase
         fclose($handle);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFreadFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2031,9 +2055,6 @@ class StreamWrapperTest extends TestCase
         self::assertEquals('', $actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFwriteFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2050,9 +2071,6 @@ class StreamWrapperTest extends TestCase
         self::assertEquals(0, $actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFseekFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2070,9 +2088,6 @@ class StreamWrapperTest extends TestCase
         self::assertEquals(-1, $actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFtellFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2091,9 +2106,6 @@ class StreamWrapperTest extends TestCase
         self::assertEquals(0, $actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFeofFailDefaultFalse(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2112,9 +2124,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFeofFailOverrideTrue(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2132,9 +2141,6 @@ class StreamWrapperTest extends TestCase
         self::assertTrue($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFflushFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2161,9 +2167,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFstatFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2181,9 +2184,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextFtruncateFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2201,9 +2201,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextRenameFail(): void
     {
         $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2219,9 +2216,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse(file_exists($pathB));
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextRenameFailCreatesErrorMessage(): void
     {
         $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2237,9 +2231,6 @@ class StreamWrapperTest extends TestCase
         rename($pathA, $pathB);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextUnlinkFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2253,9 +2244,6 @@ class StreamWrapperTest extends TestCase
         self::assertTrue(file_exists($path));
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextUnlinkFailCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2270,9 +2258,6 @@ class StreamWrapperTest extends TestCase
         unlink($path);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextStatFail(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2285,9 +2270,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextStatFailCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2302,9 +2284,6 @@ class StreamWrapperTest extends TestCase
         stat($path);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextTouchFails(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2316,9 +2295,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextTouchFailsCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2332,9 +2308,6 @@ class StreamWrapperTest extends TestCase
         touch($path);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextOpenDirFails(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2347,9 +2320,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextOpenDirFailsCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2365,8 +2335,6 @@ class StreamWrapperTest extends TestCase
     }
 
     /**
-     * @runInSeparateProcess
-     *
      * TODO: Not sure if it's a bug in php, but even if dir_closedir() returns
      * false the stream wrapper handle is still closed.
      */
@@ -2384,9 +2352,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextReadDirFails(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2404,8 +2369,6 @@ class StreamWrapperTest extends TestCase
     }
 
     /**
-     * @runInSeparateProcess
-     *
      * TODO: Not sure if it's a bug in php, but even if dir_rewinddir() returns
      * false rewinddir() itself returns null (success).
      */
@@ -2423,9 +2386,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextMkdirFails(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2437,9 +2397,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextMkdirFailsCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2453,9 +2410,6 @@ class StreamWrapperTest extends TestCase
         mkdir($path);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextRmdirFails(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
@@ -2468,9 +2422,6 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
-    /**
-     * @runInSeparateProcess
-     */
     public function testContextRmdirFailsCreatesErrorMessage(): void
     {
         $path = StreamWrapper::PROTOCOL.':///'.uniqid();
