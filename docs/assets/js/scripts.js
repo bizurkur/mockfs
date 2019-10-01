@@ -1,6 +1,8 @@
-$(function(){
-    $('html').toggleClass('no-js js');
-    $('.bs-docs-sidebar').Stickyfill();
+document.addEventListener('DOMContentLoaded', function () {
+    var sidebar = document.querySelector('.bs-docs-sidebar');
+    Stickyfill.add(sidebar);
+
+    // TODO: Make this vanilla and drop jQuery
     $('body').scrollspy({
         target: '.bs-docs-sidebar .nav',
     });
