@@ -59,6 +59,7 @@ class WindowsConfigTest extends TestCase
                 'group separator' => "\x1d",
                 'record separator' => "\x1e",
                 'unit separator' => "\x1f",
+                'delete' => "\x7f",
                 '<',
                 '>',
                 ':',
