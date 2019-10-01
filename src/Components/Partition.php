@@ -16,7 +16,7 @@ final class Partition extends Directory implements PartitionInterface
      */
     public function getPath(): string
     {
-        $sep = $this->getConfig()->getSeparator();
+        $sep = $this->getConfig()->getFileSeparator();
 
         $name = $this->getName();
         $parent = $this->getParent();

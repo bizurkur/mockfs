@@ -16,7 +16,7 @@ class WindowsConfig extends Config
     {
         return [
             'umask' => 0000,
-            'separator' => '\\',
+            'fileSeparator' => '\\',
             'ignoreCase' => true,
             'includeDotFiles' => true,
             'normalizeSlashes' => true,

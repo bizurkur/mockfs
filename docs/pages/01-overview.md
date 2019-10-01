@@ -26,7 +26,7 @@ mockfs comes with several useful features to test complex scenarios:
 
 - Support for multiple partitions
 
-- Configurable directory separator, case sensitivity, and filename character blacklist
+- Configurable file separator, case sensitivity, and filename character blacklist
 
 - Supports multiple read/writes to the same file at the same time
 

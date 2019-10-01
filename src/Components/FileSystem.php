@@ -84,7 +84,7 @@ final class FileSystem implements FileSystemInterface
     {
         $clean = trim($path);
 
-        $sep = $this->config->getSeparator();
+        $sep = $this->config->getFileSeparator();
         if ($this->config->getNormalizeSlashes()) {
             $clean = str_replace(['\\', '/'], $sep, $clean);
         }

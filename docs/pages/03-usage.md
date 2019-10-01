@@ -79,7 +79,7 @@ if ($handle === false) {
 
 mockfs defaults to using a Linux-style filesystem configuration. This means all of the following rules apply:
 
-- It uses `/` as the directory separator
+- It uses `/` as the file separator
 
 - Filenames are case-sensitive (e.g. `test.txt` is NOT the same as `TEST.TXT`)
 
@@ -112,11 +112,11 @@ The following are all of the valid configuration options that can be used:
 | Option | Type | Description |
 | ----- | ---- | ----------- |
 | `umask` | `int` | Octal representation of the umask to apply to new files added to the system. Defaults to `0000` |
-| `separator` | `string` | Directory separator to use. Defaults to `/` |
+| `fileSeparator` | `string` | File separator to use. Defaults to `/` |
 | `ignoreCase` | `bool` | Whether or not to ignore filename casing (e.g. is `test.txt` the same as `TesT.txT`). Defaults to `false` |
 | `includeDotFiles` | `bool` | Whether or not to include dot files (`.` and `..`) when listing directory contents. Defaults to `true` |
-| `normalizeSlashes` | `bool` | Whether or not to convert `\` and `/` to whatever the `separator` option is set to. Defaults to `false` |
-| `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `separator` option and the `null` character are always in the blacklist, even when the array is empty |
+| `normalizeSlashes` | `bool` | Whether or not to convert `\` and `/` to whatever the `fileSeparator` option is set to. Defaults to `false` |
+| `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `fileSeparator` option and the `null` character are always in the blacklist, even when the array is empty |
 | `user` | `int|null` | The user ID of the current user. Defaults to `null` (gets the UID from the system) |
 | `group` | `int|null` | The group ID of the current user. Defaults to `null` (gets the GID from the system) |
 | `quota` | `QuotaInterface` | The quota to apply to the filesystem. Defaults to `null`. See the [Quotas](#setting-filedisk-quotas) section for more info |
@@ -128,7 +128,7 @@ You can also create your own defaults by extending `MockFileSystem\Config\Config
 
 For example, if you prefer to use Windows-style defaults there's a pre-built config for that. It has the following rules:
 
-- It uses `\` as the directory separator
+- It uses `\` as the file separator
 
 - Filenames are case-insensitive (e.g. `test.txt` is the same as `TEST.TXT`)
 

@@ -26,7 +26,7 @@ class ConfigTest extends TestCase
 
         $expected = [
             'umask' => 0000,
-            'separator' => '/',
+            'fileSeparator' => '/',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -66,7 +66,7 @@ class ConfigTest extends TestCase
     {
         $default = [
             'umask' => 0000,
-            'separator' => '/',
+            'fileSeparator' => '/',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -84,9 +84,9 @@ class ConfigTest extends TestCase
                 'options' => ['umask' => 0444],
                 'expected' => array_replace($default, ['umask' => 0444]),
             ],
-            'separator' => [
-                'options' => ['separator' => '\\'],
-                'expected' => array_replace($default, ['separator' => '\\']),
+            'fileSeparator' => [
+                'options' => ['fileSeparator' => '\\'],
+                'expected' => array_replace($default, ['fileSeparator' => '\\']),
             ],
             'ignoreCase' => [
                 'options' => ['ignoreCase' => true],
@@ -120,7 +120,7 @@ class ConfigTest extends TestCase
         self::expectException(InvalidArgumentException::class);
         self::expectExceptionMessage('Separator cannot be empty');
 
-        new Config(['separator' => '']);
+        new Config(['fileSeparator' => '']);
     }
 
     public function testDefaultQuota(): void
@@ -246,20 +246,20 @@ class ConfigTest extends TestCase
         self::assertEquals($umask & 0777, $config->getUmask());
     }
 
-    public function testGetSeparatorWhenNotSet(): void
+    public function testGetFileSeparatorWhenNotSet(): void
     {
         $config = new Config();
 
-        self::assertEquals('/', $config->getSeparator());
+        self::assertEquals('/', $config->getFileSeparator());
     }
 
-    public function testGetSeparatorWhenSet(): void
+    public function testGetFileSeparatorWhenSet(): void
     {
         $separator = substr(uniqid(), rand(1, 3), 1);
 
-        $config = new Config(['separator' => $separator]);
+        $config = new Config(['fileSeparator' => $separator]);
 
-        self::assertEquals($separator, $config->getSeparator());
+        self::assertEquals($separator, $config->getFileSeparator());
     }
 
     public function testGetIgnoreCaseWhenNotSet(): void

@@ -64,7 +64,7 @@ class Directory extends AbstractFile implements DirectoryInterface
 
         // TODO: Clean up this entire method.
         $config = $this->getConfig();
-        $sep = $config->getSeparator();
+        $sep = $config->getFileSeparator();
 
         if ($config->getNormalizeSlashes()) {
             $clean = str_replace(['\\', '/'], $sep, $clean);

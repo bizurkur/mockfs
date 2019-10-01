@@ -132,7 +132,7 @@ final class MockFileSystem
      */
     public static function createPartition(string $name, ?int $permissions = null): Partition
     {
-        $sep = self::getFileSystem()->getConfig()->getSeparator();
+        $sep = self::getFileSystem()->getConfig()->getFileSeparator();
         $clean = rtrim(self::getPath($name), $sep);
         $parts = self::getFileParts($clean);
 
@@ -276,7 +276,7 @@ final class MockFileSystem
      * - mfs:///foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
-     * @param string|null $sep Directory separator; defaults to config.
+     * @param string|null $sep File separator; defaults to config.
      *
      * @return string
      */
@@ -284,7 +284,7 @@ final class MockFileSystem
     {
         $config = self::getFileSystem()->getConfig();
         if ($sep === null) {
-            $sep = $config->getSeparator();
+            $sep = $config->getFileSeparator();
         }
         $clean = $path;
 
@@ -332,7 +332,7 @@ final class MockFileSystem
      * - /foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
-     * @param string|null $sep Directory separator; defaults to config.
+     * @param string|null $sep File separator; defaults to config.
      *
      * @return string
      */
@@ -352,7 +352,7 @@ final class MockFileSystem
     {
         $clean = self::getPath($path);
 
-        $sep = self::getFileSystem()->getConfig()->getSeparator();
+        $sep = self::getFileSystem()->getConfig()->getFileSeparator();
         $pos = mb_strrpos($clean, $sep);
 
         if ($pos === false) {
@@ -373,7 +373,7 @@ final class MockFileSystem
      *  - /home/foo/file.txt -> ['', 'home', 'foo', 'file.txt']
      *
      * @param string $path
-     * @param string|null $sep Directory separator; defaults to config.
+     * @param string|null $sep File separator; defaults to config.
      *
      * @return string[]
      */
@@ -382,7 +382,7 @@ final class MockFileSystem
         $clean = self::getPath($path, $sep);
 
         if ($sep === null) {
-            $sep = self::getFileSystem()->getConfig()->getSeparator();
+            $sep = self::getFileSystem()->getConfig()->getFileSeparator();
         }
 
         $parts = explode($sep, $clean);

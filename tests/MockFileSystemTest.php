@@ -102,7 +102,7 @@ class MockFileSystemTest extends TestCase
     {
         $default = [
             'umask' => 0000,
-            'separator' => '/',
+            'fileSeparator' => '/',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -120,9 +120,9 @@ class MockFileSystemTest extends TestCase
                 'options' => ['umask' => 0444],
                 'expected' => array_replace($default, ['umask' => 0444]),
             ],
-            'separator' => [
-                'options' => ['separator' => '\\'],
-                'expected' => array_replace($default, ['separator' => '\\']),
+            'fileSeparator' => [
+                'options' => ['fileSeparator' => '\\'],
+                'expected' => array_replace($default, ['fileSeparator' => '\\']),
             ],
             'ignoreCase' => [
                 'options' => ['ignoreCase' => true],
@@ -153,7 +153,10 @@ class MockFileSystemTest extends TestCase
 
     public function testCreateUsingConfig(): void
     {
-        $config = $this->createConfiguredMock(ConfigInterface::class, ['getSeparator' => '/']);
+        $config = $this->createConfiguredMock(
+            ConfigInterface::class,
+            ['getFileSeparator' => '/']
+        );
         $fileSystem = MockFileSystem::create('', null, $config);
 
         $actual = $fileSystem->getConfig();
@@ -302,13 +305,13 @@ class MockFileSystemTest extends TestCase
     {
         return [
             'no slash' => [
-                'options' => ['separator' => '\\'],
+                'options' => ['fileSeparator' => '\\'],
                 'name' => 'D:',
                 'expectedName' => 'D:',
                 'expectedPath' => 'D:\\',
             ],
             'trailing slash' => [
-                'options' => ['separator' => '\\'],
+                'options' => ['fileSeparator' => '\\'],
                 'name' => 'D:\\',
                 'expectedName' => 'D:',
                 'expectedPath' => 'D:\\',
@@ -906,7 +909,7 @@ class MockFileSystemTest extends TestCase
                 'expected' => ['', 'bar', 'bur'],
             ],
             'custom separator' => [
-                'options' => ['separator' => '>'],
+                'options' => ['fileSeparator' => '>'],
                 'path' => '/foo/bar>..>baz>hot/../cakes',
                 'sep' => null,
                 'expected' => ['/foo/bar', 'baz', 'hot/../cakes'],
@@ -995,7 +998,7 @@ class MockFileSystemTest extends TestCase
                 'expected' => '/bar/bur',
             ],
             'custom separator' => [
-                'options' => ['separator' => '>'],
+                'options' => ['fileSeparator' => '>'],
                 'path' => '/foo/bar>..>baz>hot/../cakes',
                 'expected' => '/foo/bar>baz>hot/../cakes',
             ],

@@ -80,11 +80,11 @@ interface ConfigInterface
     public function getUmask(): int;
 
     /**
-     * Gets the directory separator.
+     * Gets the file separator.
      *
      * @return string
      */
-    public function getSeparator(): string;
+    public function getFileSeparator(): string;
 
     /**
      * Gets whether to ignore string case when creating/accessing files.

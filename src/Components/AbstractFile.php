@@ -224,7 +224,7 @@ abstract class AbstractFile implements FileInterface
             return $this->name;
         }
 
-        $sep = $this->getConfig()->getSeparator();
+        $sep = $this->getConfig()->getFileSeparator();
 
         return rtrim($this->parent->getPath(), $sep).$sep.$this->name;
     }
@@ -506,7 +506,7 @@ abstract class AbstractFile implements FileInterface
         $blacklist = array_merge(
             $config->getBlacklist(),
             [
-                $config->getSeparator(),
+                $config->getFileSeparator(),
                 'null' => "\0",
             ]
         );

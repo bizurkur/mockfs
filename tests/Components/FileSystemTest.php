@@ -349,7 +349,7 @@ class FileSystemTest extends TestCase
     {
         $config = $this->createConfiguredMock(
             ConfigInterface::class,
-            ['getSeparator' => '']
+            ['getFileSeparator' => '']
         );
         $this->fixture = new FileSystem($config);
 

@@ -46,7 +46,7 @@ class Config implements ConfigInterface
     {
         return [
             'umask' => 0000,
-            'separator' => '/',
+            'fileSeparator' => '/',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -64,7 +64,7 @@ class Config implements ConfigInterface
     {
         return [
             'umask' => $this->getUmask(),
-            'separator' => $this->getSeparator(),
+            'fileSeparator' => $this->getFileSeparator(),
             'ignoreCase' => $this->getIgnoreCase(),
             'includeDotFiles' => $this->getIncludeDotFiles(),
             'normalizeSlashes' => $this->getNormalizeSlashes(),
@@ -118,9 +118,9 @@ class Config implements ConfigInterface
     /**
      * {@inheritDoc}
      */
-    public function getSeparator(): string
+    public function getFileSeparator(): string
     {
-        return $this->options['separator'];
+        return $this->options['fileSeparator'];
     }
 
     /**
@@ -195,7 +195,7 @@ class Config implements ConfigInterface
     // phpcs:disable SlevomatCodingStandard.Classes.UnusedPrivateElements
 
     /**
-     * Sets the directory separator.
+     * Sets the file separator.
      *
      * This is not meant to be set after construction.
      *
@@ -203,13 +203,13 @@ class Config implements ConfigInterface
      *
      * @param string $separator
      */
-    private function setSeparator(string $separator): void
+    private function setFileSeparator(string $separator): void
     {
         if (empty($separator)) {
             throw new InvalidArgumentException('Separator cannot be empty');
         }
 
-        $this->options['separator'] = $separator;
+        $this->options['fileSeparator'] = $separator;
     }
 
     /**
