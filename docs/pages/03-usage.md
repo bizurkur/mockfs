@@ -87,7 +87,7 @@ mockfs defaults to using a Linux-style filesystem configuration. This means all 
 
 - And `\` is not the same as `/`
 
-You can change the configuration settings be either passing in an instance of `MockFileSystem\Config\ConfigInterface` or a flat `array`.
+You can change the configuration settings by either passing in an instance of `MockFileSystem\Config\ConfigInterface` or a flat `array`.
 
 In this example, we tell mockfs to ignore the case of the filename. This means if you have a file named `test.txt` you can access it using `test.txt`, `TEST.TXT`, or `TesT.tXt`.
 
