@@ -147,7 +147,30 @@ mockfs::create('', null, new WindowsConfig());
 
 #### Blacklisting Filename Characters
 
-Soon...
+When blacklisting characters in filenames, you can use the array keys to provide a more descriptive meaning to what the character is. This is especially useful for non-printable or whitespace characters. If no string is given as the array key, it will try to display the character itself in the exception that gets thrown.
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+
+$config = [
+    'blacklist' => [
+        'tab' => "\t",
+        '<',
+        '>',
+        'delete' => "\x7f",
+    ],
+];
+
+mockfs::create('', null, $config);
+
+$file = mockfs::getUrl('/in<valid');
+file_put_contents($file, uniqid());
+// triggers warning for 'Name cannot contain a "<" character.'
+
+$file = mockfs::getUrl("/in\tvalid");
+file_put_contents($file, uniqid());
+// triggers warning for 'Name cannot contain a "tab" character.'
+```
 
 
 ## Setting File/Disk Quotas
