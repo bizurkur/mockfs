@@ -170,6 +170,10 @@ body {
     .site-footer-credit {
         font-size: 1.2rem;
 
+        p {
+            margin-bottom: .2rem;
+        }
+
         @media screen and (min-width: map-get($grid-breakpoints, 'lg')) {
             text-align: right;
         }

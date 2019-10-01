@@ -29,4 +29,7 @@ If you don't have Composer installed, be sure to check out their [download page]
 
 ## Download
 
-If you don't want to use Composer to install, you can either [clone the repo]({{ site.repository }}) or download the [source files]({{ site.repository }}/releases) directly.
+If you don't want to use Composer to install, you have a couple alternatives:
+
+- [Clone the repo]({{ site.repository }})
+- Download the [source files]({{ site.repository }}/releases) directly

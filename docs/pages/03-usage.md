@@ -60,7 +60,9 @@ class Processor
 }
 ```
 
-In this example, we'll use [PHPUnit](https://phpunit.de/) to test it but the same concept applies to any other testing framework.
+We can test a class like this by using the stream context options that are built into mockfs. Since we can't pass a stream context directly into the `fopen()` call, we'll have to use `stream_context_set_default()`. Here we want `fopen()` to fail so that is the context option we will set.
+
+We'll use [PHPUnit](https://phpunit.de/) to test this example, but the same concept applies to any other testing framework.
 
 ```php
 <?php
@@ -85,9 +87,18 @@ class ProcessorTest extends TestCase
         $this->fixture = new Processor();
     }
 
-    /**
-     * @runInSeparateProcess
-     */
+    protected function tearDown(): void
+    {
+        // Unset the option we're going to use in our test
+        stream_context_set_default(
+            [
+                'mfs' => [
+                    'fopen_fail' => false,
+                ]
+            ]
+        );
+    }
+
     public function testProcessFailsToOpenFile(): void
     {
         $file = mockfs::getUrl('/example');
@@ -115,17 +126,17 @@ class ProcessorTest extends TestCase
 
 Be careful about where you place the `stream_context_set_default()` call. If you set it too early, you may cause file operations such as `file_put_contents()` to fail. Try not to set it until just before your expected failure.
 
-Also note that we added `@runInSeparateProcess`. We do this because `stream_context_set_default()` has global effects and we don't want this test to change the behavior of any other tests. The safest way to do that is to run it in a separate process so it remains isolated.
+Also be sure to unset any context options in the `tearDown()` method or tag the test as `@runInSeparateProcess` to isolate it. If you don't, you'll risk other tests being affected.
 
 
-### Supported Failures
+### Supported Options
 
 The following context options are available to force different types of failures. You can set any combination of them at the same time. With all the options available, this allows you to get extremely granular in your tests.
 
 
 #### Directory Operations
 
-{:.table.table-hover}
+{:.table}
 | Option | Type | Description |
 | ----- | ---- | ----------- |
 | `opendir_fail` | `bool` | Force calls to `opendir()` to fail |
@@ -141,7 +152,7 @@ The following context options are available to force different types of failures
 
 #### File Operations
 
-{:.table.table-hover}
+{:.table}
 | Option | Type | Description |
 | ----- | ---- | ----------- |
 | `fopen_fail` | `bool` | Force calls to `fopen()`, `file_get_contents()`, or `file_put_contents()` to fail |
