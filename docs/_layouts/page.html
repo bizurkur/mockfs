@@ -9,23 +9,23 @@ layout: default
                 {{ content }}
 
                 {%- if page.guide -%}
-                    {% assign prev_page = nil %}
-                    {% assign next_page = nil %}
-                    {% assign stop_loop = false %}
-                    {% assign sorted_pages = site.pages | sort: "name" %}
-                    {% for link in site.pages %}
-                        {% if link.hide != true and link.guide and link.title %}
-                            {% if stop_loop %}
-                                {% assign next_page = link %}
-                                {% break %}
-                            {% endif %}
-                            {% if page.title == link.title %}
-                                {% assign stop_loop = true %}
-                            {% else %}
-                                {% assign prev_page = link %}
-                            {% endif %}
-                        {% endif %}
-                    {% endfor %}
+                    {%- assign prev_page = nil -%}
+                    {%- assign next_page = nil -%}
+                    {%- assign stop_loop = false -%}
+                    {%- assign sorted_pages = site.pages | sort: "name" -%}
+                    {%- for link in site.pages -%}
+                        {%- if link.hide != true and link.guide and link.title -%}
+                            {%- if stop_loop -%}
+                                {%- assign next_page = link -%}
+                                {%- break -%}
+                            {%- endif -%}
+                            {%- if page.title == link.title -%}
+                                {%- assign stop_loop = true -%}
+                            {%- else -%}
+                                {%- assign prev_page = link -%}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endfor -%}
 
                     {%- if prev_page or next_page -%}
                         <div class="row guide-pagination-links">
