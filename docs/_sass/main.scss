@@ -10,9 +10,11 @@ body {
     padding: 0;
     margin: 0;
     font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-    font-size: 1.5rem;
     line-height: 1.5;
     color: $body-text-color;
+}
+body, blockquote {
+    font-size: 1.5rem;
 }
 
 #jumbotron-header {

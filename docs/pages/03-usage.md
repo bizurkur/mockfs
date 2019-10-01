@@ -10,8 +10,6 @@ guide: true
 An example of the most basic usage:
 
 ```php
-<?php
-
 use MockFileSystem\MockFileSystem as mockfs;
 
 // Create the filesystem
@@ -26,9 +24,135 @@ chmod($file, 0600);
 ```
 
 
-## Configuration
+## Creating the Filesystem
 
-Soon!
+The starting point for all mockfs usage is the `mockfs::create()` method. This method allows you to set the name of the first partition, the permissions it has, and any configuration settings the filesystem should follow.
+
+> Note: Calling `create()` multiple times will destroy any data previously created.
+
+
+### Setting the Partition Name
+
+The default mockfs partition is nameless and equates to `/` as the path. However, if for some reason you want to use a different name you can:
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+
+$root = mockfs::create();
+// creates /
+
+$root = mockfs::create('root');
+// creates root/
+
+$root = mockfs::create('c:');
+// creates c:/
+```
+
+
+### Setting the Permissions
+
+Partitions default to using permissions `0777` (readable and writable to everyone). The `create()` method allows you to override that:
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+
+$root = mockfs::create('', 0750);
+```
+
+This can be useful if you need to make a simple "not readable" or "not writable" test:
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+
+mockfs::create('', 0000);
+
+$file = mockfs::getUrl('/test');
+
+$handle = @fopen($file, 'w');
+if ($handle === false) {
+    echo 'Failed to open file';
+}
+```
+
+
+### Setting the Configuration
+
+mockfs defaults to using a Linux-style filesystem configuration. This means all of the following rules apply:
+
+- It uses `/` as the directory separator
+
+- Filenames are case-sensitive (e.g. `test.txt` is NOT the same as `TEST.TXT`)
+
+- Everything but `/` and the `null` character are allowed for filenames
+
+- And `\` is not the same as `/`
+
+You can change the configuration settings be either passing in an instance of `MockFileSystem\Config\ConfigInterface` or a flat `array`.
+
+In this example, we tell mockfs to ignore the case of the filename. This means if you have a file named `test.txt` you can access it using `test.txt`, `TEST.TXT`, or `TesT.tXt`.
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+
+mockfs::create('', null, ['ignoreCase' => true]);
+
+file_put_contents($mockfs::getUrl('test.txt'), 'some data');
+
+$data = file_get_contents(mockfs::getUrl('TeST.txt'));
+var_dump($data);
+// outputs "some data"
+```
+
+
+#### Configuration Options
+
+The following are all of the valid configuration options that can be used:
+
+{:.table}
+| Option | Type | Description |
+| ----- | ---- | ----------- |
+| `umask` | `int` | Octal representation of the umask to apply to new files added to the system. Defaults to `0000` |
+| `separator` | `string` | Directory separator to use. Defaults to `/` |
+| `ignoreCase` | `bool` | Whether or not to ignore filename casing (e.g. is `test.txt` the same as `TesT.txT`). Defaults to `false` |
+| `includeDotFiles` | `bool` | Whether or not to include dot files (`.` and `..`) when listing directory contents. Defaults to `true` |
+| `normalizeSlashes` | `bool` | Whether or not to convert `\` and `/` to whatever the `separator` option is set to. Defaults to `false` |
+| `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `separator` option and the `null` character are always in the blacklist, even when the array is empty |
+| `user` | `int|null` | The user ID of the current user. Defaults to `null` (gets the UID from the system) |
+| `group` | `int|null` | The group ID of the current user. Defaults to `null` (gets the GID from the system) |
+| `quota` | `QuotaInterface` | The quota to apply to the filesystem. Defaults to `null`. See the [Quotas](#setting-filedisk-quotas) section for more info |
+
+
+#### Using Custom Configuration Presets
+
+You can also create your own defaults by extending `MockFileSystem\Config\Config::getDefaultOptions()` or creating your own `MockFileSystem\Config\ConfigInterface` implementation.
+
+For example, if you prefer to use Windows-style defaults there's a pre-built config for that. It has the following rules:
+
+- It uses `\` as the directory separator
+
+- Filenames are case-insensitive (e.g. `test.txt` is the same as `TEST.TXT`)
+
+- `0x00-0x1f`, `0x7f`, `"`, `*`, `/`, `:`, `<`, `>`, `?`, `\`, and `|` are invalid filename characters
+
+- It does not matter if you use `\` or `/`
+
+```php
+use MockFileSystem\Config\WindowsConfig;
+use MockFileSystem\MockFileSystem as mockfs;
+
+// Create the filesystem using Windows-style settings
+mockfs::create('', null, new WindowsConfig());
+```
+
+
+#### Blacklisting Filename Characters
+
+Soon...
+
+
+## Setting File/Disk Quotas
+
+Soon...
 
 
 ## Testing Complex Failure

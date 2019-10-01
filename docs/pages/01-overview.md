@@ -7,7 +7,7 @@ guide: true
 
 ## What is It?
 
-mockfs is a mock filesystem for PHP that can be used to test file operations without interacting with the real filesystem; everything exists in memory. This means there's no disk operations or cleanup of any kind that is needed. Create the mock filesystem, throw data in it, and when you're done the data simply disappears.
+mockfs is a mock filesystem for PHP that can be used to test file operations without interacting with the real filesystem. This means there's no disk operations or cleanup of any kind that is needed. Create the mock filesystem, throw data in it, and when you're done the data simply disappears.
 
 Best of all, mockfs can be used in any PHP testing framework.
 
