@@ -24,6 +24,7 @@ class WindowsConfigTest extends TestCase
         $expected = [
             'umask' => 0000,
             'fileSeparator' => '\\',
+            'partitionSeparator' => ':',
             'ignoreCase' => true,
             'includeDotFiles' => true,
             'normalizeSlashes' => true,

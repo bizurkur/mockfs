@@ -103,6 +103,7 @@ class MockFileSystemTest extends TestCase
         $default = [
             'umask' => 0000,
             'fileSeparator' => '/',
+            'partitionSeparator' => '',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -123,6 +124,10 @@ class MockFileSystemTest extends TestCase
             'fileSeparator' => [
                 'options' => ['fileSeparator' => '\\'],
                 'expected' => array_replace($default, ['fileSeparator' => '\\']),
+            ],
+            'partitionSeparator' => [
+                'options' => ['partitionSeparator' => ':'],
+                'expected' => array_replace($default, ['partitionSeparator' => ':']),
             ],
             'ignoreCase' => [
                 'options' => ['ignoreCase' => true],
@@ -314,6 +319,12 @@ class MockFileSystemTest extends TestCase
                 'options' => ['fileSeparator' => '\\'],
                 'name' => 'D:\\',
                 'expectedName' => 'D:',
+                'expectedPath' => 'D:\\',
+            ],
+            'includes partition separator' => [
+                'options' => ['fileSeparator' => '\\', 'partitionSeparator' => ':'],
+                'name' => 'D',
+                'expectedName' => 'D',
                 'expectedPath' => 'D:\\',
             ],
             'leading slash' => [

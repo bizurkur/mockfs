@@ -87,6 +87,13 @@ interface ConfigInterface
     public function getFileSeparator(): string;
 
     /**
+     * Gets the partition separator.
+     *
+     * @return string
+     */
+    public function getPartitionSeparator(): string;
+
+    /**
      * Gets whether to ignore string case when creating/accessing files.
      *
      * @return bool

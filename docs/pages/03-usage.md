@@ -113,6 +113,7 @@ The following are all of the valid configuration options that can be used:
 | ----- | ---- | ----------- |
 | `umask` | `int` | Octal representation of the umask to apply to new files added to the system. Defaults to `0000` |
 | `fileSeparator` | `string` | File separator to use. Defaults to `/` |
+| `partitionSeparator` | `string` | Partition separator to use (e.g. Windows would use `:`). Defaults to empty string |
 | `ignoreCase` | `bool` | Whether or not to ignore filename casing (e.g. is `test.txt` the same as `TesT.txT`). Defaults to `false` |
 | `includeDotFiles` | `bool` | Whether or not to include dot files (`.` and `..`) when listing directory contents. Defaults to `true` |
 | `normalizeSlashes` | `bool` | Whether or not to convert `\` and `/` to whatever the `fileSeparator` option is set to. Defaults to `false` |

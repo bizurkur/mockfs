@@ -16,15 +16,19 @@ final class Partition extends Directory implements PartitionInterface
      */
     public function getPath(): string
     {
-        $sep = $this->getConfig()->getFileSeparator();
+        $config = $this->getConfig();
+
+        $fileSeparator = $config->getFileSeparator();
 
         $name = $this->getName();
         $parent = $this->getParent();
         if ($parent === null || $parent instanceof FileSystemInterface) {
+            $partitionSeparator = $config->getPartitionSeparator();
+
             // Always end root partitions with a slash, e.g. / or C:\
-            return $name.$sep;
+            return $name.$partitionSeparator.$fileSeparator;
         }
 
-        return rtrim($parent->getPath(), $sep).$sep.$name;
+        return rtrim($parent->getPath(), $fileSeparator).$fileSeparator.$name;
     }
 }

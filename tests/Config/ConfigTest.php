@@ -27,6 +27,7 @@ class ConfigTest extends TestCase
         $expected = [
             'umask' => 0000,
             'fileSeparator' => '/',
+            'partitionSeparator' => '',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -67,6 +68,7 @@ class ConfigTest extends TestCase
         $default = [
             'umask' => 0000,
             'fileSeparator' => '/',
+            'partitionSeparator' => '',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -87,6 +89,10 @@ class ConfigTest extends TestCase
             'fileSeparator' => [
                 'options' => ['fileSeparator' => '\\'],
                 'expected' => array_replace($default, ['fileSeparator' => '\\']),
+            ],
+            'partitionSeparator' => [
+                'options' => ['partitionSeparator' => ':'],
+                'expected' => array_replace($default, ['partitionSeparator' => ':']),
             ],
             'ignoreCase' => [
                 'options' => ['ignoreCase' => true],
@@ -260,6 +266,22 @@ class ConfigTest extends TestCase
         $config = new Config(['fileSeparator' => $separator]);
 
         self::assertEquals($separator, $config->getFileSeparator());
+    }
+
+    public function testGetPartitionSeparatorWhenNotSet(): void
+    {
+        $config = new Config();
+
+        self::assertEquals('', $config->getPartitionSeparator());
+    }
+
+    public function testGetPartitionSeparatorWhenSet(): void
+    {
+        $separator = substr(uniqid(), rand(1, 3), 1);
+
+        $config = new Config(['partitionSeparator' => $separator]);
+
+        self::assertEquals($separator, $config->getPartitionSeparator());
     }
 
     public function testGetIgnoreCaseWhenNotSet(): void

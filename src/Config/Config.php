@@ -47,6 +47,7 @@ class Config implements ConfigInterface
         return [
             'umask' => 0000,
             'fileSeparator' => '/',
+            'partitionSeparator' => '',
             'ignoreCase' => false,
             'includeDotFiles' => true,
             'normalizeSlashes' => false,
@@ -65,6 +66,7 @@ class Config implements ConfigInterface
         return [
             'umask' => $this->getUmask(),
             'fileSeparator' => $this->getFileSeparator(),
+            'partitionSeparator' => $this->getPartitionSeparator(),
             'ignoreCase' => $this->getIgnoreCase(),
             'includeDotFiles' => $this->getIncludeDotFiles(),
             'normalizeSlashes' => $this->getNormalizeSlashes(),
@@ -121,6 +123,14 @@ class Config implements ConfigInterface
     public function getFileSeparator(): string
     {
         return $this->options['fileSeparator'];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getPartitionSeparator(): string
+    {
+        return $this->options['partitionSeparator'];
     }
 
     /**
@@ -210,6 +220,20 @@ class Config implements ConfigInterface
         }
 
         $this->options['fileSeparator'] = $separator;
+    }
+
+    /**
+     * Sets the partition separator.
+     *
+     * This is not meant to be set after construction.
+     *
+     * @internal
+     *
+     * @param string $separator
+     */
+    private function setPartitionSeparator(string $separator): void
+    {
+        $this->options['partitionSeparator'] = $separator;
     }
 
     /**
