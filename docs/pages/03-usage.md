@@ -13,10 +13,11 @@ An example of the most basic usage:
 use MockFileSystem\MockFileSystem as mockfs;
 
 // Create the filesystem
-mockfs::create();
+$root = mockfs::create();
 
 // Prefix a path with the mockfs handle
-$file = mockfs::getUrl('/test');
+$file = $root->getUrl('/test');
+// $file = mfs:///test
 
 // Treat the file as any regular file
 file_put_contents($file, 'Hello, World!');
@@ -94,11 +95,11 @@ In this example, we tell mockfs to ignore the case of the filename. This means i
 ```php
 use MockFileSystem\MockFileSystem as mockfs;
 
-mockfs::create('', null, ['ignoreCase' => true]);
+$root = mockfs::create('', null, ['ignoreCase' => true]);
 
-file_put_contents(mockfs::getUrl('test.txt'), 'some data');
+file_put_contents($root->getUrl('test.txt'), 'some data');
 
-$data = file_get_contents(mockfs::getUrl('TeST.txt'));
+$data = file_get_contents($root->getUrl('TeST.txt'));
 var_dump($data);
 // outputs "some data"
 ```

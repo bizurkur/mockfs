@@ -240,9 +240,7 @@ final class MockFileSystem
      */
     public static function find(string $path): ?FileInterface
     {
-        $clean = self::getPath($path);
-
-        return self::getFileSystem()->find($clean);
+        return self::getFileSystem()->find($path);
     }
 
     /**
@@ -276,51 +274,12 @@ final class MockFileSystem
      * - mfs:///foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
-     * @param string|null $sep File separator; defaults to config.
      *
      * @return string
      */
-    public static function getPath(string $path, ?string $sep = null): string
+    public static function getPath(string $path): string
     {
-        $config = self::getFileSystem()->getConfig();
-        if ($sep === null) {
-            $sep = $config->getFileSeparator();
-        }
-        $clean = $path;
-
-        if ($config->getNormalizeSlashes()) {
-            $clean = str_replace(['\\', '/'], $sep, $clean);
-        }
-
-        $prefix = StreamWrapper::PROTOCOL.'://';
-        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
-            $clean = mb_substr($clean, mb_strlen($prefix));
-        }
-
-        if (mb_substr($clean, -strlen($sep)) === $sep) {
-            $clean = mb_substr($clean, 0, -strlen($sep));
-        }
-
-        $parts = explode($sep, $clean);
-        if ($parts === false) {
-            return $clean;
-        }
-
-        $files = [];
-
-        foreach ($parts as $part) {
-            if ($part === '.') {
-                continue;
-            }
-
-            if ($part !== '..') {
-                $files[] = $part;
-            } elseif (count($files) > 1) {
-                array_pop($files);
-            }
-        }
-
-        return implode($sep, $files);
+        return self::getFileSystem()->getPath($path);
     }
 
     /**
@@ -332,13 +291,12 @@ final class MockFileSystem
      * - /foo/./bar/baz/../ => /foo/bar/
      *
      * @param string $path
-     * @param string|null $sep File separator; defaults to config.
      *
      * @return string
      */
-    public static function getUrl(string $path, ?string $sep = null): string
+    public static function getUrl(string $path): string
     {
-        return StreamWrapper::PROTOCOL.'://'.self::getPath($path, $sep);
+        return self::getFileSystem()->getUrl($path);
     }
 
     /**
@@ -379,7 +337,7 @@ final class MockFileSystem
      */
     public static function explodePath(string $path, ?string $sep = null): array
     {
-        $clean = self::getPath($path, $sep);
+        $clean = self::getPath($path);
 
         if ($sep === null) {
             $sep = self::getFileSystem()->getConfig()->getFileSeparator();

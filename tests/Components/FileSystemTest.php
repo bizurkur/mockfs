@@ -63,14 +63,104 @@ class FileSystemTest extends TestCase
         $this->fixture->setParent($parent);
     }
 
-    public function testGetPath(): void
+    /**
+     * @dataProvider samplePaths
+     */
+    public function testGetPath(array $options, ?string $path, string $expected): void
     {
-        self::assertEquals('', $this->fixture->getPath());
+        $config = $this->createConfiguredMock(
+            ConfigInterface::class,
+            $options + ['getFileSeparator' => '/']
+        );
+        $this->fixture = new FileSystem($config);
+
+        $actual = @$this->fixture->getPath($path);
+
+        self::assertEquals($expected, $actual);
     }
 
-    public function testGetUrl(): void
+    /**
+     * @dataProvider samplePaths
+     */
+    public function testGetUrl(array $options, ?string $path, string $expected): void
     {
-        self::assertEquals(StreamWrapper::PROTOCOL.'://', $this->fixture->getUrl());
+        $config = $this->createConfiguredMock(
+            ConfigInterface::class,
+            $options + ['getFileSeparator' => '/']
+        );
+        $this->fixture = new FileSystem($config);
+
+        $actual = @$this->fixture->getUrl($path);
+
+        self::assertEquals(StreamWrapper::PROTOCOL.'://'.$expected, $actual);
+    }
+
+    public function samplePaths(): array
+    {
+        $multibyte = utf8_encode("Déjà_vu");
+
+        return [
+            'null path' => [
+                'options' => [],
+                'path' => null,
+                'expected' => '',
+            ],
+            'absolute, single' => [
+                'options' => [],
+                'path' => '/foo',
+                'expected' => '/foo',
+            ],
+            'absolute, nested' => [
+                'options' => [],
+                'path' => '/foo/bar/../bing bong/./baz/../',
+                'expected' => '/foo/bing bong',
+            ],
+            'relative, single' => [
+                'options' => [],
+                'path' => 'foo',
+                'expected' => 'foo',
+            ],
+            'relative, nested' => [
+                'options' => [],
+                'path' => 'foo/bar/../bing bong/./baz/../',
+                'expected' => 'foo/bing bong',
+            ],
+            'excessive relativeness' => [
+                'options' => [],
+                'path' => '/../../../../../../../.././././.././.././../bar',
+                'expected' => '/bar',
+            ],
+            'leading protocol' => [
+                'options' => [],
+                'path' => StreamWrapper::PROTOCOL.':///foo/../bar',
+                'expected' => '/bar',
+            ],
+            'multibyte support' => [
+                'options' => [],
+                'path' => StreamWrapper::PROTOCOL.':///'.$multibyte.'/υπέρ/../νωθρού',
+                'expected' => '/'.$multibyte.'/νωθρού',
+            ],
+            'invalid separator' => [
+                'options' => ['getFileSeparator' => ''],
+                'path' => StreamWrapper::PROTOCOL.':///'.$multibyte.'/υπέρ/../νωθρού/',
+                'expected' => '/'.$multibyte.'/υπέρ/../νωθρού/',
+            ],
+            'dir slash not normalized' => [
+                'options' => [],
+                'path' => '/foo\\..\\bar/baz/../bur',
+                'expected' => '/foo\\..\\bar/bur',
+            ],
+            'dir slash normalized' => [
+                'options' => ['getNormalizeSlashes' => true],
+                'path' => '/foo\\..\\bar/baz/../bur',
+                'expected' => '/bar/bur',
+            ],
+            'custom separator' => [
+                'options' => ['getFileSeparator' => '>'],
+                'path' => '/foo/bar>..>baz>hot/../cakes',
+                'expected' => '/foo/bar>baz>hot/../cakes',
+            ],
+        ];
     }
 
     public function testAddChildSetsConfig(): void
@@ -349,7 +439,7 @@ class FileSystemTest extends TestCase
     {
         $config = $this->createConfiguredMock(
             ConfigInterface::class,
-            ['getFileSeparator' => '']
+            ['getFileSeparator' => '/']
         );
         $this->fixture = new FileSystem($config);
 

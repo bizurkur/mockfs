@@ -64,17 +64,57 @@ final class FileSystem implements FileSystemInterface
     /**
      * {@inheritDoc}
      */
-    public function getPath(): string
+    public function getPath(?string $file = null): string
     {
-        return '';
+        if ($file === null) {
+            return '';
+        }
+
+        $sep = $this->config->getFileSeparator();
+        $clean = trim($file);
+
+        if ($this->config->getNormalizeSlashes()) {
+            $clean = str_replace(['\\', '/'], $sep, $clean);
+        }
+
+        $prefix = StreamWrapper::PROTOCOL.'://';
+        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
+            $clean = mb_substr($clean, mb_strlen($prefix));
+        }
+
+        if (mb_substr($clean, -strlen($sep)) === $sep) {
+            // Remove trailing slash
+            $clean = mb_substr($clean, 0, -strlen($sep));
+        }
+
+        $parts = explode($sep, $clean);
+        if ($parts === false) {
+            return $clean;
+        }
+
+        $files = [];
+
+        foreach ($parts as $part) {
+            if ($part === '.') {
+                continue;
+            }
+
+            if ($part !== '..') {
+                $files[] = $part;
+            } elseif (count($files) > 1) {
+                array_pop($files);
+            }
+        }
+
+        return implode($sep, $files);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function getUrl(): string
+    public function getUrl(?string $file = null): string
     {
-        return StreamWrapper::PROTOCOL.'://';
+        return StreamWrapper::PROTOCOL.'://'.$this->getPath($file);
     }
 
     /**
@@ -82,12 +122,9 @@ final class FileSystem implements FileSystemInterface
      */
     public function find(string $path): ?FileInterface
     {
-        $clean = trim($path);
+        $clean = $this->getPath($path);
 
         $sep = $this->config->getFileSeparator();
-        if ($this->config->getNormalizeSlashes()) {
-            $clean = str_replace(['\\', '/'], $sep, $clean);
-        }
 
         foreach ($this->partitions as $partition) {
             $prefix = $partition->getPath();
