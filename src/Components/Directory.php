@@ -5,6 +5,7 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
 
@@ -227,7 +228,10 @@ class Directory extends AbstractFile implements DirectoryInterface
         $size = 0;
 
         foreach ($this->children as $child) {
-            if ($child instanceof self) {
+            if ($child instanceof PartitionInterface) {
+                // Don't count child partition contents
+                continue;
+            } elseif ($child instanceof DirectoryInterface) {
                 $summary = $child->getSummary($user, $group);
                 $count += $summary->getFileCount();
                 $size += $summary->getSize();

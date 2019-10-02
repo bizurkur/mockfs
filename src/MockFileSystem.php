@@ -16,8 +16,6 @@ use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
-use MockFileSystem\Quota\Collection;
-use MockFileSystem\Quota\Quota;
 use MockFileSystem\StreamWrapper;
 
 /**
@@ -199,34 +197,6 @@ final class MockFileSystem
         $file = self::createAbstractFile(Block::class, $path, $permissions);
 
         return $file;
-    }
-
-    /**
-     * Adds a quota to the file system.
-     *
-     * @param int $size Number of bytes to limit to; -1 for no limit.
-     * @param int $fileCount Number of files to limit to; -1 for no limit.
-     * @param int|null $user User ID to apply limit to; null for all users.
-     * @param int|null $group Group ID to apply limit to; null for all groups.
-     */
-    public static function addQuota(
-        int $size,
-        int $fileCount,
-        ?int $user = null,
-        ?int $group = null
-    ): void {
-        $quota = new Quota($size, $fileCount, $user, $group);
-
-        $oldQuota = self::getFileSystem()->getConfig()->getQuota();
-        if ($oldQuota instanceof Collection) {
-            $oldQuota->addQuota($quota);
-
-            return;
-        }
-
-        $newQuota = new Collection([$oldQuota, $quota]);
-
-        self::getFileSystem()->getConfig()->setQuota($newQuota);
     }
 
     /**

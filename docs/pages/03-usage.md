@@ -121,7 +121,6 @@ The following are all of the valid configuration options that can be used:
 | `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `fileSeparator` option and the `null` character are always in the blacklist, even when the array is empty |
 | `user` | `int|null` | The user ID of the current user. Defaults to `null` (gets the UID from the system) |
 | `group` | `int|null` | The group ID of the current user. Defaults to `null` (gets the GID from the system) |
-| `quota` | `QuotaInterface` | The quota to apply to the file system. Defaults to `null`. See the [Quotas](#setting-filedisk-quotas) section for more info |
 
 
 #### Using Custom Configuration Presets

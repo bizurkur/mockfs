@@ -73,7 +73,6 @@ class WindowsConfigTest extends TestCase
             ],
             'user' => null,
             'group' => null,
-            'quota' => null,
         ];
         self::assertEquals($expected, $actual);
     }

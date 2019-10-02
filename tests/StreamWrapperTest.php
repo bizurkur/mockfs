@@ -3,9 +3,11 @@
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\MockFileSystem;
+use MockFileSystem\Quota\Quota;
 use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\TestCase;
@@ -945,7 +947,11 @@ class StreamWrapperTest extends TestCase
             self::fail('Failed to open handle');
         }
 
-        MockFileSystem::addQuota(4, -1);
+        $quota = new Quota(4, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $actual = fwrite($handle, $content);
         fclose($handle);
@@ -959,7 +965,11 @@ class StreamWrapperTest extends TestCase
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         $this->cleanup($url);
 
-        MockFileSystem::addQuota(4, -1);
+        $quota = new Quota(4, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         self::expectException(Warning::class);
         self::expectExceptionMessage(
@@ -971,7 +981,11 @@ class StreamWrapperTest extends TestCase
 
     public function testFilePutContentsWithQuotaLimitedSpaceResponse(): void
     {
-        MockFileSystem::addQuota(4, -1);
+        $quota = new Quota(4, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         $this->cleanup($url);
@@ -993,7 +1007,11 @@ class StreamWrapperTest extends TestCase
             self::fail('Failed to open handle');
         }
 
-        MockFileSystem::addQuota(-1, -1);
+        $quota = new Quota(-1, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $actual = fwrite($handle, $content);
         fclose($handle);
@@ -1072,7 +1090,11 @@ class StreamWrapperTest extends TestCase
             self::fail('Failed to open handle');
         }
 
-        MockFileSystem::addQuota(4, -1);
+        $quota = new Quota(4, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $actual = ftruncate($handle, rand(50, 100));
         fclose($handle);
@@ -1091,7 +1113,11 @@ class StreamWrapperTest extends TestCase
             self::fail('Failed to open handle');
         }
 
-        MockFileSystem::addQuota(-1, -1);
+        $quota = new Quota(-1, -1);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $actual = ftruncate($handle, rand(50, 100));
         fclose($handle);
@@ -1236,7 +1262,11 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('Not enough disk space');
 
-        MockFileSystem::addQuota(-1, 0);
+        $quota = new Quota(-1, 0);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
     }
@@ -1248,7 +1278,11 @@ class StreamWrapperTest extends TestCase
 
         $fixture = new StreamWrapper();
 
-        MockFileSystem::addQuota(-1, 0);
+        $quota = new Quota(-1, 0);
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
 
         $actual = $fixture->stream_open($url, 'w', 0, $path);
 

@@ -5,8 +5,6 @@ namespace MockFileSystem\Tests\Config;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
-use MockFileSystem\Quota\Collection;
-use MockFileSystem\Quota\QuotaInterface;
 use PHPUnit\Framework\TestCase;
 
 class ConfigTest extends TestCase
@@ -34,7 +32,6 @@ class ConfigTest extends TestCase
             'blacklist' => [],
             'user' => null,
             'group' => null,
-            'quota' => null,
         ];
         self::assertEquals($expected, $actual);
     }
@@ -56,9 +53,6 @@ class ConfigTest extends TestCase
     {
         $config = new Config($options);
         $actual = $config->toArray();
-
-        self::assertInstanceOf(QuotaInterface::class, $actual['quota']);
-        unset($actual['quota']);
 
         self::assertEquals($expected, $actual);
     }
@@ -127,33 +121,6 @@ class ConfigTest extends TestCase
         self::expectExceptionMessage('Separator cannot be empty');
 
         new Config(['fileSeparator' => '']);
-    }
-
-    public function testDefaultQuota(): void
-    {
-        $config = new Config();
-
-        $quota = $config->getQuota();
-        self::assertInstanceOf(Collection::class, $quota);
-        self::assertEquals(0, $quota->count());
-    }
-
-    public function testCustomQuota(): void
-    {
-        $quota = $this->createMock(QuotaInterface::class);
-        $config = new Config(['quota' => $quota]);
-
-        self::assertSame($quota, $config->getQuota());
-    }
-
-    public function testSetQuota(): void
-    {
-        $quota = $this->createMock(QuotaInterface::class);
-
-        $config = new Config();
-        $config->setQuota($quota);
-
-        self::assertSame($quota, $config->getQuota());
     }
 
     public function testGetUserWhenNotSet(): void

@@ -4,8 +4,6 @@ namespace MockFileSystem\Config;
 
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
-use MockFileSystem\Quota\Collection;
-use MockFileSystem\Quota\QuotaInterface;
 
 /**
  * Configuration settings for the file system.
@@ -54,7 +52,6 @@ class Config implements ConfigInterface
             'blacklist' => [],
             'user' => null,
             'group' => null,
-            'quota' => null,
         ];
     }
 
@@ -73,16 +70,7 @@ class Config implements ConfigInterface
             'blacklist' => $this->getBlacklist(),
             'user' => $this->getUser(),
             'group' => $this->getGroup(),
-            'quota' => $this->getQuota(),
         ];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getQuota(): QuotaInterface
-    {
-        return $this->options['quota'];
     }
 
     /**
@@ -163,19 +151,6 @@ class Config implements ConfigInterface
     public function getBlacklist(): array
     {
         return $this->options['blacklist'];
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function setQuota(?QuotaInterface $quota): void
-    {
-        if ($quota === null) {
-            // An empty Collection is an unlimited quota
-            $quota = new Collection();
-        }
-
-        $this->options['quota'] = $quota;
     }
 
     /**

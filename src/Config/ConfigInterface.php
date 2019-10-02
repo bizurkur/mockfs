@@ -2,8 +2,6 @@
 
 namespace MockFileSystem\Config;
 
-use MockFileSystem\Quota\QuotaInterface;
-
 /**
  * Represents configuration settings for the file system.
  */
@@ -42,13 +40,6 @@ interface ConfigInterface
      * @return mixed[]
      */
     public function toArray(): array;
-
-    /**
-     * Gets the quota for the file system.
-     *
-     * @return QuotaInterface
-     */
-    public function getQuota(): QuotaInterface;
 
     /**
      * Gets the user ID.
@@ -120,13 +111,6 @@ interface ConfigInterface
      * @return string[]
      */
     public function getBlacklist(): array;
-
-    /**
-     * Sets the quota for the file system.
-     *
-     * @param QuotaInterface $quota
-     */
-    public function setQuota(QuotaInterface $quota): void;
 
     /**
      * Sets the user ID.

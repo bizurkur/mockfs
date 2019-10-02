@@ -4,6 +4,7 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
@@ -423,8 +424,17 @@ abstract class AbstractFile implements FileInterface
      */
     protected function getFreeDiskSpace(?FileInterface $child = null): int
     {
+        $partition = $this->getPartition();
+        if ($partition === null) {
+            return QuotaInterface::UNLIMITED;
+        }
+
+        $quota = $partition->getQuota();
+        if ($quota === null) {
+            return QuotaInterface::UNLIMITED;
+        }
+
         $config = $this->getConfig();
-        $quota = $config->getQuota();
         $user = $config->getUser();
         $group = $config->getGroup();
 
@@ -432,7 +442,7 @@ abstract class AbstractFile implements FileInterface
             return QuotaInterface::UNLIMITED;
         }
 
-        $summary = $this->getRoot()->getSummary($user, $group);
+        $summary = $partition->getSummary($user, $group);
         $usedCount = $summary->getFileCount();
         $usedSize = $summary->getSize();
         $remainingCount = $quota->getRemainingFileCount($usedCount, $user, $group);
@@ -466,26 +476,23 @@ abstract class AbstractFile implements FileInterface
     }
 
     /**
-     * Gets the root container.
+     * Gets the partition this file is in.
      *
-     * @return ContainerInterface
+     * @return PartitionInterface|null
      */
-    private function getRoot(): ContainerInterface
+    private function getPartition(): ?PartitionInterface
     {
-        $root = $this->getParent();
-        if ($root === null) {
-            throw new RuntimeException('File has not been attached to the file system');
-        }
+        $root = $this;
 
-        while ($root) {
-            $parent = $root->getParent();
-            if ($parent === null) {
-                break;
+        do {
+            if ($root instanceof PartitionInterface) {
+                return $root;
             }
-            $root = $parent;
-        }
 
-        return $root;
+            $root = $root->getParent();
+        } while ($root);
+
+        return null;
     }
 
     /**

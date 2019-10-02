@@ -5,12 +5,18 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
+use MockFileSystem\Quota\QuotaInterface;
 
 /**
  * Class to represent a partition.
  */
 final class Partition extends Directory implements PartitionInterface
 {
+    /**
+     * @var QuotaInterface|null
+     */
+    private $quota = null;
+
     /**
      * {@inheritDoc}
      */
@@ -30,5 +36,21 @@ final class Partition extends Directory implements PartitionInterface
         }
 
         return rtrim($parent->getPath(), $fileSeparator).$fileSeparator.$name;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getQuota(): ?QuotaInterface
+    {
+        return $this->quota;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setQuota(?QuotaInterface $quota): void
+    {
+        $this->quota = $quota;
     }
 }

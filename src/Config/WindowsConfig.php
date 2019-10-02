@@ -67,7 +67,6 @@ class WindowsConfig extends Config
             ],
             'user' => null,
             'group' => null,
-            'quota' => null,
         ];
     }
 }
