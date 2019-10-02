@@ -34,7 +34,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "MockFileSystem\\Tests\\": "tests/"
+            "MockFileSystem\\Tests\\": ["tests/unit/", "tests/e2e/"]
         }
     },
     "minimum-stability": "stable"
