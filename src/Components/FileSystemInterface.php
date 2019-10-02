@@ -22,7 +22,7 @@ interface FileSystemInterface extends ContainerInterface
     /**
      * Gets the full path for the file.
      *
-     * If not file is given, returns the path of the filesystem.
+     * If no file is given, returns the path of the file system.
      *
      * Automatically removes the stream wrapper prefix, if applicable.
      *
@@ -40,7 +40,7 @@ interface FileSystemInterface extends ContainerInterface
     /**
      * Gets the full URL for the file.
      *
-     * If not file is given, returns the URL of the filesystem.
+     * If no file is given, returns the URL of the file system.
      *
      * This is the same as the path, except includes the Mock File System prefix.
      *

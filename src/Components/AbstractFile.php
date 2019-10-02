@@ -474,7 +474,7 @@ abstract class AbstractFile implements FileInterface
     {
         $root = $this->getParent();
         if ($root === null) {
-            throw new RuntimeException('File has not been attached to the filesystem');
+            throw new RuntimeException('File has not been attached to the file system');
         }
 
         while ($root) {

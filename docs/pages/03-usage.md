@@ -12,7 +12,7 @@ An example of the most basic usage:
 ```php
 use MockFileSystem\MockFileSystem as mockfs;
 
-// Create the filesystem
+// Create the file system
 $root = mockfs::create();
 
 // Prefix a path with the mockfs handle
@@ -27,7 +27,7 @@ chmod($file, 0600);
 
 ## Creating the Filesystem
 
-The starting point for all mockfs usage is the `mockfs::create()` method. This method allows you to set the name of the first partition, the permissions it has, and any configuration settings the filesystem should follow.
+The starting point for all mockfs usage is the `mockfs::create()` method. This method allows you to set the name of the first partition, the permissions it has, and any configuration settings the file system should follow.
 
 > Note: Calling `create()` multiple times will destroy any data previously created.
 
@@ -78,7 +78,7 @@ if ($handle === false) {
 
 ### Setting the Configuration
 
-mockfs defaults to using a Linux-style filesystem configuration. This means all of the following rules apply:
+mockfs defaults to using a Linux-style file system configuration. This means all of the following rules apply:
 
 - It uses `/` as the file separator
 
@@ -121,7 +121,7 @@ The following are all of the valid configuration options that can be used:
 | `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `fileSeparator` option and the `null` character are always in the blacklist, even when the array is empty |
 | `user` | `int|null` | The user ID of the current user. Defaults to `null` (gets the UID from the system) |
 | `group` | `int|null` | The group ID of the current user. Defaults to `null` (gets the GID from the system) |
-| `quota` | `QuotaInterface` | The quota to apply to the filesystem. Defaults to `null`. See the [Quotas](#setting-filedisk-quotas) section for more info |
+| `quota` | `QuotaInterface` | The quota to apply to the file system. Defaults to `null`. See the [Quotas](#setting-filedisk-quotas) section for more info |
 
 
 #### Using Custom Configuration Presets
@@ -142,7 +142,7 @@ For example, if you prefer to use Windows-style defaults there's a pre-built con
 use MockFileSystem\Config\WindowsConfig;
 use MockFileSystem\MockFileSystem as mockfs;
 
-// Create the filesystem using Windows-style settings
+// Create the file system using Windows-style settings
 mockfs::create('', null, new WindowsConfig());
 ```
 

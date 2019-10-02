@@ -8,7 +8,7 @@ guide: true
 
 ## Inspiration
 
-mockfs is inspired by [vfsStream](https://github.com/bovigo/vfsStream). The code is completely different, but the underlying principle is the same &#151; provide a way to mock the filesystem.
+mockfs is inspired by [vfsStream](https://github.com/bovigo/vfsStream). The code is completely different, but the underlying principle is the same &#151; provide a way to mock the file system.
 
 
 ### How It Differs
@@ -25,7 +25,7 @@ Here are some of the key differences between mockfs and vfsStream (v1.6.7):
 
 - Support for more detailed file quotas
 
-- Support for emulating different filesystems (e.g. you can set up mockfs to behave like Windows)
+- Support for emulating different file systems (e.g. you can set up mockfs to behave like Windows)
 
 - Support for special files, such as /dev/null or /dev/random
 
