@@ -6,6 +6,7 @@ use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\PartitionInterface;
+use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
 
@@ -27,6 +28,18 @@ class Directory extends AbstractFile implements DirectoryInterface
     {
         parent::__construct($name, $permissions);
         $this->type = self::TYPE_DIR;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setConfig(ConfigInterface $config): void
+    {
+        parent::setConfig($config);
+
+        foreach ($this->children as $child) {
+            $child->setConfig($config);
+        }
     }
 
     /**
