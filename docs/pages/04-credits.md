@@ -23,7 +23,7 @@ Here are some of the key differences between mockfs and vfsStream (v1.6.7):
 
 - Support for testing more complex failure scenarios
 
-- Support for multiple quota, as well as more detailed quotas
+- Support for multiple, more detailed quotas
 
 - Support for emulating different file systems (e.g. you can set up mockfs to behave like Windows)
 
