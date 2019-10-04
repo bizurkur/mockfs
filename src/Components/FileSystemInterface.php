@@ -47,7 +47,7 @@ interface FileSystemInterface extends ContainerInterface
      * Examples:
      * - /foo => mfs:///foo
      * - mfs:///foo => mfs:///foo
-     * - /foo/./bar/baz/../ => /foo/bar/
+     * - /foo/./bar/baz/../ => mfs:///foo/bar/
      *
      * @param string|null $file
      *
