@@ -22,6 +22,7 @@ class WindowsConfig extends Config
             'includeDotFiles' => true,
             'normalizeSlashes' => true,
             // Based on https://en.wikipedia.org/wiki/Filename
+            // Summary: 0x00-0x1f, 0x7f, ", *, /, :, <, >, ?, \, and |
             'blacklist' => [
                 'start of heading' => "\x01",
                 'start of text' => "\x02",
