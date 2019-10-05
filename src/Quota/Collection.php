@@ -45,6 +45,16 @@ final class Collection implements QuotaInterface
     }
 
     /**
+     * Gets the number of quotas in the collection.
+     *
+     * @return int
+     */
+    public function count(): int
+    {
+        return count($this->quotas);
+    }
+
+    /**
      * {@inheritDoc}
      */
     public function appliesTo(int $user, int $group): bool
@@ -86,15 +96,5 @@ final class Collection implements QuotaInterface
         }
 
         return self::UNLIMITED;
-    }
-
-    /**
-     * Gets the number of quotes in the collection.
-     *
-     * @return int
-     */
-    public function count(): int
-    {
-        return count($this->quotas);
     }
 }
