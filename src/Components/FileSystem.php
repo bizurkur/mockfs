@@ -70,16 +70,17 @@ final class FileSystem implements FileSystemInterface
             return '';
         }
 
-        $sep = $this->config->getFileSeparator();
         $clean = trim($file);
 
-        if ($this->config->getNormalizeSlashes()) {
-            $clean = str_replace(['\\', '/'], $sep, $clean);
+        $prefix = StreamWrapper::PROTOCOL.'://';
+        $pathPrefix = mb_substr($clean, 0, mb_strlen($prefix));
+        if (strcmp(mb_strtoupper($prefix), mb_strtoupper($pathPrefix)) === 0) {
+            $clean = mb_substr($clean, mb_strlen($prefix));
         }
 
-        $prefix = StreamWrapper::PROTOCOL.'://';
-        if ($prefix === mb_substr($clean, 0, mb_strlen($prefix))) {
-            $clean = mb_substr($clean, mb_strlen($prefix));
+        $sep = $this->config->getFileSeparator();
+        if ($this->config->getNormalizeSlashes()) {
+            $clean = str_replace(['\\', '/'], $sep, $clean);
         }
 
         if (mb_substr($clean, -strlen($sep)) === $sep) {

@@ -130,8 +130,11 @@ final class MockFileSystem
      */
     public static function createPartition(string $name, ?int $permissions = null): Partition
     {
-        $sep = self::getFileSystem()->getConfig()->getFileSeparator();
-        $clean = rtrim(self::getPath($name), $sep);
+        $fileSeparator = self::getFileSystem()->getConfig()->getFileSeparator();
+        $partitionSeparator = self::getFileSystem()->getConfig()->getPartitionSeparator();
+        $clean = self::getPath($name);
+        $clean = rtrim($clean, $fileSeparator);
+        $clean = rtrim($clean, $partitionSeparator);
         $parts = self::getFileParts($clean);
 
         $partition = new Partition($parts['basename'], $permissions);
@@ -140,7 +143,7 @@ final class MockFileSystem
         self::getFileSystem()->addChild($partition);
 
         // If this partition is also a child directory then add it there, too
-        if (mb_strpos($clean, $sep) !== false) {
+        if (mb_strpos($clean, $fileSeparator) !== false) {
             self::getDirectory($parts['dirname'])->addChild($partition);
         }
 
