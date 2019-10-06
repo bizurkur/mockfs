@@ -34,16 +34,9 @@ final class StreamWrapper
      *
      * @see https://www.php.net/manual/en/function.stream-context-create.php
      *
-     * @var resource
+     * @var resource|null
      */
     public $context = null;
-
-    /**
-     * Array of context options for the stream.
-     *
-     * @var mixed[]
-     */
-    private $contextOptions = null;
 
     /**
      * @var \Iterator
@@ -555,6 +548,9 @@ final class StreamWrapper
             return (bool) $this->getContextOption('feof_response', false);
         }
 
+        // TODO: File "update" mode (what the default stream content uses)
+        // does not report EOF. Ever.
+
         return $this->file->isEof();
     }
 
@@ -605,25 +601,23 @@ final class StreamWrapper
             return false;
         }
 
-        if ($option === \STREAM_META_OWNER) {
-            $file->setUser($value);
-
-            return true;
+        switch ($option) {
+            case \STREAM_META_OWNER:
+                $file->setUser($value);
+                break;
+            case \STREAM_META_GROUP:
+                $file->setGroup($value);
+                break;
+            case \STREAM_META_ACCESS:
+                $file->setPermissions($value);
+                break;
+            default:
+                return false;
         }
 
-        if ($option === \STREAM_META_GROUP) {
-            $file->setGroup($value);
+        clearstatcache();
 
-            return true;
-        }
-
-        if ($option === \STREAM_META_ACCESS) {
-            $file->setPermissions($value);
-
-            return true;
-        }
-
-        return false;
+        return true;
     }
 
     // public function stream_set_option(int $option, int $arg1, int $arg2): bool
@@ -1053,16 +1047,15 @@ final class StreamWrapper
      */
     private function getContextOptions(): array
     {
-        if ($this->context === null) {
-            $this->context = stream_context_get_default();
+        $context = $this->context;
+        if ($context === null) {
+            $context = stream_context_get_default();
         }
 
-        if ($this->contextOptions === null) {
-            $this->contextOptions = stream_context_get_options($this->context);
-        }
+        $contextOptions = stream_context_get_options($context);
 
-        if (array_key_exists(self::PROTOCOL, $this->contextOptions)) {
-            return $this->contextOptions[self::PROTOCOL];
+        if (array_key_exists(self::PROTOCOL, $contextOptions)) {
+            return $contextOptions[self::PROTOCOL];
         }
 
         return [];

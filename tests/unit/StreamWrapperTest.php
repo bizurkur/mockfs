@@ -3,31 +3,42 @@
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\MockFileSystem;
-use MockFileSystem\Quota\Quota;
+use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\Error\Warning;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
-// TODO: Split this into end-to-end tests and unit tests
 // phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class StreamWrapperTest extends TestCase
 {
+    /**
+     * @var StreamWrapper
+     */
+    private $fixture = null;
+
+    /**
+     * @var FileSystemInterface
+     */
+    private $root = null;
+
     protected function setUp(): void
     {
         parent::setUp();
 
-        MockFileSystem::create();
+        $this->root = MockFileSystem::create();
+
+        $this->fixture = new StreamWrapper();
     }
 
     protected function tearDown(): void
     {
         parent::tearDown();
-
-        MockFileSystem::destroy();
 
         stream_context_set_default(
             [
@@ -38,7 +49,7 @@ class StreamWrapperTest extends TestCase
                     'readdir_fail' => false,
                     'rewinddir_fail' => false,
                     'mkdir_fail' => false,
-                    'mkdir_message	' => null,
+                    'mkdir_message' => null,
                     'rmdir_fail' => false,
                     'rmdir_message' => null,
                     'fopen_fail' => false,
@@ -66,483 +77,567 @@ class StreamWrapperTest extends TestCase
         );
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeAndRemoveDir(string $prefix): void
+    public function testOpenDir(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
 
-        mkdir($url);
+        $actual = $this->fixture->dir_opendir($path, 0);
 
-        self::assertTrue(is_dir($url), 'Failed to make directory');
-
-        rmdir($url);
-
-        self::assertFalse(file_exists($url), 'Failed to remove directory');
+        self::assertTrue($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeRecursiveDir(string $prefix): void
+    public function testOpenDirContextFailCreatesError(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
+        $message = uniqid();
 
-        mkdir($child, 0777, true);
-
-        self::assertTrue(is_dir($child), 'Failed to make directory');
-
-        rmdir($child);
-        rmdir($base);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     * @runInSeparateProcess
-     */
-    public function testMakeDirGivesCorrectPermissions(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $umask = 0022;
-
-        umask($umask);
-        MockFileSystem::umask($umask);
-
-        mkdir($url, 0777);
-
-        $actual = fileperms($url);
-        $actual &= ~FileInterface::TYPE_DIR;
-
-        self::assertEquals(0755, $actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenParentDoesNotExistCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+        $this->setContext(['opendir_fail' => true, 'opendir_message' => $message]);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): No such file or directory');
+        self::expectExceptionMessage($message);
 
-        mkdir($url);
+        $this->fixture->dir_opendir($path, 0);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenParentDoesNotExistResponse(string $prefix): void
+    public function testOpenDirContextFailResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
 
-        self::assertFalse(@mkdir($url));
+        $this->setContext(['opendir_fail' => true]);
+
+        $actual = $this->fixture->dir_opendir($path, 0);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenNoWritePermissionCreatesError(string $prefix): void
+    public function testOpenDirWhenNotExistsCreatesError(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base, 0500);
+        $path = uniqid();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): Permission denied');
+        self::expectExceptionMessage('opendir('.$path.'): failed to open dir: No such file or directory');
 
-        mkdir($child);
+        $this->fixture->dir_opendir($path, 0);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenNoWritePermissionResponse(string $prefix): void
+    public function testOpenDirWhenNotExistsResponse(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
+        $path = uniqid();
 
-        mkdir($base, 0500);
-
-        self::assertFalse(@mkdir($child));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenFileExistsCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): File exists');
-
-        mkdir($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenFileExistsResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        self::assertFalse(@mkdir($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenPathContainsFileCreatesError(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base);
-        file_put_contents($child, uniqid());
-
-        self::expectException(Warning::class);
-        // On Max, "not a directory" error.
-        // On Linux, "not such file or directory" error.
-
-        mkdir($child.'/'.uniqid());
-    }
-
-    public function testMakeDirWhenPathContainsFileCreatesErrorMessage(): void
-    {
-        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base);
-        file_put_contents($child, uniqid());
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): Not a directory');
-
-        mkdir($child.'/'.uniqid());
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testMakeDirWhenPathContainsFileResponse(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base);
-        file_put_contents($child, uniqid());
-
-        self::assertFalse(@mkdir($child.'/'.uniqid()));
-    }
-
-    public function testMakeDirWhenNoPartitionCreatesError(): void
-    {
-        $base = StreamWrapper::PROTOCOL.'://';
-        MockFileSystem::getFileSystem()->removeChild('/');
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): No such file or directory');
-
-        mkdir($base);
-    }
-
-    public function testMakeDirWhenNoPartitionResponse(): void
-    {
-        $base = StreamWrapper::PROTOCOL.'://';
-        MockFileSystem::getFileSystem()->removeChild('/');
-
-        self::assertFalse(@mkdir($base));
-    }
-
-    public function testMakeDirWhenPartitionNotExistsCreatesError(): void
-    {
-        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        MockFileSystem::getFileSystem()->removeChild('/');
-        MockFileSystem::createPartition('c:');
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('mkdir(): No such file or directory');
-
-        mkdir($base);
-    }
-
-    public function testMakeDirWhenPartitionNotExistsResponse(): void
-    {
-        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        MockFileSystem::getFileSystem()->removeChild('/');
-        MockFileSystem::createPartition('c:');
-
-        self::assertFalse(@mkdir($base));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenNotExistsCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('rmdir('.$url.'): No such file or directory');
-
-        rmdir($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenNotExistsResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-
-        self::assertFalse(@rmdir($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenPathIsNotDirCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('rmdir('.$url.'): Not a directory');
-
-        rmdir($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenPathIsNotDirResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        self::assertFalse(@rmdir($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenDirNotEmptyCreatesError(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base);
-        file_put_contents($child, uniqid());
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('rmdir('.$base.'): Directory not empty');
-
-        rmdir($base);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenDirNotEmptyResponse(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base);
-        file_put_contents($child, uniqid());
-
-        self::assertFalse(@rmdir($base));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenNotWritableCreatesError(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base, 0700);
-        mkdir($child);
-        chmod($base, 0500);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('rmdir('.$child.'): Permission denied');
-
-        rmdir($child);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRemoveDirWhenNotWritableResponse(string $prefix): void
-    {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $child = $base.'/'.uniqid();
-        $this->cleanup($child);
-        $this->cleanup($base);
-
-        mkdir($base, 0700);
-        mkdir($child);
-        chmod($base, 0500);
-
-        self::assertFalse(@rmdir($child));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testOpenDirWhenNotExistsCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: No such file or directory');
-
-        opendir($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testOpenDirWhenNotExistsResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-
-        $handle = @opendir($url);
+        $handle = @$this->fixture->dir_opendir($path, 0);
 
         self::assertFalse($handle);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testOpenDirWhenNotReadableCreatesError(string $prefix): void
+    public function testOpenDirWhenNotReadableCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        mkdir($url, 0000);
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path, 0000);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: Permission denied');
+        self::expectExceptionMessage('opendir('.$path.'): failed to open dir: Permission denied');
 
-        opendir($url);
+        $this->fixture->dir_opendir($path, 0);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testOpenDirWhenNotReadableResponse(string $prefix): void
+    public function testOpenDirWhenNotReadableResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        mkdir($url, 0000);
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path, 0000);
 
-        self::assertFalse(@opendir($url));
+        $actual = @$this->fixture->dir_opendir($path, 0);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadDir(string $prefix): void
+    public function testCloseDir(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
+        $actual = $this->fixture->dir_closedir();
+
+        self::assertTrue($actual);
+    }
+
+    public function testCloseDirContextFailResponse(): void
+    {
+        $this->setContext(['closedir_fail' => true]);
+
+        $actual = $this->fixture->dir_closedir();
+
+        self::assertFalse($actual);
+    }
+
+    public function testReadDir(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
-        $this->cleanup($base.'/'.$childA);
-        $this->cleanup($base.'/'.$childB);
-        $this->cleanup($base);
-        mkdir($base);
-        mkdir($base.'/'.$childA);
-        file_put_contents($base.'/'.$childB, uniqid());
+        mkdir($path);
+        mkdir($path.'/'.$childA);
+        file_put_contents($path.'/'.$childB, uniqid());
 
-        $handle = opendir($base);
-        if ($handle === false) {
-            self::fail('Failed to open dir handle');
-        }
+        $this->fixture->dir_opendir($path, 0);
 
         $actual = [];
-        while (($entry = readdir($handle)) !== false) {
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
             $actual[] = $entry;
         }
 
         // 2nd loop should do nothing
-        while (($entry = readdir($handle)) !== false) {
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
             $actual[] = $entry;
         }
-
-        closedir($handle);
 
         sort($actual);
         self::assertEquals(['.', '..', $childA, $childB], $actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadDirWithRewind(string $prefix): void
+    public function testReadDirContextFailResponse(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
+        $path = $this->root->getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
-        $this->cleanup($base.'/'.$childA);
-        $this->cleanup($base.'/'.$childB);
-        $this->cleanup($base);
-        mkdir($base);
-        mkdir($base.'/'.$childA);
-        file_put_contents($base.'/'.$childB, uniqid());
+        mkdir($path);
+        mkdir($path.'/'.$childA);
+        file_put_contents($path.'/'.$childB, uniqid());
 
-        $handle = opendir($base);
-        if ($handle === false) {
-            self::fail('Failed to open dir handle');
+        $this->fixture->dir_opendir($path, 0);
+
+        $this->setContext(['readdir_fail' => true]);
+
+        $actual = $this->fixture->dir_readdir();
+
+        self::assertFalse($actual);
+    }
+
+    public function testRewindDir(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $childA = uniqid('a');
+        $childB = uniqid('b');
+        mkdir($path);
+        mkdir($path.'/'.$childA);
+        file_put_contents($path.'/'.$childB, uniqid());
+
+        $this->fixture->dir_opendir($path, 0);
+
+        $actualA = [];
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
+            $actualA[] = $entry;
         }
+
+        self::assertTrue($this->fixture->dir_rewinddir());
+
+        $actualB = [];
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
+            $actualB[] = $entry;
+        }
+
+        sort($actualA);
+        sort($actualB);
+        self::assertEquals(['.', '..', $childA, $childB], $actualA);
+        self::assertEquals(['.', '..', $childA, $childB], $actualB);
+    }
+
+    public function testRewindDirContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $childA = uniqid('a');
+        $childB = uniqid('b');
+        mkdir($path);
+        mkdir($path.'/'.$childA);
+        file_put_contents($path.'/'.$childB, uniqid());
+
+        $this->fixture->dir_opendir($path, 0);
 
         $actual = [];
-        while (($entry = readdir($handle)) !== false) {
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
             $actual[] = $entry;
         }
 
-        rewinddir($handle);
-        while (($entry = readdir($handle)) !== false) {
+        $this->setContext(['rewinddir_fail' => true]);
+        self::assertFalse($this->fixture->dir_rewinddir());
+
+        while (($entry = $this->fixture->dir_readdir()) !== false) {
             $actual[] = $entry;
         }
 
-        closedir($handle);
-
-        $expected = ['.', '..', $childA, $childB, '.', '..', $childA, $childB];
         sort($actual);
-        sort($expected);
-        self::assertEquals($expected, $actual);
+        self::assertEquals(['.', '..', $childA, $childB], $actual);
+    }
+
+    public function testMakeDir(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = $this->fixture->mkdir($path, 0777, 0);
+
+        self::assertTrue($actual);
+        self::assertTrue(is_dir($path), 'Failed to make directory');
+    }
+
+    public function testMakeDirContextFailCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $message = uniqid();
+
+        $this->setContext(['mkdir_fail' => true, 'mkdir_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $this->fixture->mkdir($path, 0777, 0);
+    }
+
+    public function testMakeDirContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $this->setContext(['mkdir_fail' => true]);
+
+        $actual = $this->fixture->mkdir($path, 0777, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeRecursiveDir(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        $actual = $this->fixture->mkdir($child, 0777, \STREAM_MKDIR_RECURSIVE);
+
+        self::assertTrue($actual);
+        self::assertTrue(is_dir($child), 'Failed to make directory');
+    }
+
+    public function testMakeDirGivesCorrectPermissions(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = $this->fixture->mkdir($path, 0755, 0);
+
+        $actual = fileperms($path);
+
+        self::assertEquals(0755|FileInterface::TYPE_DIR, $actual);
+    }
+
+    public function testMakeDirWhenParentDoesNotExistCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        $this->fixture->mkdir($path, 0755, 0);
+    }
+
+    public function testMakeDirWhenParentDoesNotExistResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+
+        $actual = @$this->fixture->mkdir($path, 0755, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeDirWhenNoWritePermissionCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        $this->fixture->mkdir($path, 0500, 0);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): Permission denied');
+
+        $this->fixture->mkdir($child, 0500, 0);
+    }
+
+    public function testMakeDirWhenNoWritePermissionResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        $this->fixture->mkdir($path, 0500, 0);
+
+        $actual = @$this->fixture->mkdir($child, 0500, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeDirWhenFileExistsCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): File exists');
+
+        $this->fixture->mkdir($path, 0777, 0);
+    }
+
+    public function testMakeDirWhenFileExistsResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = @$this->fixture->mkdir($path, 0777, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeDirWhenPathContainsFileCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path);
+        file_put_contents($child, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): Not a directory');
+
+        $this->fixture->mkdir($child.uniqid('/'), 0777, 0);
+    }
+
+    public function testMakeDirWhenPathContainsFileResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path);
+        file_put_contents($child, uniqid());
+
+        $actual = @$this->fixture->mkdir($child.uniqid('/'), 0777, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeDirWhenNoPartitionCreatesError(): void
+    {
+        $path = $this->root->getUrl('/');
+        $this->root->removeChild('/');
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        $this->fixture->mkdir($path, 0777, 0);
+    }
+
+    public function testMakeDirWhenNoPartitionResponse(): void
+    {
+        $path = $this->root->getUrl('/');
+        $this->root->removeChild('/');
+
+        $actual = @$this->fixture->mkdir($path, 0777, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testMakeDirWhenWrongPartitionCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('c:/'));
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('mkdir(): No such file or directory');
+
+        $this->fixture->mkdir($path, 0777, 0);
+    }
+
+    public function testMakeDirWhenWrongPartitionResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('c:/'));
+
+        $actual = @$this->fixture->mkdir($path, 0777, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testRemoveDir(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
+
+        self::assertTrue(file_exists($path));
+
+        $actual = $this->fixture->rmdir($path, 0);
+
+        self::assertTrue($actual);
+        self::assertFalse(file_exists($path));
+    }
+
+    public function testRemoveDirContextFailCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
+        $message = uniqid();
+
+        $this->setContext(['rmdir_fail' => true, 'rmdir_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $this->fixture->rmdir($path, 0);
+    }
+
+    public function testRemoveDirContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
+
+        $this->setContext(['rmdir_fail' => true]);
+
+        $actual = $this->fixture->rmdir($path, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testRemoveDirWhenNotExistsCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$path.'): No such file or directory');
+
+        $this->fixture->rmdir($path, 0);
+    }
+
+    public function testRemoveDirWhenNotExistsResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = @$this->fixture->rmdir($path, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testRemoveDirWhenPathIsNotDirCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$path.'): Not a directory');
+
+        $this->fixture->rmdir($path, 0);
+    }
+
+    public function testRemoveDirWhenPathIsNotDirResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = @$this->fixture->rmdir($path, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testRemoveDirWhenDirNotEmptyCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path);
+        file_put_contents($child, uniqid());
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$path.'): Directory not empty');
+
+        $this->fixture->rmdir($path, 0);
+    }
+
+    public function testRemoveDirWhenDirNotEmptyResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path);
+        file_put_contents($child, uniqid());
+
+        $actual = @$this->fixture->rmdir($path, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testRemoveDirWhenNotWritableCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path, 0700);
+        mkdir($child);
+        chmod($path, 0500);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('rmdir('.$child.'): Permission denied');
+
+        $this->fixture->rmdir($child, 0);
+    }
+
+    public function testRemoveDirWhenNotWritableResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $child = $path.'/'.uniqid();
+
+        mkdir($path, 0700);
+        mkdir($child);
+        chmod($path, 0500);
+
+        $actual = @$this->fixture->rmdir($child, 0);
+
+        self::assertFalse($actual);
+    }
+
+    public function testFileOpenContextFailCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        $message = uniqid();
+
+        $this->setContext(
+            [
+                'fopen_fail' => true,
+                'fopen_message' => $message,
+            ]
+        );
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
+    }
+
+    public function testFileOpenContextFailDoesNotCreateError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        $message = uniqid();
+
+        $this->setContext(
+            [
+                'fopen_fail' => true,
+                'fopen_message' => $message,
+            ]
+        );
+
+        $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
+
+        self::assertFalse($actual);
+    }
+
+    public function testFileOpenContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+
+        $this->setContext(['fopen_fail' => true]);
+
+        $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
+
+        self::assertFalse($actual);
     }
 
     /**
@@ -550,15 +645,13 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenInvalidModeCreatesError(string $mode): void
     {
-        $url = uniqid('mfs_');
-        $path = uniqid();
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('Illegal mode "'.$mode.'"');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, $mode, \STREAM_REPORT_ERRORS, $ignore);
     }
 
     public function sampleInvalidModes(): array
@@ -570,54 +663,35 @@ class StreamWrapperTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testFileOpenInvalidModeResponse(string $prefix): void
+    public function testFileOpenInvalidModeResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
 
-        self::assertFalse(@fopen($url, 'q'));
+        $actual = $this->fixture->stream_open($path, 'q', 0, $ignore);
+
+        self::assertFalse($actual);
     }
-
-    // TODO: Test this
-    // /**
-    //  * @dataProvider samplePrefixes
-    //  */
-    // public function testFileOpenForReadOnNonExistentFileCreatesError(string $prefix): void
-    // {
-    //     $url = $prefix.'/'.uniqid('mfs_');
-    //     $this->cleanup($url);
-    //
-    //     self::expectException(Warning::class);
-    //     self::expectExceptionMessage('fopen('.$url.'): failed to open stream: No such file or directory');
-    //
-    //     fopen($url, 'r');
-    // }
 
     public function testFileOpenForReadOnNonExistentFileCreatesError(): void
     {
-        $url = uniqid('mfs_');
-        $path = uniqid();
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Cannot open non-existent file "'.$url.'" for reading.');
+        self::expectExceptionMessage('Cannot open non-existent file "'.$path.'" for reading.');
 
-        $fixture->stream_open($url, 'r', \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, 'r', \STREAM_REPORT_ERRORS, $ignore);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testFileOpenForReadOnNonExistentFileResponse(string $prefix): void
+    public function testFileOpenForReadOnNonExistentFileResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
 
-        self::assertFalse(@fopen($url, 'r'));
+        $actual = $this->fixture->stream_open($path, 'r', 0, $ignore);
+
+        self::assertFalse($actual);
     }
 
     /**
@@ -625,16 +699,14 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForCreateNewWhenExistsCreatesError(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" already exists; cannot open in mode '.$mode);
+        self::expectExceptionMessage('File "'.$path.'" already exists; cannot open in mode '.$mode);
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, $mode, \STREAM_REPORT_ERRORS, $ignore);
     }
 
     /**
@@ -642,13 +714,11 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForCreateNewWhenExistsDoesNotCreateError(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
 
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
+        $actual = $this->fixture->stream_open($path, $mode, 0, $ignore);
 
         self::assertFalse($actual);
     }
@@ -664,15 +734,17 @@ class StreamWrapperTest extends TestCase
     }
 
     /**
-     * @dataProvider samplePrefixes
+     * @dataProvider sampleCreateNewModes
      */
-    public function testFileOpenForCreateNewWhenExistsResponse(string $prefix): void
+    public function testFileOpenForCreateNewWhenExistsResponse(string $mode): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
 
-        self::assertFalse(@fopen($url, 'x'));
+        $actual = $this->fixture->stream_open($path, $mode, 0, $ignore);
+
+        self::assertFalse($actual);
     }
 
     /**
@@ -680,17 +752,15 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForReadWhenNotReadableCreatesError(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0200);
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
+        chmod($path, 0200);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" is not readable.');
+        self::expectExceptionMessage('File "'.$path.'" is not readable.');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, $mode, \STREAM_REPORT_ERRORS, $ignore);
     }
 
     /**
@@ -698,14 +768,12 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForReadWhenNotReadableDoesNotCreateError(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0200);
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
+        chmod($path, 0200);
 
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
+        $actual = $this->fixture->stream_open($path, $mode, 0, $ignore);
 
         self::assertFalse($actual);
     }
@@ -723,16 +791,18 @@ class StreamWrapperTest extends TestCase
     }
 
     /**
-     * @dataProvider samplePrefixes
+     * @dataProvider sampleReadModes
      */
-    public function testFileOpenForReadWhenNotReadableResponse(string $prefix): void
+    public function testFileOpenForReadWhenNotReadableResponse(string $mode): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-        chmod($url, 0200);
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
+        chmod($path, 0200);
 
-        self::assertFalse(@fopen($url, 'r'));
+        $actual = $this->fixture->stream_open($path, $mode, 0, $ignore);
+
+        self::assertFalse($actual);
     }
 
     /**
@@ -740,32 +810,28 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForWriteWhenNotWritableCreatesError(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0500);
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
+        chmod($path, 0500);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" is not writeable.');
+        self::expectExceptionMessage('File "'.$path.'" is not writeable.');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, $mode, \STREAM_REPORT_ERRORS, $ignore);
     }
 
     /**
      * @dataProvider sampleWriteModes
      */
-    public function testFileOpenForWriteWhenNotWritableDoesNotCreateError(string $mode): void
+    public function testFileOpenForWriteWhenNotWritableResponse(string $mode): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0500);
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+        file_put_contents($path, uniqid());
+        chmod($path, 0500);
 
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
+        $actual = $this->fixture->stream_open($path, $mode, 0, $ignore);
 
         self::assertFalse($actual);
     }
@@ -782,819 +848,812 @@ class StreamWrapperTest extends TestCase
         ];
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testFileOpenForWriteWhenNotWritableResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-        chmod($url, 0500);
-
-        self::assertFalse(@fopen($url, 'w'));
-    }
-
     public function testFileOpenSetsOpenPath(): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
 
-        $fixture = new StreamWrapper();
+        $actual = $this->fixture->stream_open($path, 'w', \STREAM_USE_PATH, $openedPath);
 
-        $actual = $fixture->stream_open($url, 'w', \STREAM_USE_PATH, $path);
-
-        self::assertEquals($url, $path);
+        self::assertEquals($path, $openedPath);
     }
+
 
     public function testFileOpenDoesNotSetOpenPath(): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
 
-        $fixture = new StreamWrapper();
+        $actual = $this->fixture->stream_open($path, 'w', 0, $openedPath);
 
-        $actual = $fixture->stream_open($url, 'w', 0, $path);
-
-        self::assertNull($path);
+        self::assertNull($openedPath);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadAndWrite(string $prefix): void
+    public function testFileCloseContextFailResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
 
-        file_put_contents($url, $content);
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
 
-        self::assertEquals($content, file_get_contents($url));
+        $content = $this->mockFileContent($path);
+        $content->expects(self::never())->method('close');
+
+        $this->setContext(['fclose_fail' => true]);
+
+        $this->fixture->stream_close();
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testAppendAlwaysWritesToEnd(string $prefix): void
+    public function testFileClose(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $contentA = uniqid('a');
-        $contentB = uniqid('b');
-        $contentC = uniqid('c');
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
 
-        $handle = fopen($url, 'a+');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fwrite($handle, $contentA);
-        fseek($handle, 0);
-        fwrite($handle, $contentB);
-        fseek($handle, 0);
-        fwrite($handle, $contentC);
-        fclose($handle);
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
 
-        self::assertEquals($contentA.$contentB.$contentC, file_get_contents($url));
-    }
+        $this->fixture->stream_close();
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadWhenNotReadMode(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = fread($handle, rand(1, 100));
-        fclose($handle);
-
-        self::assertEquals('', $actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadWhenNotReadable(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-        file_put_contents($url, $content);
-
-        $handle = fopen($url, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        chmod($url, 0000); // This should have no effect on an open stream
-        $actual = fread($handle, rand(50, 100));
-        fclose($handle);
-
-        self::assertEquals($content, $actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testWriteWhenNotWriteMode(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        $handle = fopen($url, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = fwrite($handle, uniqid());
-        fclose($handle);
-
-        self::assertEquals(0, $actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testWriteWhenNotWritable(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        chmod($url, 0000); // This should have no effect on an open stream
-        $actual = fwrite($handle, $content);
-        fclose($handle);
-
-        self::assertEquals(strlen($content), $actual);
-    }
-
-    public function testWriteWithQuotaLimitedSpace(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-
-        $quota = new Quota(4, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $actual = fwrite($handle, $content);
-        fclose($handle);
-
-        self::assertEquals(4, $actual);
-        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
-    }
-
-    public function testFilePutContentsWithQuotaLimitedSpaceCreatesError(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-
-        $quota = new Quota(4, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage(
-            'file_put_contents(): Only 4 of 13 bytes written, possibly out of free disk space'
-        );
-
-        file_put_contents($url, uniqid());
-    }
-
-    public function testFilePutContentsWithQuotaLimitedSpaceResponse(): void
-    {
-        $quota = new Quota(4, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        @file_put_contents($url, $content);
-
-        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
-    }
-
-    public function testWriteWithQuotaUnlimitedSpace(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-
-        $quota = new Quota(-1, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $actual = fwrite($handle, $content);
-        fclose($handle);
-
-        self::assertEquals(strlen($content), $actual);
-        self::assertEquals($content, file_get_contents($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTruncateWhenNotWriteMode(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        $handle = fopen($url, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = ftruncate($handle, rand(1, 3));
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTruncateWhenNotWritable(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        chmod($url, 0000); // This should have no effect on an open stream
-        $actual = ftruncate($handle, rand(1, 3));
-        fclose($handle);
-
-        self::assertTrue($actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTruncateUp(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        $handle = fopen($url, 'w+');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fwrite($handle, $content);
-        ftruncate($handle, strlen($content) + 3);
-        fclose($handle);
-
-        self::assertEquals($content."\0\0\0", file_get_contents($url));
-    }
-
-    public function testTruncateUpWithQuotaLimitedSpace(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-
-        $quota = new Quota(4, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $actual = ftruncate($handle, rand(50, 100));
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    public function testTruncateUpWithQuotaUnlimitedSpace(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-
-        $quota = new Quota(-1, -1);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $actual = ftruncate($handle, rand(50, 100));
-        fclose($handle);
-
-        self::assertTrue($actual);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTruncateDown(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-
-        $handle = fopen($url, 'w+');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fwrite($handle, $content);
-        ftruncate($handle, 4);
-        fclose($handle);
-
-        self::assertEquals(substr($content, 0, 4), file_get_contents($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testWriteSameFileFromTwoHandles(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $contentA = uniqid('a');
-        $contentB = uniqid('b');
-
-        $handle1 = fopen($url, 'w');
-        if ($handle1 === false) {
-            self::fail('Failed to open handle 1');
-        }
-        $handle2 = fopen($url, 'w');
-        if ($handle2 === false) {
-            self::fail('Failed to open handle 2');
-        }
-
-        fwrite($handle1, $contentA.$contentA);
-        fwrite($handle2, $contentB);
-        fclose($handle1);
-        fclose($handle2);
-
-        self::assertEquals($contentB.$contentA, file_get_contents($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testWriteDifferentFileFromTwoHandles(string $prefix): void
-    {
-        $urlA = $prefix.'/'.uniqid('mfs_a');
-        $urlB = $prefix.'/'.uniqid('mfs_b');
-        $this->cleanup($urlA);
-        $this->cleanup($urlB);
-        $contentA = uniqid('a');
-        $contentB = uniqid('b');
-
-        $handle1 = fopen($urlA, 'w');
-        if ($handle1 === false) {
-            self::fail('Failed to open handle 1');
-        }
-        $handle2 = fopen($urlB, 'w');
-        if ($handle2 === false) {
-            self::fail('Failed to open handle 2');
-        }
-
-        fwrite($handle1, $contentA);
-        fwrite($handle2, $contentB);
-        fclose($handle1);
-        fclose($handle2);
-
-        self::assertEquals($contentA, file_get_contents($urlA));
-        self::assertEquals($contentB, file_get_contents($urlB));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testWriteParentDirDoesNotExist(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
-
-        self::assertFalse(@fopen($url, 'w'));
+        self::assertTrue(true);
     }
 
     public function testWriteParentDirDoesNotExistCreatesError(): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
-        $path = null;
-
-        $fixture = new StreamWrapper();
+        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $ignore = null;
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Path "'.$url.'" does not exist.');
+        self::expectExceptionMessage('Path "'.$path.'" does not exist.');
 
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+        $this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testCreateFileParentNotWritable(string $prefix): void
+    public function testWriteParentDirDoesNotExistCreatesErrorResponse(): void
     {
-        $base = $prefix.'/'.uniqid('mfs_');
-        $url = $base.'/'.uniqid();
-        mkdir($base, 0500);
+        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $ignore = null;
 
-        self::assertFalse(@fopen($url, 'w'));
-    }
-
-    public function testCreateFileParentNotWritableCreatesError(): void
-    {
-        $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $url = $base.'/'.uniqid();
-        $path = null;
-        mkdir($base, 0500);
-
-        $fixture = new StreamWrapper();
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('Directory "'.$base.'" is not writable.');
-
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
-    }
-
-    public function testCreateFileThrowsExceptionCreatesError(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('Not enough disk space');
-
-        $quota = new Quota(-1, 0);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
-    }
-
-    public function testCreateFileThrowsExceptionResponse(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
-
-        $quota = new Quota(-1, 0);
-        $partition = MockFileSystem::getFileSystem()->getChild('/');
-        if ($partition instanceof PartitionInterface) {
-            $partition->setQuota($quota);
-        }
-
-        $actual = $fixture->stream_open($url, 'w', 0, $path);
+        $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
 
         self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadSameFileFromTwoHandles(string $prefix): void
+    public function testCreateFileParentNotWritableCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        $content = uniqid();
-        file_put_contents($url, $content);
+        $base = $this->root->getUrl(uniqid('/'));
+        $path = $base.'/'.uniqid();
+        $ignore = null;
+        mkdir($base, 0500);
 
-        $handle1 = fopen($url, 'r');
-        $handle2 = fopen($url, 'r');
-        if ($handle1 === false) {
-            self::fail('Failed to open handle 1');
-        }
-        if ($handle2 === false) {
-            self::fail('Failed to open handle 2');
-        }
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Directory "'.$base.'" is not writable.');
 
-        $contentA = fread($handle1, 4096);
-        $contentB = fread($handle2, 4096);
-        fclose($handle1);
-        fclose($handle2);
-
-        self::assertEquals($content, $contentA);
-        self::assertEquals($content, $contentB);
+        $this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testReadDifferentFileFromTwoHandles(string $prefix): void
+    public function testCreateFileParentNotWritableResponse(): void
     {
-        $urlA = $prefix.'/'.uniqid('mfs_');
-        $urlB = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($urlA);
-        $this->cleanup($urlB);
+        $base = $this->root->getUrl(uniqid('/'));
+        $path = $base.'/'.uniqid();
+        $ignore = null;
+        mkdir($base, 0500);
+
+        $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
+
+        self::assertFalse($actual);
+    }
+
+    public function testCreateFileThrowsExceptionCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Not enough disk space');
+
+        $quota = $this->createConfiguredMock(
+            QuotaInterface::class,
+            [
+                'appliesTo' => true,
+                'getRemainingSize' => 0,
+                'getRemainingFileCount' => 0,
+            ]
+        );
+        $partition = $this->root->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
+
+        $this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
+    }
+
+    public function testCreateFileThrowsExceptionResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $ignore = null;
+
+        $quota = $this->createConfiguredMock(
+            QuotaInterface::class,
+            [
+                'appliesTo' => true,
+                'getRemainingSize' => 0,
+                'getRemainingFileCount' => 0,
+            ]
+        );
+        $partition = $this->root->getChild('/');
+        if ($partition instanceof PartitionInterface) {
+            $partition->setQuota($quota);
+        }
+
+        $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
+
+        self::assertFalse($actual);
+    }
+
+    public function testAppendAlwaysWritesToEnd(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
         $contentA = uniqid('a');
         $contentB = uniqid('b');
-        file_put_contents($urlA, $contentA);
-        file_put_contents($urlB, $contentB);
+        $contentC = uniqid('c');
+        file_put_contents($path, $contentA);
 
-        $handle1 = fopen($urlA, 'r');
-        if ($handle1 === false) {
-            self::fail('Failed to open handle 1');
-        }
-        $handle2 = fopen($urlB, 'r');
-        if ($handle2 === false) {
-            self::fail('Failed to open handle 2');
-        }
+        $this->fixture->stream_open($path, 'a+', 0, $openedPath);
+        $this->fixture->stream_write($contentB);
+        $this->fixture->stream_seek(0, \SEEK_SET); // seek should only effect reading
+        $this->fixture->stream_write($contentC);
 
-        $actualA = fread($handle1, 4096);
-        $actualB = fread($handle2, 4096);
-        fclose($handle1);
-        fclose($handle2);
-
-        self::assertEquals($contentA, $actualA);
-        self::assertEquals($contentB, $actualB);
+        self::assertEquals($contentA.$contentB.$contentC, file_get_contents($path));
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testFlush(string $prefix): void
+    public function testRead(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+        file_put_contents($path, $content);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_read(rand(50, 100));
+
+        self::assertEquals($content, $actual);
+    }
+
+    public function testReadContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $this->setContext(['fread_fail' => true]);
+
+        $actual = $this->fixture->stream_read(100);
+
+        self::assertEquals('', $actual);
+    }
+
+    public function testReadWhenNotReadMode(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+
+        $actual = $this->fixture->stream_read(rand(1, 100));
+
+        self::assertEquals('', $actual);
+    }
+
+    public function testReadWhenFileChangedToNotReadableAfterOpen(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+        file_put_contents($path, $content);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        chmod($path, 0000); // This should have no effect on an open stream
+
+        $actual = $this->fixture->stream_read(rand(50, 100));
+
+        self::assertEquals($content, $actual);
+    }
+
+    public function testWrite(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
         $content = uniqid();
 
-        $handle = fopen($url, 'w+');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fwrite($handle, $content);
-        $actual = fflush($handle);
-        fclose($handle);
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+
+        $actual = $this->fixture->stream_write($content);
+
+        self::assertEquals(strlen($content), $actual);
+    }
+
+    public function testWriteContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+
+        $this->setContext(['fwrite_fail' => true]);
+
+        $actual = $this->fixture->stream_write(uniqid());
+
+        self::assertEquals(0, $actual);
+    }
+
+    public function testWriteWhenNotWriteMode(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_write(uniqid());
+
+        self::assertEquals(0, $actual);
+    }
+
+    public function testWriteWhenFileChangedToNotWritableAfterOpen(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        chmod($path, 0000); // This should have no effect on an open stream
+
+        $actual = $this->fixture->stream_write($content);
+
+        self::assertEquals(strlen($content), $actual);
+    }
+
+    public function testTruncateUp(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+
+        $this->fixture->stream_open($path, 'w+', 0, $openedPath);
+        $this->fixture->stream_write($content);
+        $this->fixture->stream_truncate(strlen($content) + 3);
+        $this->fixture->stream_seek(0);
+        $actual = $this->fixture->stream_read(1024);
+
+        self::assertEquals($content."\0\0\0", $actual);
+    }
+
+    public function testTruncateDown(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+
+        $this->fixture->stream_open($path, 'w+', 0, $openedPath);
+        $this->fixture->stream_write($content);
+        $this->fixture->stream_truncate(4);
+        $this->fixture->stream_seek(0);
+        $actual = $this->fixture->stream_read(1024);
+
+        self::assertEquals(substr($content, 0, 4), $actual);
+    }
+
+    public function testTruncateContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'w+', 0, $openedPath);
+
+        $this->setContext(['ftruncate_fail' => true]);
+
+        $actual = $this->fixture->stream_truncate(4);
+
+        self::assertFalse($actual);
+    }
+
+    public function testTruncateWhenNotWriteMode(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_truncate(rand(1, 3));
+
+        self::assertFalse($actual);
+    }
+
+    public function testTruncateWhenFileChangedToNotWritableAfterOpen(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        chmod($path, 0000); // This should have no effect on an open stream
+
+        $actual = $this->fixture->stream_truncate(rand(1, 3));
 
         self::assertTrue($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameFile(string $prefix): void
+    public function testSeekPastEnd(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest');
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        $this->fixture->stream_seek(rand(1, 99), \SEEK_SET);
+
+        $actual = $this->fixture->stream_tell();
+
+        self::assertEquals(0, $actual);
+    }
+
+    public function testSeekAbsolute(): void
+    {
+        $offset = rand(1, 8);
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_seek($offset, \SEEK_SET);
+
+        $actual = $this->fixture->stream_tell();
+
+        self::assertEquals($offset, $actual);
+    }
+
+    public function testSeekFromEnd(): void
+    {
+        $offset = rand(1, 8);
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $content = uniqid();
+        file_put_contents($path, $content);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_seek(-$offset, \SEEK_END);
+
+        $actual = $this->fixture->stream_tell();
+
+        self::assertEquals(strlen($content) - $offset, $actual);
+    }
+
+    public function testSeekFromRelative(): void
+    {
+        $offsetA = rand(1, 8);
+        $offsetB = rand(1, 8);
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid().uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_seek($offsetA, \SEEK_SET);
+        $this->fixture->stream_seek($offsetB, \SEEK_CUR);
+
+        $actual = $this->fixture->stream_tell();
+
+        self::assertEquals($offsetA + $offsetB, $actual);
+    }
+
+    public function testSeekResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_seek(rand(1, 8));
+
+        self::assertTrue($actual);
+    }
+
+    public function testSeekContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $this->setContext(['fseek_fail' => true]);
+
+        $actual = $this->fixture->stream_seek(rand());
+
+        self::assertFalse($actual);
+    }
+
+    public function testTellContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_seek(rand(1, 8));
+
+        $this->setContext(['ftell_fail' => true]);
+
+        $actual = $this->fixture->stream_tell();
+
+        self::assertEquals(0, $actual);
+    }
+
+    public function testEof(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $expected = (bool) rand(0, 1);
+        file_put_contents($path, uniqid());
+
+        $content = $this->mockFileContent($path);
+        $content->method('isEof')->willReturn($expected);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_eof();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testEofNotReached(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_eof();
+
+        self::assertFalse($actual);
+    }
+
+    public function testEofContextFailDefaultFalse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['feof_fail' => true]);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_read(100);
+
+        $actual = $this->fixture->stream_eof();
+
+        self::assertFalse($actual);
+    }
+
+    public function testEofContextFailOverrideTrue(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['feof_fail' => true, 'feof_response' => true]);
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+        $this->fixture->stream_read(100);
+
+        $actual = $this->fixture->stream_eof();
+
+        self::assertTrue($actual);
+    }
+
+    public function testFlush(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $expected = (bool) rand(0, 1);
+        file_put_contents($path, uniqid());
+
+        $content = $this->mockFileContent($path);
+        $content->method('flush')->willReturn($expected);
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        $this->fixture->stream_write(uniqid());
+
+        $actual = $this->fixture->stream_flush();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testFlushContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        $this->fixture->stream_write(uniqid());
+
+        $this->setContext(['fflush_fail' => true]);
+
+        $content = $this->mockFileContent($path);
+        $content->expects(self::never())->method('flush');
+
+        $actual = $this->fixture->stream_flush();
+
+        self::assertFalse($actual);
+    }
+
+    public function testStreamStat(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        $permissions = 0500;
+        $now = time();
+        file_put_contents($path, uniqid());
+        chmod($path, $permissions);
+        $config = MockFileSystem::getFileSystem()->getConfig();
+        $file = MockFileSystem::find($path);
+        if ($file === null) {
+            self::fail('File not found');
+        }
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $actual = $this->fixture->stream_stat();
+
+        $expected = [
+            0 => 0,
+            1 => spl_object_id($file),
+            2 => FileInterface::TYPE_FILE|$permissions,
+            3 => 1,
+            4 => $config->getUser(),
+            5 => $config->getGroup(),
+            6 => 0,
+            7 => 13,
+            8 => $now,
+            9 => $now,
+            10 => $now,
+            11 => -1,
+            12 => -1,
+            'dev' => 0,
+            'ino' => spl_object_id($file),
+            'mode' => FileInterface::TYPE_FILE|$permissions,
+            'nlink' => 1,
+            'uid' => $config->getUser(),
+            'gid' => $config->getGroup(),
+            'rdev' => 0,
+            'size' => 13,
+            'atime' => $now,
+            'mtime' => $now,
+            'ctime' => $now,
+            'blksize' => -1,
+            'blocks' => -1,
+        ];
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testStreamStatContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        $openedPath = null;
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_open($path, 'r', 0, $openedPath);
+
+        $this->setContext(['fstat_fail' => true]);
+
+        $actual = $this->fixture->stream_stat();
+
+        self::assertFalse($actual);
+    }
+
+    public function testRenameFile(): void
+    {
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
 
         $content = uniqid();
         file_put_contents($src, $content);
 
-        self::assertTrue(rename($src, $dest));
+        $actual = $this->fixture->rename($src, $dest);
+
+        self::assertTrue($actual);
         self::assertFalse(file_exists($src), 'Source file not removed');
         self::assertTrue(is_file($dest), 'Destination file not created');
         self::assertEquals($content, file_get_contents($dest), 'Content not moved');
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDir(string $prefix): void
+    public function testRenameDir(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest');
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
 
-        self::assertTrue(rename($src, $dest));
+        $actual = $this->fixture->rename($src, $dest);
+
+        self::assertTrue($actual);
         self::assertFalse(file_exists($src), 'Source not removed');
         self::assertTrue(is_dir($dest), 'Destination not created');
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameNonExistentSrcCreatesError(string $prefix): void
+    public function testRenameContextFailCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest');
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        file_put_contents($src, uniqid());
+        $message = uniqid();
+
+        $this->setContext(['rename_fail' => true, 'rename_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $this->fixture->rename($src, $dest);
+    }
+
+    public function testRenameContextFailResponse(): void
+    {
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        file_put_contents($src, uniqid());
+
+        $this->setContext(['rename_fail' => true]);
+
+        $actual = $this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
+        self::assertTrue(file_exists($src));
+        self::assertFalse(file_exists($dest));
+    }
+
+    public function testRenameNonExistentSrcCreatesError(): void
+    {
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): No such file or directory');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameNonExistentSrcResponse(string $prefix): void
+    public function testRenameNonExistentSrcResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest');
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameNonExistentDestCreatesError(string $prefix): void
+    public function testRenameNonExistentDestCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest').uniqid('/'));
         file_put_contents($src, uniqid());
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): No such file or directory');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameNonExistentDestResponse(string $prefix): void
+    public function testRenameNonExistentDestResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest').uniqid('/'));
         file_put_contents($src, uniqid());
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDestNotDirectoryCreatesError(string $prefix): void
+    public function testRenameDestNotDirectoryCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         file_put_contents($destBase, uniqid());
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): Not a directory');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDestNotDirectoryResponse(string $prefix): void
+    public function testRenameDestNotDirectoryResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         file_put_contents($destBase, uniqid());
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDestNotWritableCreatesError(string $prefix): void
+    public function testRenameDestNotWritableCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         mkdir($destBase, 0500);
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): Permission denied');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDestNotWritableResponse(string $prefix): void
+    public function testRenameDestNotWritableResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         mkdir($destBase, 0500);
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDirWhenDestNotEmptyCreatesError(string $prefix): void
+    public function testRenameDirWhenDestNotEmptyCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
-        mkdir($dest, 0777, true);
-        file_put_contents($dest.'/'.uniqid(), uniqid());
+        mkdir($dest, 0777);
+        file_put_contents($dest.uniqid('/'), uniqid());
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): Directory not empty');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDirWhenDestNotEmptyResponse(string $prefix): void
+    public function testRenameDirWhenDestNotEmptyResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
-        mkdir($dest, 0777, true);
-        file_put_contents($dest.'/'.uniqid(), uniqid());
+        mkdir($dest, 0777);
+        file_put_contents($dest.uniqid('/'), uniqid());
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDirWhenDestExists(string $prefix): void
+    public function testRenameDirWhenDestExists(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $dest = $prefix.'/'.uniqid('mfs_dest').'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
-        mkdir($dest, 0777, true);
+        mkdir($dest, 0777);
 
-        self::assertTrue(rename($src, $dest));
+        $actual = $this->fixture->rename($src, $dest);
+
+        self::assertTrue($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDirWhenDestExistsAsFileCreatesError(string $prefix): void
+    public function testRenameDirWhenDestExistsAsFileCreatesError(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         mkdir($src, 0777);
         mkdir($destBase, 0777);
         file_put_contents($dest, uniqid());
@@ -1602,120 +1661,129 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): Not a directory');
 
-        rename($src, $dest);
+        $this->fixture->rename($src, $dest);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testRenameDirWhenDestExistsAsFileResponse(string $prefix): void
+    public function testRenameDirWhenDestExistsAsFileResponse(): void
     {
-        $src = $prefix.'/'.uniqid('mfs_src');
-        $destBase = $prefix.'/'.uniqid('mfs_dest');
-        $dest = $destBase.'/'.uniqid();
-        $this->cleanup($src);
-        $this->cleanup($destBase);
-        $this->cleanup($dest);
+        $src = $this->root->getUrl(uniqid('/mfs_src'));
+        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $dest = $destBase.uniqid('/');
         mkdir($src, 0777);
         mkdir($destBase, 0777);
         file_put_contents($dest, uniqid());
 
-        self::assertFalse(@rename($src, $dest));
+        $actual = @$this->fixture->rename($src, $dest);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTouchWhenNotExists(string $prefix): void
+    public function testTouchWhenNotExists(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
 
-        touch($url);
+        $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
+
         $now = time();
-        $stat = stat($url);
+        $stat = $this->fixture->url_stat($path, 0);
 
-        self::assertTrue(is_file($url));
+        self::assertTrue(is_file($path));
         self::assertEqualsWithDelta($now, $stat['atime'], 1);
         self::assertEqualsWithDelta($now, $stat['mtime'], 1);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTouchWhenPathNotExistsCreatesError(string $prefix): void
+    public function testTouchWhenPathNotExistsCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('touch(): Unable to create file '.$url);
+        self::expectExceptionMessage('touch(): Unable to create file '.$path);
 
-        self::assertFalse(touch($url));
+        $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTouchWhenPathNotExistsResponse(string $prefix): void
+    public function testTouchContextFailCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_').'/'.uniqid();
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+        $message = uniqid();
 
-        self::assertFalse(@touch($url));
+        $this->setContext(['touch_fail' => true, 'touch_message' => $message]);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage($message);
+
+        $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testTouchWhenFileAlreadyExist(string $prefix): void
+    public function testTouchContextFailResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
+        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
 
-        touch($url);
+        $this->setContext(['touch_fail' => true]);
+
+        $actual = @$this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
+
+        self::assertFalse($actual);
+    }
+
+    public function testTouchWhenPathNotExistsResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+
+        $actual = @$this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
+
+        self::assertFalse($actual);
+    }
+
+    public function testTouchWhenFileAlreadyExist(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
+
         $now = time();
-        $stat = stat($url);
+        $stat = $this->fixture->url_stat($path, 0);
 
-        self::assertTrue(is_file($url));
+        self::assertTrue(is_file($path));
         self::assertEqualsWithDelta($now, $stat['atime'], 1);
         self::assertEqualsWithDelta($now, $stat['mtime'], 1);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testStatWhenFileNotExistsCreatesError(string $prefix): void
+    public function testStatWhenFileNotExistsCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
+        $path = $this->root->getUrl(uniqid('/'));
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('stat(): stat failed for '.$url);
+        self::expectExceptionMessage('stat(): stat failed for '.$path);
 
-        stat($url);
+        $this->fixture->url_stat($path, 0);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testStatWhenFileNotExistsResponse(string $prefix): void
+    public function testStatWhenFileNotExistsResponse(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
+        $path = $this->root->getUrl(uniqid('/'));
 
-        self::assertFalse(@stat($url));
+        $actual = @$this->fixture->url_stat($path, 0);
+
+        self::assertFalse($actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testStatHasCorrectKeys(string $prefix): void
+    public function testStatWhenFileNotExistsDoesNotCreateError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
+        $path = $this->root->getUrl(uniqid('/'));
 
-        $actual = stat($url);
+        $actual = $this->fixture->url_stat($path, \STREAM_URL_STAT_QUIET);
+
+        self::assertFalse($actual);
+    }
+
+    public function testStatHasCorrectKeys(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->url_stat($path, 0);
         if ($actual === false) {
             self::fail('Stat returned false');
         }
@@ -1743,19 +1811,18 @@ class StreamWrapperTest extends TestCase
 
     public function testStatOnFile(): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
         $permissions = 0500;
         $now = time();
-        file_put_contents($url, uniqid());
-        chmod($url, $permissions);
+        file_put_contents($path, uniqid());
+        chmod($path, $permissions);
         $config = MockFileSystem::getFileSystem()->getConfig();
-        $file = MockFileSystem::find($url);
+        $file = MockFileSystem::find($path);
         if ($file === null) {
             self::fail('File not found');
         }
 
-        $actual = stat($url);
+        $actual = $this->fixture->url_stat($path, 0);
 
         $expected = [
             0 => 0,
@@ -1790,18 +1857,17 @@ class StreamWrapperTest extends TestCase
 
     public function testStatOnDir(): void
     {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
+        $path = $this->root->getUrl(uniqid('/'));
         $permissions = 0750;
         $now = time();
-        mkdir($url, $permissions);
+        mkdir($path, $permissions);
         $config = MockFileSystem::getFileSystem()->getConfig();
-        $file = MockFileSystem::find($url);
+        $file = MockFileSystem::find($path);
         if ($file === null) {
             self::fail('File not found');
         }
 
-        $actual = stat($url);
+        $actual = $this->fixture->url_stat($path, 0);
 
         $expected = [
             0 => 0,
@@ -1834,479 +1900,9 @@ class StreamWrapperTest extends TestCase
         self::assertEquals($expected, $actual);
     }
 
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testUnlinkNonExistentFileCreatesError(string $prefix): void
+    public function testStatContextFailCreatesError(): void
     {
-        $url = $prefix.'/'.uniqid('mfs_src');
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('unlink('.$url.'): No such file or directory');
-
-        unlink($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testUnlinkNonExistentFileResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_src');
-
-        self::assertFalse(@unlink($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testUnlinkDirCreatesError(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_src');
-        $this->cleanup($url);
-        mkdir($url);
-
-        self::expectException(Warning::class);
-        // On Mac, "operation not permitted" error.
-        // On Linux, "is a directory" error.
-
-        unlink($url);
-    }
-
-    public function testUnlinkDirCreatesErrorMessage(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $this->cleanup($url);
-        mkdir($url);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('unlink('.$url.'): Operation not permitted');
-
-        unlink($url);
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testUnlinkDirResponse(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_src');
-        $this->cleanup($url);
-        mkdir($url);
-
-        self::assertFalse(@unlink($url));
-    }
-
-    /**
-     * @dataProvider samplePrefixes
-     */
-    public function testUnlink(string $prefix): void
-    {
-        $url = $prefix.'/'.uniqid('mfs_src');
-        $this->cleanup($url);
-        file_put_contents($url, uniqid());
-
-        self::assertTrue(file_exists($url), 'File does not exist');
-        self::assertTrue(unlink($url), 'Unlink failed');
-        self::assertFalse(file_exists($url), 'File exists after unlink');
-    }
-
-    public function testChownWhenPathNotExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
-
-        self::assertFalse(chown($url, 123));
-    }
-
-    public function testChownWhenPathExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        file_put_contents($url, uniqid());
-
-        self::assertTrue(chown($url, 123));
-        self::assertEquals(123, fileowner($url));
-    }
-
-    public function testChownWithStringUser(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        file_put_contents($url, uniqid());
-
-        self::assertFalse(chown($url, get_current_user()));
-    }
-
-    public function testChgrpWhenPathNotExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
-
-        self::assertFalse(chgrp($url, 123));
-    }
-
-    public function testChgrpWhenPathExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        file_put_contents($url, uniqid());
-
-        self::assertTrue(chgrp($url, 123));
-        self::assertEquals(123, filegroup($url));
-    }
-
-    public function testChgrpWithStringGroup(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        file_put_contents($url, uniqid());
-
-        self::assertFalse(chgrp($url, get_current_user()));
-    }
-
-    public function testChmodWhenPathNotExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
-
-        self::assertFalse(chmod($url, 0440));
-    }
-
-    public function testChmodWhenPathExists(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        file_put_contents($url, uniqid());
-
-        self::assertTrue(chmod($url, 0440));
-        self::assertEquals(FileInterface::TYPE_FILE|0440, fileperms($url));
-    }
-
-    public function testStreamCastCreatesError(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $read = [$handle];
-        $write = null;
-        $except = null;
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage(
-            'stream_select(): cannot represent a stream of type user-space as a select()able descriptor'
-        );
-
-        stream_select($read, $write, $except, 0);
-    }
-
-    public function testStreamCastResponse(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-
-        $handle = fopen($url, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $read = [$handle];
-        $write = null;
-        $except = null;
-
-        self::assertFalse(@stream_select($read, $write, $except, 0));
-    }
-
-    public function samplePrefixes(): array
-    {
-        return [
-            [StreamWrapper::PROTOCOL.'://'],
-            [sys_get_temp_dir()],
-        ];
-    }
-
-    public function testContextFopenFail(): void
-    {
-        $this->setContext(['fopen_fail' => true]);
-
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-
-        $actual = @fopen($path, 'w');
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextFopenFailMessage(): void
-    {
-        $path = uniqid('mfs_');
-        $junk = uniqid();
-        $message = uniqid();
-
-        $this->setContext(
-            [
-                'fopen_fail' => true,
-                'fopen_message' => $message,
-            ]
-        );
-
-        $fixture = new StreamWrapper();
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        $fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $junk);
-    }
-
-    public function testContextFcloseFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        /** @var RegularFileInterface $file */
-        $file = MockFileSystem::find($path);
-        $content = $this->createMock(ContentInterface::class);
-        $file->setContent($content);
-
-        $this->setContext(['fclose_fail' => true]);
-
-        $handle = fopen($path, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-
-        $content->expects(self::never())->method('close');
-
-        fclose($handle);
-    }
-
-    public function testContextFreadFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['fread_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = fread($handle, 100);
-        fclose($handle);
-
-        self::assertEquals('', $actual);
-    }
-
-    public function testContextFwriteFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-
-        $this->setContext(['fwrite_fail' => true]);
-
-        $handle = fopen($path, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = @fwrite($handle, uniqid());
-        fclose($handle);
-
-        self::assertEquals(0, $actual);
-    }
-
-    public function testContextFseekFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['fseek_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = fseek($handle, 2);
-        fclose($handle);
-
-        self::assertEquals(-1, $actual);
-    }
-
-    public function testContextFtellFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['ftell_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fseek($handle, 2);
-        $actual = ftell($handle);
-        fclose($handle);
-
-        self::assertEquals(0, $actual);
-    }
-
-    public function testContextFeofFailDefaultFalse(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['feof_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fread($handle, 100);
-        $actual = feof($handle);
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextFeofFailOverrideTrue(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['feof_fail' => true, 'feof_response' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = feof($handle);
-        fclose($handle);
-
-        self::assertTrue($actual);
-    }
-
-    public function testContextFflushFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        /** @var RegularFileInterface $file */
-        $file = MockFileSystem::find($path);
-        $content = $this->createMock(ContentInterface::class);
-        $file->setContent($content);
-
-        $this->setContext(['fflush_fail' => true]);
-
-        $handle = fopen($path, 'w');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        fwrite($handle, uniqid());
-
-        $content->expects(self::never())->method('flush');
-
-        $actual = @fflush($handle);
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextFstatFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['fstat_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = @fstat($handle);
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextFtruncateFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['ftruncate_fail' => true]);
-
-        $handle = fopen($path, 'r');
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = @ftruncate($handle, 2);
-        fclose($handle);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextRenameFail(): void
-    {
-        $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
-        $pathB = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($pathA, uniqid());
-
-        $this->setContext(['rename_fail' => true]);
-
-        $actual = rename($pathA, $pathB);
-
-        self::assertFalse($actual);
-        self::assertTrue(file_exists($pathA));
-        self::assertFalse(file_exists($pathB));
-    }
-
-    public function testContextRenameFailCreatesErrorMessage(): void
-    {
-        $pathA = StreamWrapper::PROTOCOL.':///'.uniqid();
-        $pathB = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($pathA, uniqid());
-        $message = uniqid();
-
-        $this->setContext(['rename_fail' => true, 'rename_message' => $message]);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        rename($pathA, $pathB);
-    }
-
-    public function testContextUnlinkFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['unlink_fail' => true]);
-
-        $actual = unlink($path);
-
-        self::assertFalse($actual);
-        self::assertTrue(file_exists($path));
-    }
-
-    public function testContextUnlinkFailCreatesErrorMessage(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-        $message = uniqid();
-
-        $this->setContext(['unlink_fail' => true, 'unlink_message' => $message]);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        unlink($path);
-    }
-
-    public function testContextStatFail(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        file_put_contents($path, uniqid());
-
-        $this->setContext(['stat_fail' => true]);
-
-        $actual = @stat($path);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextStatFailCreatesErrorMessage(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $path = $this->root->getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
         $message = uniqid();
 
@@ -2315,185 +1911,208 @@ class StreamWrapperTest extends TestCase
         self::expectException(Warning::class);
         self::expectExceptionMessage($message);
 
-        stat($path);
+        $this->fixture->url_stat($path, 0);
     }
 
-    public function testContextTouchFails(): void
+    public function testStatContextFailResponse(): void
     {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
 
-        $this->setContext(['touch_fail' => true]);
+        $this->setContext(['stat_fail' => true]);
 
-        $actual = @touch($path);
+        $actual = @$this->fixture->url_stat($path, 0);
 
         self::assertFalse($actual);
     }
 
-    public function testContextTouchFailsCreatesErrorMessage(): void
+    public function testUnlinkNonExistentFileCreatesError(): void
     {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        $message = uniqid();
-
-        $this->setContext(['touch_fail' => true, 'touch_message' => $message]);
+        $path = $this->root->getUrl(uniqid('/'));
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
+        self::expectExceptionMessage('unlink('.$path.'): No such file or directory');
 
-        touch($path);
+        $this->fixture->unlink($path);
     }
 
-    public function testContextOpenDirFails(): void
+    public function testUnlinkNonExistentFileResponse(): void
     {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
+        $path = $this->root->getUrl(uniqid('/'));
 
-        $this->setContext(['opendir_fail' => true]);
-
-        $actual = @opendir($path);
+        $actual = @$this->fixture->unlink($path);
 
         self::assertFalse($actual);
     }
 
-    public function testContextOpenDirFailsCreatesErrorMessage(): void
+    public function testUnlinkDirCreatesError(): void
     {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
+        $path = $this->root->getUrl(uniqid('/'));
         mkdir($path);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('unlink('.$path.'): Operation not permitted');
+
+        $this->fixture->unlink($path);
+    }
+
+    public function testUnlinkDirResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        mkdir($path);
+
+        $actual = @$this->fixture->unlink($path);
+
+        self::assertFalse($actual);
+    }
+
+    public function testUnlink(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = @$this->fixture->unlink($path);
+
+        self::assertTrue($actual, 'Unlink failed');
+        self::assertFalse(file_exists($path), 'File exists after unlink');
+    }
+
+    public function testUnlinkContextFailCreatesError(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
         $message = uniqid();
 
-        $this->setContext(['opendir_fail' => true, 'opendir_message' => $message]);
+        $this->setContext(['unlink_fail' => true, 'unlink_message' => $message]);
 
         self::expectException(Warning::class);
         self::expectExceptionMessage($message);
 
-        opendir($path);
+        $this->fixture->unlink($path);
+    }
+
+    public function testUnlinkContextFailResponse(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $this->setContext(['unlink_fail' => true]);
+
+        $actual = $this->fixture->unlink($path);
+
+        self::assertFalse($actual);
+        self::assertTrue(file_exists($path));
+    }
+
+    public function testStreamCastResponse(): void
+    {
+        $actual = $this->fixture->stream_cast(rand());
+
+        self::assertFalse($actual);
+    }
+
+    public function testChownWhenPathNotExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER, rand());
+
+        self::assertFalse($actual);
+    }
+
+    public function testChownWhenPathExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER, 123);
+
+        self::assertTrue($actual);
+        self::assertEquals(123, fileowner($path));
+    }
+
+    public function testChownWithStringUser(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER_NAME, uniqid());
+
+        self::assertFalse($actual);
+    }
+
+    public function testChgrpWhenPathNotExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP, rand());
+
+        self::assertFalse($actual);
+    }
+
+    public function testChgrpWhenPathExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP, 123);
+
+        self::assertTrue($actual);
+        self::assertEquals(123, filegroup($path));
+    }
+
+    public function testChgrpWithStringGroup(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP_NAME, uniqid());
+
+        self::assertFalse($actual);
+    }
+
+    public function testChmodWhenPathNotExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_ACCESS, 0700);
+
+        self::assertFalse($actual);
+    }
+
+    public function testChmodWhenPathExists(): void
+    {
+        $path = $this->root->getUrl(uniqid('/'));
+        file_put_contents($path, uniqid());
+
+        $actual = $this->fixture->stream_metadata($path, \STREAM_META_ACCESS, 0700);
+
+        self::assertTrue($actual);
+        self::assertEquals(FileInterface::TYPE_FILE|0700, fileperms($path));
     }
 
     /**
-     * TODO: Not sure if it's a bug in php, but even if dir_closedir() returns
-     * false the stream wrapper handle is still closed.
+     * @param mixed[] $options
      */
-    public function testContextCloseDirFails(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
-
-        $this->setContext(['closedir_fail' => true]);
-
-        $fixture = new StreamWrapper();
-        $fixture->dir_opendir($path, 0);
-        $actual = $fixture->dir_closedir();
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextReadDirFails(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
-
-        $this->setContext(['readdir_fail' => true]);
-
-        $handle = opendir($path);
-        if ($handle === false) {
-            self::fail('Failed to open handle');
-        }
-        $actual = readdir($handle);
-
-        self::assertFalse($actual);
-    }
-
-    /**
-     * TODO: Not sure if it's a bug in php, but even if dir_rewinddir() returns
-     * false rewinddir() itself returns null (success).
-     */
-    public function testContextRewindDirFails(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
-
-        $this->setContext(['rewinddir_fail' => true]);
-
-        $fixture = new StreamWrapper();
-        $fixture->dir_opendir($path, 0);
-        $actual = $fixture->dir_rewinddir();
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextMkdirFails(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-
-        $this->setContext(['mkdir_fail' => true]);
-
-        $actual = @mkdir($path);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextMkdirFailsCreatesErrorMessage(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        $message = uniqid();
-
-        $this->setContext(['mkdir_fail' => true, 'mkdir_message' => $message]);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        mkdir($path);
-    }
-
-    public function testContextRmdirFails(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
-
-        $this->setContext(['rmdir_fail' => true]);
-
-        $actual = @rmdir($path);
-
-        self::assertFalse($actual);
-    }
-
-    public function testContextRmdirFailsCreatesErrorMessage(): void
-    {
-        $path = StreamWrapper::PROTOCOL.':///'.uniqid();
-        mkdir($path);
-        $message = uniqid();
-
-        $this->setContext(['rmdir_fail' => true, 'rmdir_message' => $message]);
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        rmdir($path);
-    }
-
     private function setContext(array $options = []): void
     {
         stream_context_set_default([StreamWrapper::PROTOCOL => $options]);
     }
 
     /**
-     * Cleans up temporary files.
+     * @param string $path
      *
-     * @param string $file
+     * @return ContentInterface&MockObject
      */
-    private function cleanup(string $file): void
+    private function mockFileContent(string $path): ContentInterface
     {
-        register_shutdown_function(
-            function () use ($file) {
-                if (!@file_exists($file)) {
-                    return;
-                }
+        /** @var ContentInterface&MockObject $content */
+        $content = $this->createMock(ContentInterface::class);
 
-                if (is_file($file)) {
-                    @unlink($file);
-                } else {
-                    @rmdir($file);
-                }
-            }
-        );
+        /** @var RegularFileInterface $file */
+        $file = MockFileSystem::findByType($path, FileInterface::TYPE_FILE);
+        $file->setContent($content);
+
+        return $content;
     }
 }
