@@ -33,13 +33,15 @@ class Directory extends AbstractFile implements DirectoryInterface
     /**
      * {@inheritDoc}
      */
-    public function setConfig(ConfigInterface $config): void
+    public function setConfig(ConfigInterface $config): FileInterface
     {
         parent::setConfig($config);
 
         foreach ($this->children as $child) {
             $child->setConfig($config);
         }
+
+        return $this;
     }
 
     /**

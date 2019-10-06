@@ -61,8 +61,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the configuration settings used by the file system.
      *
      * @param ConfigInterface $config
+     *
+     * @return FileInterface
      */
-    public function setConfig(ConfigInterface $config): void;
+    public function setConfig(ConfigInterface $config): FileInterface;
 
     /**
      * Gets the configuration settings used by the file system.
@@ -84,8 +86,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the file permissions.
      *
      * @param int $permissions
+     *
+     * @return FileInterface
      */
-    public function setPermissions(int $permissions): void;
+    public function setPermissions(int $permissions): FileInterface;
 
     /**
      * Gets the file permissions.
@@ -98,8 +102,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the file owner.
      *
      * @param int $user
+     *
+     * @return FileInterface
      */
-    public function setUser(int $user): void;
+    public function setUser(int $user): FileInterface;
 
     /**
      * Gets the file owner.
@@ -112,8 +118,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the file group.
      *
      * @param int $group
+     *
+     * @return FileInterface
      */
-    public function setGroup(int $group): void;
+    public function setGroup(int $group): FileInterface;
 
     /**
      * Gets the file group.
@@ -170,8 +178,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the name of the file.
      *
      * @param string $name
+     *
+     * @return FileInterface
      */
-    public function setName(string $name): void;
+    public function setName(string $name): FileInterface;
 
     /**
      * Adds this file to the given container.
@@ -179,8 +189,10 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * This should remove the file from its current container.
      *
      * @param ContainerInterface $container
+     *
+     * @return FileInterface
      */
-    public function addTo(ContainerInterface $container): void;
+    public function addTo(ContainerInterface $container): FileInterface;
 
     /**
      * Gets the size of the file.
@@ -225,20 +237,26 @@ interface FileInterface extends ChildInterface, ReferenceableInterface
      * Sets the time the file was last accessed.
      *
      * @param int|null $time
+     *
+     * @return FileInterface
      */
-    public function setLastAccessTime(?int $time = null): void;
+    public function setLastAccessTime(?int $time = null): FileInterface;
 
     /**
      * Sets the time the file was last modified.
      *
      * @param int|null $time
+     *
+     * @return FileInterface
      */
-    public function setLastModifyTime(?int $time = null): void;
+    public function setLastModifyTime(?int $time = null): FileInterface;
 
     /**
      * Sets the time the file attributes were last changed.
      *
      * @param int|null $time
+     *
+     * @return FileInterface
      */
-    public function setLastChangeTime(?int $time = null): void;
+    public function setLastChangeTime(?int $time = null): FileInterface;
 }

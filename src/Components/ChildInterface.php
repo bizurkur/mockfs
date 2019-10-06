@@ -22,7 +22,9 @@ interface ChildInterface
      *
      * @param ContainerInterface|null $parent
      *
+     * @return ChildInterface
+     *
      * @throws RecursionException If the parent is invalid, e.g. a circular reference.
      */
-    public function setParent(?ContainerInterface $parent): void;
+    public function setParent(?ContainerInterface $parent): ChildInterface;
 }

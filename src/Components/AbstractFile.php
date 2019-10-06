@@ -2,6 +2,7 @@
 
 namespace MockFileSystem\Components;
 
+use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\PartitionInterface;
@@ -96,7 +97,7 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setConfig(ConfigInterface $config): void
+    public function setConfig(ConfigInterface $config): FileInterface
     {
         $this->config = $config;
 
@@ -113,6 +114,8 @@ abstract class AbstractFile implements FileInterface
         }
 
         $this->validateName($this->name);
+
+        return $this;
     }
 
     /**
@@ -140,10 +143,12 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setPermissions(int $permissions): void
+    public function setPermissions(int $permissions): FileInterface
     {
         $this->setLastChangeTime();
         $this->permissions = $permissions;
+
+        return $this;
     }
 
     /**
@@ -157,10 +162,12 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setUser(int $user): void
+    public function setUser(int $user): FileInterface
     {
         $this->setLastChangeTime();
         $this->user = $user;
+
+        return $this;
     }
 
     /**
@@ -174,10 +181,12 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setGroup(int $group): void
+    public function setGroup(int $group): FileInterface
     {
         $this->setLastChangeTime();
         $this->group = $group;
+
+        return $this;
     }
 
     /**
@@ -207,13 +216,15 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setName(string $name): void
+    public function setName(string $name): FileInterface
     {
         if ($this->config !== null) {
             $this->validateName($name);
         }
 
         $this->name = $name;
+
+        return $this;
     }
 
     /**
@@ -251,7 +262,7 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setParent(?ContainerInterface $parent): void
+    public function setParent(?ContainerInterface $parent): ChildInterface
     {
         $node = $parent;
         while ($node) {
@@ -264,12 +275,14 @@ abstract class AbstractFile implements FileInterface
         }
 
         $this->parent = $parent;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function addTo(ContainerInterface $container): void
+    public function addTo(ContainerInterface $container): FileInterface
     {
         $parent = $this->getParent();
         if ($parent !== null && !$parent instanceof FileSystemInterface) {
@@ -277,6 +290,8 @@ abstract class AbstractFile implements FileInterface
         }
 
         $container->addChild($this);
+
+        return $this;
     }
 
     /**
@@ -378,37 +393,43 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
-    public function setLastAccessTime(?int $time = null): void
+    public function setLastAccessTime(?int $time = null): FileInterface
     {
         if ($time === null) {
             $time = time();
         }
 
         $this->lastAccessTime = $time;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setLastModifyTime(?int $time = null): void
+    public function setLastModifyTime(?int $time = null): FileInterface
     {
         if ($time === null) {
             $time = time();
         }
 
         $this->lastModifyTime = $time;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setLastChangeTime(?int $time = null): void
+    public function setLastChangeTime(?int $time = null): FileInterface
     {
         if ($time === null) {
             $time = time();
         }
 
         $this->lastChangeTime = $time;
+
+        return $this;
     }
 
     /**

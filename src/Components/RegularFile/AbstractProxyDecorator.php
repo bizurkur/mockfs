@@ -2,7 +2,9 @@
 
 namespace MockFileSystem\Components\RegularFile;
 
+use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ContainerInterface;
+use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\ContentInterface;
@@ -31,9 +33,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setConfig(ConfigInterface $config): void
+    public function setConfig(ConfigInterface $config): FileInterface
     {
-        $this->base->setConfig($config);
+        return $this->base->setConfig($config);
     }
 
     /**
@@ -55,9 +57,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setPermissions(int $permissions): void
+    public function setPermissions(int $permissions): FileInterface
     {
-        $this->base->setPermissions($permissions);
+        return $this->base->setPermissions($permissions);
     }
 
     /**
@@ -71,9 +73,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setUser(int $user): void
+    public function setUser(int $user): FileInterface
     {
-        $this->base->setUser($user);
+        return $this->base->setUser($user);
     }
 
     /**
@@ -87,9 +89,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setGroup(int $group): void
+    public function setGroup(int $group): FileInterface
     {
-        $this->base->setGroup($group);
+        return $this->base->setGroup($group);
     }
 
     /**
@@ -143,9 +145,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setName(string $name): void
+    public function setName(string $name): FileInterface
     {
-        $this->base->setName($name);
+        return $this->base->setName($name);
     }
 
     /**
@@ -159,17 +161,17 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setParent(?ContainerInterface $parent): void
+    public function setParent(?ContainerInterface $parent): ChildInterface
     {
-        $this->base->setParent($parent);
+        return $this->base->setParent($parent);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function addTo(ContainerInterface $container): void
+    public function addTo(ContainerInterface $container): FileInterface
     {
-        $this->base->addTo($container);
+        return $this->base->addTo($container);
     }
 
     /**
@@ -231,25 +233,25 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setLastAccessTime(?int $time = null): void
+    public function setLastAccessTime(?int $time = null): FileInterface
     {
-        $this->base->setLastAccessTime($time);
+        return $this->base->setLastAccessTime($time);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setLastModifyTime(?int $time = null): void
+    public function setLastModifyTime(?int $time = null): FileInterface
     {
-        $this->base->setLastModifyTime($time);
+        return $this->base->setLastModifyTime($time);
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setLastChangeTime(?int $time = null): void
+    public function setLastChangeTime(?int $time = null): FileInterface
     {
-        $this->base->setLastChangeTime($time);
+        return $this->base->setLastChangeTime($time);
     }
 
     /**
@@ -335,9 +337,9 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setContent(ContentInterface $content): void
+    public function setContent(ContentInterface $content): RegularFileInterface
     {
-        $this->base->setContent($content);
+        return $this->base->setContent($content);
     }
 
     /**

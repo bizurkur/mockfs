@@ -118,8 +118,10 @@ interface ConfigInterface
      * Set to null to default to the real system's user ID.
      *
      * @param int|null $user
+     *
+     * @return ConfigInterface
      */
-    public function setUser(?int $user): void;
+    public function setUser(?int $user): ConfigInterface;
 
     /**
      * Sets the group ID.
@@ -127,13 +129,17 @@ interface ConfigInterface
      * Set to null to default to the real system's group ID.
      *
      * @param int|null $group
+     *
+     * @return ConfigInterface
      */
-    public function setGroup(?int $group): void;
+    public function setGroup(?int $group): ConfigInterface;
 
     /**
      * Sets the umask.
      *
      * @param int $mask
+     *
+     * @return ConfigInterface
      */
-    public function setUmask(int $mask): void;
+    public function setUmask(int $mask): ConfigInterface;
 }

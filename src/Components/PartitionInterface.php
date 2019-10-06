@@ -21,6 +21,8 @@ interface PartitionInterface extends DirectoryInterface
      * Sets the quota for the partition.
      *
      * @param QuotaInterface|null $quota
+     *
+     * @return PartitionInterface
      */
-    public function setQuota(?QuotaInterface $quota): void;
+    public function setQuota(?QuotaInterface $quota): PartitionInterface;
 }

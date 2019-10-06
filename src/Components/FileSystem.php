@@ -2,6 +2,7 @@
 
 namespace MockFileSystem\Components;
 
+use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
@@ -54,11 +55,13 @@ final class FileSystem implements FileSystemInterface
     /**
      * {@inheritDoc}
      */
-    public function setParent(?ContainerInterface $parent): void
+    public function setParent(?ContainerInterface $parent): ChildInterface
     {
         if ($parent !== null) {
             throw new LogicException('The file system cannot have a parent.');
         }
+
+        return $this;
     }
 
     /**

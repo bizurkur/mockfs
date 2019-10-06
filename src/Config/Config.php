@@ -156,25 +156,31 @@ class Config implements ConfigInterface
     /**
      * {@inheritDoc}
      */
-    public function setUser(?int $user): void
+    public function setUser(?int $user): ConfigInterface
     {
         $this->options['user'] = $user;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setGroup(?int $group): void
+    public function setGroup(?int $group): ConfigInterface
     {
         $this->options['group'] = $group;
+
+        return $this;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function setUmask(int $mask): void
+    public function setUmask(int $mask): ConfigInterface
     {
         $this->options['umask'] = $mask & 0777;
+
+        return $this;
     }
 
     // phpcs:disable SlevomatCodingStandard.Classes.UnusedPrivateElements

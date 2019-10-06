@@ -161,9 +161,11 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function setContent(ContentInterface $content): void
+    public function setContent(ContentInterface $content): RegularFileInterface
     {
         $this->content = $content;
+
+        return $this;
     }
 
     /**

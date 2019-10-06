@@ -99,8 +99,10 @@ interface RegularFileInterface extends FileInterface
      * Does not update the last modified time.
      *
      * @param ContentInterface $content
+     *
+     * @return RegularFileInterface
      */
-    public function setContent(ContentInterface $content): void;
+    public function setContent(ContentInterface $content): RegularFileInterface;
 
     /**
      * Gets the file content.

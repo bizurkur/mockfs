@@ -49,8 +49,10 @@ final class Partition extends Directory implements PartitionInterface
     /**
      * {@inheritDoc}
      */
-    public function setQuota(?QuotaInterface $quota): void
+    public function setQuota(?QuotaInterface $quota): PartitionInterface
     {
         $this->quota = $quota;
+
+        return $this;
     }
 }
