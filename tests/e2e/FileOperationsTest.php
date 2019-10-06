@@ -762,6 +762,8 @@ class FileOperationsTest extends AbstractTestCase
         /** @var RegularFileInterface $file */
         $file = MockFileSystem::find($path);
         $content = $this->createMock(ContentInterface::class);
+        $content->method('open')->willReturn(true);
+        $content->method('close')->willReturn(true);
         $file->setContent($content);
 
         $this->setContext(['fclose_fail' => true]);
@@ -887,6 +889,8 @@ class FileOperationsTest extends AbstractTestCase
         /** @var RegularFileInterface $file */
         $file = MockFileSystem::find($path);
         $content = $this->createMock(ContentInterface::class);
+        $content->method('open')->willReturn(true);
+        $content->method('close')->willReturn(true);
         $file->setContent($content);
 
         $this->setContext(['fflush_fail' => true]);

@@ -43,11 +43,13 @@ final class StreamContent extends AbstractContent
     /**
      * {@inheritDoc}
      */
-    public function close(): void
+    public function close(): bool
     {
         // Do not close the actual stream, as we have no way of getting it back.
         // Simply release any lock instead.
         flock($this->stream, \LOCK_UN | \LOCK_NB);
+
+        return true;
     }
 
     /**

@@ -20,15 +20,17 @@ abstract class AbstractContent implements ContentInterface
     /**
      * {@inheritDoc}
      */
-    public function open(): void
+    public function open(): bool
     {
+        return true;
     }
 
     /**
      * {@inheritDoc}
      */
-    public function close(): void
+    public function close(): bool
     {
+        return true;
     }
 
     /**

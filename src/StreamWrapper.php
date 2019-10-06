@@ -414,10 +414,10 @@ final class StreamWrapper
 
         $this->file = new MultiInstanceDecorator($file);
         if ($this->mode === self::MODE_APPEND) {
-            $this->file->open();
+            $success = $this->file->open();
             $this->file->seek(0, \SEEK_END);
         } else {
-            $this->file->open();
+            $success = $this->file->open();
             $this->file->seek(0);
             if ($this->mode === self::MODE_WRITE) {
                 $this->file->truncate(0);
@@ -428,7 +428,7 @@ final class StreamWrapper
             $openedPath = $this->file->getUrl();
         }
 
-        return true;
+        return $success;
     }
 
     /**

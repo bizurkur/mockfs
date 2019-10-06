@@ -14,13 +14,17 @@ interface RegularFileInterface extends FileInterface
      * Opens the file.
      *
      * Should update the last accessed time.
+     *
+     * @return bool
      */
-    public function open(): void;
+    public function open(): bool;
 
     /**
      * Closes the file.
+     *
+     * @return bool
      */
-    public function close(): void;
+    public function close(): bool;
 
     /**
      * Reads data from the file.

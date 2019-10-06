@@ -6,13 +6,17 @@ interface ContentInterface
 {
     /**
      * Opens the file.
+     *
+     * @return bool
      */
-    public function open(): void;
+    public function open(): bool;
 
     /**
      * Closes the file.
+     *
+     * @return bool
      */
-    public function close(): void;
+    public function close(): bool;
 
     /**
      * Deletes the file.

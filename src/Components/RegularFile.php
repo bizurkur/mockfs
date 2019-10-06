@@ -54,18 +54,19 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function open(): void
+    public function open(): bool
     {
         $this->setLastAccessTime();
-        $this->content->open();
+
+        return $this->content->open();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function close(): void
+    public function close(): bool
     {
-        $this->content->close();
+        return $this->content->close();
     }
 
     /**

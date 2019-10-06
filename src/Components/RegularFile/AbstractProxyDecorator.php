@@ -257,17 +257,17 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
-    public function open(): void
+    public function open(): bool
     {
-        $this->base->open();
+        return $this->base->open();
     }
 
     /**
      * {@inheritDoc}
      */
-    public function close(): void
+    public function close(): bool
     {
-        $this->base->close();
+        return $this->base->close();
     }
 
     /**
