@@ -109,6 +109,17 @@ interface RegularFileInterface extends FileInterface
     public function setContent(ContentInterface $content): RegularFileInterface;
 
     /**
+     * Sets the file content from a string.
+     *
+     * Does not update the last modified time.
+     *
+     * @param string $content
+     *
+     * @return RegularFileInterface
+     */
+    public function setContentFromString(string $content): RegularFileInterface;
+
+    /**
      * Gets the file content.
      *
      * Does not update the last accessed time.

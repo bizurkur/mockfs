@@ -345,6 +345,14 @@ abstract class AbstractProxyDecorator implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function setContentFromString(string $content): RegularFileInterface
+    {
+        return $this->base->setContentFromString($content);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getContent(): ContentInterface
     {
         return $this->base->getContent();

@@ -6,6 +6,7 @@ use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Content\ContentInterface;
+use MockFileSystem\Content\StreamContent;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -349,6 +350,29 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $actual = $this->fixture->unlink();
 
         self::assertTrue($actual);
+    }
+
+    public function testSetContent(): void
+    {
+        $content = $this->createContent();
+
+        $this->fixture->setContent($content);
+
+        $actual = $this->fixture->getContent();
+
+        self::assertSame($content, $actual);
+    }
+
+    public function testSetContentFromString(): void
+    {
+        $content = uniqid();
+
+        $this->fixture->setContentFromString($content);
+
+        $actual = $this->fixture->getContent();
+
+        self::assertInstanceOf(StreamContent::class, $actual);
+        self::assertEquals($content, $actual->read(1024));
     }
 
     /**

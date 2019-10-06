@@ -172,6 +172,16 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     /**
      * {@inheritDoc}
      */
+    public function setContentFromString(string $content): RegularFileInterface
+    {
+        $this->content = new StreamContent($content);
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getContent(): ContentInterface
     {
         return $this->content;
