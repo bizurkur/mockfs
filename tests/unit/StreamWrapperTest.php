@@ -3,7 +3,6 @@
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\ContentInterface;
@@ -22,16 +21,11 @@ class StreamWrapperTest extends TestCase
      */
     private $fixture = null;
 
-    /**
-     * @var FileSystemInterface
-     */
-    private $root = null;
-
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->root = MockFileSystem::create();
+        MockFileSystem::create();
 
         $this->fixture = new StreamWrapper();
     }
@@ -79,7 +73,7 @@ class StreamWrapperTest extends TestCase
 
     public function testOpenDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         $actual = $this->fixture->dir_opendir($path, 0);
@@ -89,7 +83,7 @@ class StreamWrapperTest extends TestCase
 
     public function testOpenDirContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
         $message = uniqid();
 
@@ -103,7 +97,7 @@ class StreamWrapperTest extends TestCase
 
     public function testOpenDirContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         $this->setContext(['opendir_fail' => true]);
@@ -134,7 +128,7 @@ class StreamWrapperTest extends TestCase
 
     public function testOpenDirWhenNotReadableCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path, 0000);
 
         self::expectException(Warning::class);
@@ -145,7 +139,7 @@ class StreamWrapperTest extends TestCase
 
     public function testOpenDirWhenNotReadableResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path, 0000);
 
         $actual = @$this->fixture->dir_opendir($path, 0);
@@ -171,7 +165,7 @@ class StreamWrapperTest extends TestCase
 
     public function testReadDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
         mkdir($path);
@@ -196,7 +190,7 @@ class StreamWrapperTest extends TestCase
 
     public function testReadDirContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
         mkdir($path);
@@ -214,7 +208,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRewindDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
         mkdir($path);
@@ -243,7 +237,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRewindDirContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $childA = uniqid('a');
         $childB = uniqid('b');
         mkdir($path);
@@ -270,7 +264,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->mkdir($path, 0777, 0);
 
@@ -280,7 +274,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $message = uniqid();
 
         $this->setContext(['mkdir_fail' => true, 'mkdir_message' => $message]);
@@ -293,7 +287,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $this->setContext(['mkdir_fail' => true]);
 
@@ -304,7 +298,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeRecursiveDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         $actual = $this->fixture->mkdir($child, 0777, \STREAM_MKDIR_RECURSIVE);
@@ -315,7 +309,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirGivesCorrectPermissions(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->mkdir($path, 0755, 0);
 
@@ -326,7 +320,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenParentDoesNotExistCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/').uniqid('/'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
@@ -336,7 +330,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenParentDoesNotExistResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/').uniqid('/'));
 
         $actual = @$this->fixture->mkdir($path, 0755, 0);
 
@@ -345,7 +339,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenNoWritePermissionCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         $this->fixture->mkdir($path, 0500, 0);
@@ -358,7 +352,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenNoWritePermissionResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         $this->fixture->mkdir($path, 0500, 0);
@@ -370,7 +364,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenFileExistsCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         self::expectException(Warning::class);
@@ -381,7 +375,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenFileExistsResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = @$this->fixture->mkdir($path, 0777, 0);
@@ -391,7 +385,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenPathContainsFileCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path);
@@ -405,7 +399,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenPathContainsFileResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path);
@@ -418,8 +412,8 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenNoPartitionCreatesError(): void
     {
-        $path = $this->root->getUrl('/');
-        $this->root->removeChild('/');
+        $path = MockFileSystem::getUrl('/');
+        MockFileSystem::getFileSystem()->removeChild('/');
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
@@ -429,8 +423,8 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenNoPartitionResponse(): void
     {
-        $path = $this->root->getUrl('/');
-        $this->root->removeChild('/');
+        $path = MockFileSystem::getUrl('/');
+        MockFileSystem::getFileSystem()->removeChild('/');
 
         $actual = @$this->fixture->mkdir($path, 0777, 0);
 
@@ -439,7 +433,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenWrongPartitionCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('c:/'));
+        $path = MockFileSystem::getUrl(uniqid('c:/'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('mkdir(): No such file or directory');
@@ -449,7 +443,7 @@ class StreamWrapperTest extends TestCase
 
     public function testMakeDirWhenWrongPartitionResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('c:/'));
+        $path = MockFileSystem::getUrl(uniqid('c:/'));
 
         $actual = @$this->fixture->mkdir($path, 0777, 0);
 
@@ -458,7 +452,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         self::assertTrue(file_exists($path));
@@ -471,7 +465,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
         $message = uniqid();
 
@@ -485,7 +479,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         $this->setContext(['rmdir_fail' => true]);
@@ -497,7 +491,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenNotExistsCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rmdir('.$path.'): No such file or directory');
@@ -507,7 +501,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenNotExistsResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = @$this->fixture->rmdir($path, 0);
 
@@ -516,7 +510,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenPathIsNotDirCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         self::expectException(Warning::class);
@@ -527,7 +521,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenPathIsNotDirResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = @$this->fixture->rmdir($path, 0);
@@ -537,7 +531,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenDirNotEmptyCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path);
@@ -551,7 +545,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenDirNotEmptyResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path);
@@ -564,7 +558,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenNotWritableCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path, 0700);
@@ -579,7 +573,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRemoveDirWhenNotWritableResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $child = $path.'/'.uniqid();
 
         mkdir($path, 0700);
@@ -593,7 +587,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         $message = uniqid();
 
@@ -612,7 +606,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenContextFailDoesNotCreateError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         $message = uniqid();
 
@@ -630,7 +624,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         $this->setContext(['fopen_fail' => true]);
@@ -645,7 +639,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenInvalidModeCreatesError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         self::expectException(Warning::class);
@@ -665,7 +659,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenInvalidModeResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         $actual = $this->fixture->stream_open($path, 'q', 0, $ignore);
@@ -675,7 +669,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenForReadOnNonExistentFileCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         self::expectException(Warning::class);
@@ -686,7 +680,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenForReadOnNonExistentFileResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         $actual = $this->fixture->stream_open($path, 'r', 0, $ignore);
@@ -699,7 +693,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForCreateNewWhenExistsCreatesError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
 
@@ -714,7 +708,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForCreateNewWhenExistsDoesNotCreateError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
 
@@ -738,7 +732,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForCreateNewWhenExistsResponse(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
 
@@ -752,7 +746,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForReadWhenNotReadableCreatesError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
         chmod($path, 0200);
@@ -768,7 +762,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForReadWhenNotReadableDoesNotCreateError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
         chmod($path, 0200);
@@ -795,7 +789,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForReadWhenNotReadableResponse(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
         chmod($path, 0200);
@@ -810,7 +804,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForWriteWhenNotWritableCreatesError(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
         chmod($path, 0500);
@@ -826,7 +820,7 @@ class StreamWrapperTest extends TestCase
      */
     public function testFileOpenForWriteWhenNotWritableResponse(string $mode): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
         file_put_contents($path, uniqid());
         chmod($path, 0500);
@@ -850,7 +844,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenSetsOpenPath(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
         $actual = $this->fixture->stream_open($path, 'w', \STREAM_USE_PATH, $openedPath);
@@ -861,7 +855,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileOpenDoesNotSetOpenPath(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
         $actual = $this->fixture->stream_open($path, 'w', 0, $openedPath);
@@ -871,7 +865,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileCloseContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -887,7 +881,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFileClose(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
         $this->fixture->stream_open($path, 'w', 0, $openedPath);
@@ -899,7 +893,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWriteParentDirDoesNotExistCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/').uniqid('/'));
         $ignore = null;
 
         self::expectException(Warning::class);
@@ -910,7 +904,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWriteParentDirDoesNotExistCreatesErrorResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/').uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/').uniqid('/'));
         $ignore = null;
 
         $actual = $this->fixture->stream_open($path, 'w', 0, $ignore);
@@ -920,7 +914,7 @@ class StreamWrapperTest extends TestCase
 
     public function testCreateFileParentNotWritableCreatesError(): void
     {
-        $base = $this->root->getUrl(uniqid('/'));
+        $base = MockFileSystem::getUrl(uniqid('/'));
         $path = $base.'/'.uniqid();
         $ignore = null;
         mkdir($base, 0500);
@@ -933,7 +927,7 @@ class StreamWrapperTest extends TestCase
 
     public function testCreateFileParentNotWritableResponse(): void
     {
-        $base = $this->root->getUrl(uniqid('/'));
+        $base = MockFileSystem::getUrl(uniqid('/'));
         $path = $base.'/'.uniqid();
         $ignore = null;
         mkdir($base, 0500);
@@ -943,9 +937,32 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
+    public function testCreateFileWhenExistsCreatesError(): void
+    {
+        $path = MockFileSystem::getUrl(uniqid('/'));
+        $ignore = null;
+        mkdir($path);
+
+        self::expectException(Warning::class);
+        self::expectExceptionMessage('Path "'.$path.'" already exists.');
+
+        $this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
+    }
+
+    public function testCreateFileWhenExistsResponse(): void
+    {
+        $path = MockFileSystem::getUrl(uniqid('/'));
+        $ignore = null;
+        mkdir($path);
+
+        $actual = @$this->fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $ignore);
+
+        self::assertFalse($actual);
+    }
+
     public function testCreateFileThrowsExceptionCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         self::expectException(Warning::class);
@@ -959,7 +976,7 @@ class StreamWrapperTest extends TestCase
                 'getRemainingFileCount' => 0,
             ]
         );
-        $partition = $this->root->getChild('/');
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
         if ($partition instanceof PartitionInterface) {
             $partition->setQuota($quota);
         }
@@ -969,7 +986,7 @@ class StreamWrapperTest extends TestCase
 
     public function testCreateFileThrowsExceptionResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $ignore = null;
 
         $quota = $this->createConfiguredMock(
@@ -980,7 +997,7 @@ class StreamWrapperTest extends TestCase
                 'getRemainingFileCount' => 0,
             ]
         );
-        $partition = $this->root->getChild('/');
+        $partition = MockFileSystem::getFileSystem()->getChild('/');
         if ($partition instanceof PartitionInterface) {
             $partition->setQuota($quota);
         }
@@ -992,7 +1009,7 @@ class StreamWrapperTest extends TestCase
 
     public function testAppendAlwaysWritesToEnd(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $contentA = uniqid('a');
         $contentB = uniqid('b');
@@ -1009,7 +1026,7 @@ class StreamWrapperTest extends TestCase
 
     public function testRead(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
         file_put_contents($path, $content);
@@ -1023,7 +1040,7 @@ class StreamWrapperTest extends TestCase
 
     public function testReadContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1038,7 +1055,7 @@ class StreamWrapperTest extends TestCase
 
     public function testReadWhenNotReadMode(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
         $this->fixture->stream_open($path, 'w', 0, $openedPath);
@@ -1050,7 +1067,7 @@ class StreamWrapperTest extends TestCase
 
     public function testReadWhenFileChangedToNotReadableAfterOpen(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
         file_put_contents($path, $content);
@@ -1065,7 +1082,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWrite(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
 
@@ -1078,7 +1095,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWriteContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
         $this->fixture->stream_open($path, 'w', 0, $openedPath);
@@ -1092,7 +1109,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWriteWhenNotWriteMode(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1105,7 +1122,7 @@ class StreamWrapperTest extends TestCase
 
     public function testWriteWhenFileChangedToNotWritableAfterOpen(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
         file_put_contents($path, uniqid());
@@ -1120,7 +1137,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTruncateUp(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
 
@@ -1135,7 +1152,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTruncateDown(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
 
@@ -1150,7 +1167,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTruncateContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1165,7 +1182,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTruncateWhenNotWriteMode(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1178,7 +1195,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTruncateWhenFileChangedToNotWritableAfterOpen(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1192,7 +1209,7 @@ class StreamWrapperTest extends TestCase
 
     public function testSeekPastEnd(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1207,7 +1224,7 @@ class StreamWrapperTest extends TestCase
     public function testSeekAbsolute(): void
     {
         $offset = rand(1, 8);
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1222,7 +1239,7 @@ class StreamWrapperTest extends TestCase
     public function testSeekFromEnd(): void
     {
         $offset = rand(1, 8);
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $content = uniqid();
         file_put_contents($path, $content);
@@ -1239,7 +1256,7 @@ class StreamWrapperTest extends TestCase
     {
         $offsetA = rand(1, 8);
         $offsetB = rand(1, 8);
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid().uniqid());
 
@@ -1254,7 +1271,7 @@ class StreamWrapperTest extends TestCase
 
     public function testSeekResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1267,7 +1284,7 @@ class StreamWrapperTest extends TestCase
 
     public function testSeekContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1281,7 +1298,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTellContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1296,7 +1313,7 @@ class StreamWrapperTest extends TestCase
 
     public function testEof(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $expected = (bool) rand(0, 1);
         file_put_contents($path, uniqid());
 
@@ -1312,7 +1329,7 @@ class StreamWrapperTest extends TestCase
 
     public function testEofNotReached(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1324,7 +1341,7 @@ class StreamWrapperTest extends TestCase
 
     public function testEofContextFailDefaultFalse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->setContext(['feof_fail' => true]);
@@ -1339,7 +1356,7 @@ class StreamWrapperTest extends TestCase
 
     public function testEofContextFailOverrideTrue(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->setContext(['feof_fail' => true, 'feof_response' => true]);
@@ -1354,7 +1371,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFlush(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $expected = (bool) rand(0, 1);
         file_put_contents($path, uniqid());
@@ -1372,7 +1389,7 @@ class StreamWrapperTest extends TestCase
 
     public function testFlushContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1391,7 +1408,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStreamStat(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         $permissions = 0500;
         $now = time();
@@ -1440,7 +1457,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStreamStatContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
         file_put_contents($path, uniqid());
 
@@ -1455,8 +1472,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameFile(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
 
         $content = uniqid();
         file_put_contents($src, $content);
@@ -1471,8 +1488,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDir(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
 
         $actual = $this->fixture->rename($src, $dest);
@@ -1484,8 +1501,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameContextFailCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         file_put_contents($src, uniqid());
         $message = uniqid();
 
@@ -1499,8 +1516,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameContextFailResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         file_put_contents($src, uniqid());
 
         $this->setContext(['rename_fail' => true]);
@@ -1514,8 +1531,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameNonExistentSrcCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('rename('.$src.','.$dest.'): No such file or directory');
@@ -1525,8 +1542,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameNonExistentSrcResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
 
         $actual = @$this->fixture->rename($src, $dest);
 
@@ -1535,8 +1552,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameNonExistentDestCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest').uniqid('/'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest').uniqid('/'));
         file_put_contents($src, uniqid());
 
         self::expectException(Warning::class);
@@ -1547,8 +1564,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameNonExistentDestResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest').uniqid('/'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest').uniqid('/'));
         file_put_contents($src, uniqid());
 
         $actual = @$this->fixture->rename($src, $dest);
@@ -1558,8 +1575,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDestNotDirectoryCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         file_put_contents($destBase, uniqid());
@@ -1572,8 +1589,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDestNotDirectoryResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         file_put_contents($destBase, uniqid());
@@ -1585,8 +1602,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDestNotWritableCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         mkdir($destBase, 0500);
@@ -1599,8 +1616,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDestNotWritableResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         file_put_contents($src, uniqid());
         mkdir($destBase, 0500);
@@ -1612,8 +1629,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDirWhenDestNotEmptyCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
         mkdir($dest, 0777);
         file_put_contents($dest.uniqid('/'), uniqid());
@@ -1626,8 +1643,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDirWhenDestNotEmptyResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
         mkdir($dest, 0777);
         file_put_contents($dest.uniqid('/'), uniqid());
@@ -1639,8 +1656,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDirWhenDestExists(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $dest = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         mkdir($src, 0777);
         mkdir($dest, 0777);
 
@@ -1651,8 +1668,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDirWhenDestExistsAsFileCreatesError(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         mkdir($src, 0777);
         mkdir($destBase, 0777);
@@ -1666,8 +1683,8 @@ class StreamWrapperTest extends TestCase
 
     public function testRenameDirWhenDestExistsAsFileResponse(): void
     {
-        $src = $this->root->getUrl(uniqid('/mfs_src'));
-        $destBase = $this->root->getUrl(uniqid('/mfs_dest'));
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $destBase = MockFileSystem::getUrl(uniqid('/mfs_dest'));
         $dest = $destBase.uniqid('/');
         mkdir($src, 0777);
         mkdir($destBase, 0777);
@@ -1680,7 +1697,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchWhenNotExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
 
@@ -1694,7 +1711,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchWhenPathNotExistsCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+        $path = MockFileSystem::getUrl(uniqid('/')).uniqid('/');
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('touch(): Unable to create file '.$path);
@@ -1704,7 +1721,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+        $path = MockFileSystem::getUrl(uniqid('/')).uniqid('/');
         $message = uniqid();
 
         $this->setContext(['touch_fail' => true, 'touch_message' => $message]);
@@ -1717,7 +1734,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+        $path = MockFileSystem::getUrl(uniqid('/')).uniqid('/');
 
         $this->setContext(['touch_fail' => true]);
 
@@ -1728,7 +1745,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchWhenPathNotExistsResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/')).uniqid('/');
+        $path = MockFileSystem::getUrl(uniqid('/')).uniqid('/');
 
         $actual = @$this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
 
@@ -1737,7 +1754,7 @@ class StreamWrapperTest extends TestCase
 
     public function testTouchWhenFileAlreadyExist(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_metadata($path, \STREAM_META_TOUCH, []);
@@ -1752,7 +1769,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatWhenFileNotExistsCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('stat(): stat failed for '.$path);
@@ -1762,7 +1779,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatWhenFileNotExistsResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = @$this->fixture->url_stat($path, 0);
 
@@ -1771,7 +1788,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatWhenFileNotExistsDoesNotCreateError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->url_stat($path, \STREAM_URL_STAT_QUIET);
 
@@ -1780,7 +1797,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatHasCorrectKeys(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->url_stat($path, 0);
@@ -1811,7 +1828,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatOnFile(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $permissions = 0500;
         $now = time();
         file_put_contents($path, uniqid());
@@ -1857,7 +1874,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatOnDir(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         $permissions = 0750;
         $now = time();
         mkdir($path, $permissions);
@@ -1902,7 +1919,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
         $message = uniqid();
 
@@ -1916,7 +1933,7 @@ class StreamWrapperTest extends TestCase
 
     public function testStatContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->setContext(['stat_fail' => true]);
@@ -1928,7 +1945,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkNonExistentFileCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         self::expectException(Warning::class);
         self::expectExceptionMessage('unlink('.$path.'): No such file or directory');
@@ -1938,7 +1955,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkNonExistentFileResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = @$this->fixture->unlink($path);
 
@@ -1947,7 +1964,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkDirCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         self::expectException(Warning::class);
@@ -1958,7 +1975,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkDirResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         mkdir($path);
 
         $actual = @$this->fixture->unlink($path);
@@ -1968,7 +1985,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlink(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = @$this->fixture->unlink($path);
@@ -1979,7 +1996,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkContextFailCreatesError(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
         $message = uniqid();
 
@@ -1993,7 +2010,7 @@ class StreamWrapperTest extends TestCase
 
     public function testUnlinkContextFailResponse(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $this->setContext(['unlink_fail' => true]);
@@ -2013,7 +2030,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChownWhenPathNotExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER, rand());
 
@@ -2022,7 +2039,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChownWhenPathExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER, 123);
@@ -2033,7 +2050,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChownWithStringUser(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_OWNER_NAME, uniqid());
@@ -2043,7 +2060,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChgrpWhenPathNotExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP, rand());
 
@@ -2052,7 +2069,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChgrpWhenPathExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP, 123);
@@ -2063,7 +2080,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChgrpWithStringGroup(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_GROUP_NAME, uniqid());
@@ -2073,7 +2090,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChmodWhenPathNotExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_ACCESS, 0700);
 
@@ -2082,7 +2099,7 @@ class StreamWrapperTest extends TestCase
 
     public function testChmodWhenPathExists(): void
     {
-        $path = $this->root->getUrl(uniqid('/'));
+        $path = MockFileSystem::getUrl(uniqid('/'));
         file_put_contents($path, uniqid());
 
         $actual = $this->fixture->stream_metadata($path, \STREAM_META_ACCESS, 0700);

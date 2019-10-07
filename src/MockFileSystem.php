@@ -13,8 +13,11 @@ use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\ContentInterface;
+use MockFileSystem\Content\FullContent;
+use MockFileSystem\Content\NullContent;
+use MockFileSystem\Content\RandomContent;
+use MockFileSystem\Content\ZeroContent;
 use MockFileSystem\Exception\InvalidArgumentException;
-use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\StreamWrapper;
 
@@ -40,15 +43,17 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
+     * @param array[] $structure
      * @param mixed[]|ConfigInterface $options
      *
-     * @return FileSystem
+     * @return Partition
      */
     public static function create(
         string $name = '',
         ?int $permissions = null,
+        array $structure = [],
         $options = []
-    ): FileSystem {
+    ): Partition {
         $config = $options;
         if (is_array($options)) {
             $config = new Config($options);
@@ -67,9 +72,11 @@ final class MockFileSystem
         self::register();
 
         self::$fileSystem = new FileSystem($config);
-        self::createPartition($name, $permissions);
 
-        return self::$fileSystem;
+        $partition = self::createPartition($name, $permissions, $structure);
+        $partition->addTo(self::$fileSystem);
+
+        return $partition;
     }
 
     /**
@@ -100,21 +107,21 @@ final class MockFileSystem
      *
      * Sets the umask and returns the old umask.
      *
-     * If no mask is provided, returns the current umask.
+     * If no umask is provided, returns the current umask.
      *
      * @see https://www.php.net/manual/en/function.umask.php
      *
-     * @param int|null $mask
+     * @param int|null $umask
      *
      * @return int
      */
-    public static function umask(?int $mask = null): int
+    public static function umask(?int $umask = null): int
     {
         $config = self::getFileSystem()->getConfig();
         $oldMask = $config->getUmask();
 
-        if ($mask !== null) {
-            $config->setUmask($mask);
+        if ($umask !== null) {
+            $config->setUmask($umask);
         }
 
         return $oldMask;
@@ -125,63 +132,149 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
+     * @param array[] $structure
      *
      * @return Partition
      */
-    public static function createPartition(string $name, ?int $permissions = null): Partition
-    {
-        $fileSeparator = self::getFileSystem()->getConfig()->getFileSeparator();
-        $partitionSeparator = self::getFileSystem()->getConfig()->getPartitionSeparator();
+    public static function createPartition(
+        string $name,
+        ?int $permissions = null,
+        array $structure = []
+    ): Partition {
+        $config = self::getFileSystem()->getConfig();
+        $fileSeparator = $config->getFileSeparator();
+        $partitionSeparator = $config->getPartitionSeparator();
         $clean = self::getPath($name);
         $clean = rtrim($clean, $fileSeparator);
         $clean = rtrim($clean, $partitionSeparator);
-        $parts = self::getFileParts($clean);
 
-        $partition = new Partition($parts['basename'], $permissions);
+        $partition = new Partition($clean, $permissions);
+        $partition->setConfig($config);
 
-        // Add all partitions at the base of the file system
-        self::getFileSystem()->addChild($partition);
-
-        // If this partition is also a child directory then add it there, too
-        if (mb_strpos($clean, $fileSeparator) !== false) {
-            self::getDirectory($parts['dirname'])->addChild($partition);
-        }
+        self::addStructure($structure, $partition);
 
         return $partition;
     }
 
     /**
+     * Adds a file structure to the given parent.
+     *
+     * Structure should be an array of data with the file name as the array key.
+     * Use a string as the array value to create a file or another array to
+     * create a directory. Create a block file by wrapping the name in brackets.
+     *
+     * [
+     *     'foo' => 'this is a file',
+     *     'bar' => [
+     *         'baz' => 'another file',
+     *         'foo2' => [
+     *             'foobar' => 'a third file',
+     *         ],
+     *     ],
+     *     'dev' => [
+     *         '[null]' => null, // a block file that uses NullContent
+     *         '[random]' => null, // a block file that uses RandomContent
+     *         '[blar]' => 'a block file with regular content',
+     *     ],
+     * ]
+     *
+     * @param array[] $structure
+     * @param DirectoryInterface $parent
+     */
+    public static function addStructure(array $structure, DirectoryInterface $parent): void
+    {
+        foreach ($structure as $name => $data) {
+            if (!is_string($name)) {
+                throw new InvalidArgumentException(
+                    sprintf('File name must be a string; received %s', gettype($name))
+                );
+            }
+
+            if (is_array($data)) {
+                $child = self::createDirectory($name, null);
+                $child->addTo($parent);
+                self::addStructure($data, $child);
+
+                continue;
+            }
+
+            if (substr($name, 0, 1) === '[' && substr($name, -1) === ']') {
+                $name = substr($name, 1, -1);
+                if ($data === null) {
+                    switch ($name) {
+                        case 'null':
+                            $data = new NullContent();
+                            break;
+                        case 'full':
+                            $data = new FullContent();
+                            break;
+                        case 'random':
+                            $data = new RandomContent();
+                            break;
+                        case 'zero':
+                            $data = new ZeroContent();
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+                self::createBlock($name, null, $data)->addTo($parent);
+
+                continue;
+            }
+
+            if (is_string($data) || $data instanceof ContentInterface) {
+                self::createFile($name, null, $data)->addTo($parent);
+
+                continue;
+            }
+
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Data must be a string (file) or array (directory); received %s',
+                    gettype($data)
+                )
+            );
+        }
+    }
+
+    /**
      * Creates a directory.
      *
-     * @param string $path
+     * @param string $name
      * @param int|null $permissions
      *
      * @return Directory
      */
-    public static function createDirectory(string $path, ?int $permissions = null): Directory
+    public static function createDirectory(string $name, ?int $permissions = null): Directory
     {
-        /** @var Directory $file */
-        $file = self::createAbstractFile(Directory::class, $path, $permissions);
+        $config = self::getFileSystem()->getConfig();
 
-        return $file;
+        $directory = new Directory($name, $permissions);
+        $directory->setConfig($config);
+
+        return $directory;
     }
 
     /**
      * Creates a file.
      *
-     * @param string $path
+     * @param string $name
      * @param int|null $permissions
-     * @param ContentInterface|null $content
+     * @param ContentInterface|string|null $content
      *
      * @return RegularFile
      */
     public static function createFile(
-        string $path,
+        string $name,
         ?int $permissions = null,
-        ?ContentInterface $content = null
+        $content = null
     ): RegularFile {
-        /** @var RegularFile $file */
-        $file = self::createAbstractFile(RegularFile::class, $path, $permissions, $content);
+        $config = self::getFileSystem()->getConfig();
+
+        $file = new RegularFile($name, $permissions, $content);
+        $file->setConfig($config);
 
         return $file;
     }
@@ -189,17 +282,23 @@ final class MockFileSystem
     /**
      * Creates a block file.
      *
-     * @param string $path
+     * @param string $name
      * @param int|null $permissions
+     * @param ContentInterface|string|null $content
      *
      * @return Block
      */
-    public static function createBlock(string $path, ?int $permissions = null): Block
-    {
-        /** @var Block $file */
-        $file = self::createAbstractFile(Block::class, $path, $permissions);
+    public static function createBlock(
+        string $name,
+        ?int $permissions = null,
+        $content = null
+    ): Block {
+        $config = self::getFileSystem()->getConfig();
 
-        return $file;
+        $block = new Block($name, $permissions, $content);
+        $block->setConfig($config);
+
+        return $block;
     }
 
     /**
@@ -322,59 +421,6 @@ final class MockFileSystem
         }
 
         return $parts;
-    }
-
-    /**
-     * Gets the directory for path.
-     *
-     * @param string $path
-     *
-     * @return DirectoryInterface
-     *
-     * @throws NotFoundException If the path is not a directory.
-     */
-    public static function getDirectory(string $path): DirectoryInterface
-    {
-        /** @var DirectoryInterface|null $parent */
-        $parent = self::findByType($path, FileInterface::TYPE_DIR);
-        if ($parent === null) {
-            throw new NotFoundException(
-                sprintf('Directory "%s" does not exist.', $path)
-            );
-        }
-
-        return $parent;
-    }
-
-    /**
-     * Creates a file of the given class.
-     *
-     * @param string $class
-     * @param string $path
-     * @param int|null $permissions
-     * @param array<int, mixed> $args
-     *
-     * @return FileInterface
-     */
-    private static function createAbstractFile(
-        string $class,
-        string $path,
-        ?int $permissions,
-        ...$args
-    ): FileInterface {
-        $parts = self::getFileParts($path);
-        $parent = self::getDirectory($parts['dirname']);
-
-        if ($parent->hasChild($parts['basename'])) {
-            throw new RuntimeException(
-                sprintf('Path "%s" already exists.', $path)
-            );
-        }
-
-        $child = new $class($parts['basename'], $permissions, ...$args);
-        $parent->addChild($child);
-
-        return $child;
     }
 
     /**

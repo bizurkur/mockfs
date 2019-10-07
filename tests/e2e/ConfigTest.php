@@ -15,11 +15,11 @@ class ConfigTest extends TestCase
 {
     public function testWindowsConfig(): void
     {
-        $root = MockFileSystem::create('c:\\', null, new WindowsConfig());
+        MockFileSystem::create('c:\\', null, [], new WindowsConfig());
 
         $actualNames = [];
         $actualPaths = [];
-        foreach ($root->getChildren() as $child) {
+        foreach (MockFileSystem::getFileSystem()->getChildren() as $child) {
             $actualNames[] = $child->getName();
             $actualPaths[] = $child->getPath();
         }
@@ -30,8 +30,8 @@ class ConfigTest extends TestCase
 
     public function testWindowsConfigIgnoresCase(): void
     {
-        $root = MockFileSystem::create('c:\\', null, new WindowsConfig());
-        $base = $root->getUrl('c:\\windows');
+        MockFileSystem::create('c:\\', null, [], new WindowsConfig());
+        $base = MockFileSystem::getUrl('c:\\windows');
         $path = $base.'\\test.txt';
         mkdir($base);
         file_put_contents($path, uniqid());
@@ -42,11 +42,11 @@ class ConfigTest extends TestCase
 
     public function testDefaultConfig(): void
     {
-        $root = MockFileSystem::create();
+        MockFileSystem::create();
 
         $actualNames = [];
         $actualPaths = [];
-        foreach ($root->getChildren() as $child) {
+        foreach (MockFileSystem::getFileSystem()->getChildren() as $child) {
             $actualNames[] = $child->getName();
             $actualPaths[] = $child->getPath();
         }

@@ -16,7 +16,7 @@ use MockFileSystem\MockFileSystem as mockfs;
 $root = mockfs::create();
 
 // Prefix a path with the mockfs handle
-$file = $root->getUrl('/test');
+$file = mockfs::getUrl('/test');
 // $file = mfs:///test
 
 // Treat the file as any regular file
@@ -97,9 +97,9 @@ use MockFileSystem\MockFileSystem as mockfs;
 
 $root = mockfs::create('', null, ['ignoreCase' => true]);
 
-file_put_contents($root->getUrl('test.txt'), 'some data');
+file_put_contents($root->getUrl().'test.txt'), 'some data');
 
-$data = file_get_contents($root->getUrl('TeST.txt'));
+$data = file_get_contents($root->getUrl().'TeST.txt'));
 var_dump($data);
 // outputs "some data"
 ```

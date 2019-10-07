@@ -445,13 +445,20 @@ abstract class AbstractFile implements FileInterface
      */
     protected function getFreeDiskSpace(?FileInterface $child = null): int
     {
+        if ($child instanceof PartitionInterface) {
+            // Partitions don't count against quotas
+            return QuotaInterface::UNLIMITED;
+        }
+
         $partition = $this->getPartition();
         if ($partition === null) {
+            // This file is not attached to the file system
             return QuotaInterface::UNLIMITED;
         }
 
         $quota = $partition->getQuota();
         if ($quota === null) {
+            // No quota set
             return QuotaInterface::UNLIMITED;
         }
 
@@ -460,6 +467,7 @@ abstract class AbstractFile implements FileInterface
         $group = $config->getGroup();
 
         if (!$quota->appliesTo($user, $group)) {
+            // Quota doesn't apply to the current user
             return QuotaInterface::UNLIMITED;
         }
 
@@ -470,6 +478,7 @@ abstract class AbstractFile implements FileInterface
         $remainingSize = $quota->getRemainingSize($usedSize, $user, $group);
 
         if ($remainingCount === 0 || $remainingSize === 0) {
+            // Out of space or out of files
             return 0;
         }
 

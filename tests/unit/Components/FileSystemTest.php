@@ -63,6 +63,13 @@ class FileSystemTest extends TestCase
         $this->fixture->setParent($parent);
     }
 
+    public function testSetParentNull(): void
+    {
+        $actual = $this->fixture->setParent(null);
+
+        self::assertSame($this->fixture, $actual);
+    }
+
     /**
      * @dataProvider samplePaths
      */

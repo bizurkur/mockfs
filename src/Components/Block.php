@@ -13,12 +13,12 @@ final class Block extends RegularFile
     /**
      * @param string $name
      * @param int|null $permissions
-     * @param ContentInterface|null $content
+     * @param ContentInterface|string|null $content
      */
     public function __construct(
         string $name,
         ?int $permissions = null,
-        ?ContentInterface $content = null
+        $content = null
     ) {
         parent::__construct($name, $permissions, $content);
         $this->type = self::TYPE_BLOCK;

@@ -9,6 +9,7 @@ use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFile\MultiInstanceDecorator;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Exception\BaseException;
+use MockFileSystem\Exception\RuntimeException;
 
 // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 // phpcs:disable Generic.Metrics.CyclomaticComplexity.MaxExceeded
@@ -948,8 +949,17 @@ final class StreamWrapper
             return null;
         }
 
+        if ($parent->hasChild($parts['basename'])) {
+            if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
+                trigger_error(sprintf('Path "%s" already exists.', $path), \E_USER_WARNING);
+            }
+
+            return null;
+        }
+
         try {
-            $file = MockFileSystem::createFile($path);
+            $file = MockFileSystem::createFile($parts['basename']);
+            $file->addTo($parent);
         } catch (BaseException $exception) {
             if (($options & \STREAM_REPORT_ERRORS) === \STREAM_REPORT_ERRORS) {
                 trigger_error($exception->getMessage(), \E_USER_WARNING);

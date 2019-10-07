@@ -11,7 +11,7 @@ parameters:
         - tests
     ignoreErrors:
         -
-            message: '/^Parameter #3 \$options of static method MockFileSystem\\MockFileSystem::create\(\) expects array\|MockFileSystem\\Config\\ConfigInterface, string given\.$/'
+            message: '/^Parameter #4 \$options of static method MockFileSystem\\MockFileSystem::create\(\) expects array\|MockFileSystem\\Config\\ConfigInterface, string given\.$/'
             path: tests/e2e/MockFileSystemTest.php
         -
             message: '/^Parameter #1 \$stream of class MockFileSystem\\Content\\StreamContent constructor expects resource\|string, int given\.$/'

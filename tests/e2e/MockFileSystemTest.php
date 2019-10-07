@@ -11,7 +11,6 @@ use MockFileSystem\Config\Config;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Content\StreamContent;
 use MockFileSystem\Exception\InvalidArgumentException;
-use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\StreamWrapper;
@@ -74,11 +73,11 @@ class MockFileSystemTest extends TestCase
         @MockFileSystem::create();
     }
 
-    public function testCreateReturnsFileSystem(): void
+    public function testCreateReturnsPartition(): void
     {
         $actual = MockFileSystem::create();
 
-        self::assertInstanceOf(FileSystem::class, $actual);
+        self::assertInstanceOf(Partition::class, $actual);
     }
 
     /**
@@ -86,8 +85,8 @@ class MockFileSystemTest extends TestCase
      */
     public function testCreateUsingCorrectOptions(array $options, array $expected): void
     {
-        $fileSystem = MockFileSystem::create('', null, $options);
-        $actual = $fileSystem->getConfig()->toArray();
+        $partition = MockFileSystem::create('', null, [], $options);
+        $actual = $partition->getConfig()->toArray();
 
         self::assertEquals($expected, $actual);
     }
@@ -156,9 +155,9 @@ class MockFileSystemTest extends TestCase
             ConfigInterface::class,
             ['getFileSeparator' => '/']
         );
-        $fileSystem = MockFileSystem::create('', null, $config);
+        $partition = MockFileSystem::create('', null, [], $config);
 
-        $actual = $fileSystem->getConfig();
+        $actual = $partition->getConfig();
 
         self::assertSame($config, $actual);
     }
@@ -172,7 +171,7 @@ class MockFileSystemTest extends TestCase
             'Options must be an array or instance of '.ConfigInterface::class.'; string given'
         );
 
-        MockFileSystem::create('', null, $config);
+        MockFileSystem::create('', null, [], $config);
     }
 
     public function testCreateUsesPartitionName(): void
@@ -181,9 +180,7 @@ class MockFileSystemTest extends TestCase
 
         $actual = MockFileSystem::create($name);
 
-        $partitions = $actual->getChildren();
-        self::assertCount(1, $partitions);
-        self::assertEquals($name, $partitions[0]->getName());
+        self::assertEquals($name, $actual->getName());
     }
 
     public function testCreateUsesPartitionPermissions(): void
@@ -192,9 +189,7 @@ class MockFileSystemTest extends TestCase
 
         $actual = MockFileSystem::create('', $permissions);
 
-        $partitions = $actual->getChildren();
-        self::assertCount(1, $partitions);
-        self::assertEquals($permissions, $partitions[0]->getPermissions());
+        self::assertEquals($permissions, $actual->getPermissions());
     }
 
     public function testCreateMakesEmptyPartition(): void
@@ -235,7 +230,7 @@ class MockFileSystemTest extends TestCase
     {
         $umask = 0200;
 
-        MockFileSystem::create('', null, ['umask' => $umask]);
+        MockFileSystem::create('', null, [], ['umask' => $umask]);
 
         $actual = MockFileSystem::umask();
 
@@ -246,7 +241,7 @@ class MockFileSystemTest extends TestCase
     {
         $umask = 0222;
 
-        MockFileSystem::create('', null, ['umask' => $umask]);
+        MockFileSystem::create('', null, [], ['umask' => $umask]);
 
         $actual = MockFileSystem::umask(0777);
 
@@ -291,13 +286,13 @@ class MockFileSystemTest extends TestCase
         string $expectedName,
         string $expectedPath
     ): void {
-        MockFileSystem::create('', null, $options);
-        MockFileSystem::createPartition($name);
+        MockFileSystem::create('', null, [], $options);
+        $root = MockFileSystem::getFileSystem();
 
-        $partitions = MockFileSystem::getFileSystem()->getChildren();
-        self::assertCount(2, $partitions);
-        self::assertEquals($expectedName, $partitions[1]->getName(), 'wrong name');
-        self::assertEquals($expectedPath, $partitions[1]->getPath(), 'wrong path');
+        $actual = MockFileSystem::createPartition($name)->addTo($root);
+
+        self::assertEquals($expectedName, $actual->getName(), 'wrong name');
+        self::assertEquals($expectedPath, $actual->getPath(), 'wrong path');
     }
 
     public function samplePartitionNames(): array
@@ -317,27 +312,9 @@ class MockFileSystemTest extends TestCase
             ],
             'includes partition separator' => [
                 'options' => ['fileSeparator' => '\\', 'partitionSeparator' => ':'],
-                'name' => 'D',
+                'name' => 'D:',
                 'expectedName' => 'D',
                 'expectedPath' => 'D:\\',
-            ],
-            'leading slash' => [
-                'options' => [],
-                'name' => '/home',
-                'expectedName' => 'home',
-                'expectedPath' => '/home',
-            ],
-            'leading slash, wrong slash' => [
-                'options' => ['normalizeSlashes' => false],
-                'name' => '\\home',
-                'expectedName' => '\\home',
-                'expectedPath' => '\\home/',
-            ],
-            'leading slash, normalized slash' => [
-                'options' => ['normalizeSlashes' => true],
-                'name' => '\\home',
-                'expectedName' => 'home',
-                'expectedPath' => '/home',
             ],
         ];
     }
@@ -387,40 +364,17 @@ class MockFileSystemTest extends TestCase
         $nameB = uniqid('b');
         $nameC = uniqid('c');
 
-        MockFileSystem::create();
+        $root = MockFileSystem::create();
 
-        MockFileSystem::createDirectory('/'.$nameA);
-        MockFileSystem::createDirectory('/'.$nameA.'/'.$nameB);
-        $actual = MockFileSystem::createDirectory('/'.$nameA.'/'.$nameB.'/'.$nameC);
+        $dirA = MockFileSystem::createDirectory($nameA);
+        $dirA->addTo($root);
+        $dirB = MockFileSystem::createDirectory($nameB);
+        $dirB->addTo($dirA);
+        $actual = MockFileSystem::createDirectory($nameC);
+        $actual->addTo($dirB);
 
         self::assertEquals($nameC, $actual->getName());
         self::assertEquals('/'.$nameA.'/'.$nameB.'/'.$nameC, $actual->getPath());
-    }
-
-    public function testCreateDirectoryThrowsExceptionWhenMissingParent(): void
-    {
-        $missing = uniqid('/');
-
-        MockFileSystem::create();
-
-        self::expectException(NotFoundException::class);
-        self::expectExceptionMessage('Directory "'.$missing.'" does not exist.');
-
-        MockFileSystem::createDirectory($missing.uniqid('/'));
-    }
-
-    public function testCreateDirectoryThrowsExceptionWhenExists(): void
-    {
-        $name = uniqid();
-
-        MockFileSystem::create();
-
-        MockFileSystem::createDirectory('/'.$name);
-
-        self::expectException(RuntimeException::class);
-        self::expectExceptionMessage('Path "/'.$name.'" already exists.');
-
-        MockFileSystem::createDirectory('/'.$name);
     }
 
     public function testCreateDirectorySetsPermissions(): void
@@ -468,40 +422,17 @@ class MockFileSystemTest extends TestCase
         $nameB = uniqid('b');
         $nameC = uniqid('c');
 
-        MockFileSystem::create();
+        $root = MockFileSystem::create();
 
-        MockFileSystem::createDirectory('/'.$nameA);
-        MockFileSystem::createDirectory('/'.$nameA.'/'.$nameB);
-        $actual = MockFileSystem::createFile('/'.$nameA.'/'.$nameB.'/'.$nameC);
+        $dirA = MockFileSystem::createDirectory($nameA);
+        $dirA->addTo($root);
+        $dirB = MockFileSystem::createDirectory($nameB);
+        $dirB->addTo($dirA);
+        $actual = MockFileSystem::createFile($nameC);
+        $actual->addTo($dirB);
 
         self::assertEquals($nameC, $actual->getName());
         self::assertEquals('/'.$nameA.'/'.$nameB.'/'.$nameC, $actual->getPath());
-    }
-
-    public function testCreateFileThrowsExceptionWhenMissingParent(): void
-    {
-        $missing = uniqid('/');
-
-        MockFileSystem::create();
-
-        self::expectException(NotFoundException::class);
-        self::expectExceptionMessage('Directory "'.$missing.'" does not exist.');
-
-        MockFileSystem::createFile($missing.uniqid('/'));
-    }
-
-    public function testCreateFileThrowsExceptionWhenExists(): void
-    {
-        $name = uniqid();
-
-        MockFileSystem::create();
-
-        MockFileSystem::createFile('/'.$name);
-
-        self::expectException(RuntimeException::class);
-        self::expectExceptionMessage('Path "/'.$name.'" already exists.');
-
-        MockFileSystem::createFile('/'.$name);
     }
 
     public function testCreateFileSetsPermissions(): void
@@ -560,40 +491,17 @@ class MockFileSystemTest extends TestCase
         $nameB = uniqid('b');
         $nameC = uniqid('c');
 
-        MockFileSystem::create();
+        $root = MockFileSystem::create();
 
-        MockFileSystem::createDirectory('/'.$nameA);
-        MockFileSystem::createDirectory('/'.$nameA.'/'.$nameB);
-        $actual = MockFileSystem::createBlock('/'.$nameA.'/'.$nameB.'/'.$nameC);
+        $dirA = MockFileSystem::createDirectory($nameA);
+        $dirA->addTo($root);
+        $dirB = MockFileSystem::createDirectory($nameB);
+        $dirB->addTo($dirA);
+        $actual = MockFileSystem::createBlock($nameC);
+        $actual->addTo($dirB);
 
         self::assertEquals($nameC, $actual->getName());
         self::assertEquals('/'.$nameA.'/'.$nameB.'/'.$nameC, $actual->getPath());
-    }
-
-    public function testCreateBlockThrowsExceptionWhenMissingParent(): void
-    {
-        $missing = uniqid('/');
-
-        MockFileSystem::create();
-
-        self::expectException(NotFoundException::class);
-        self::expectExceptionMessage('Directory "'.$missing.'" does not exist.');
-
-        MockFileSystem::createBlock($missing.uniqid('/'));
-    }
-
-    public function testCreateBlockThrowsExceptionWhenExists(): void
-    {
-        $name = uniqid();
-
-        MockFileSystem::create();
-
-        MockFileSystem::createBlock('/'.$name);
-
-        self::expectException(RuntimeException::class);
-        self::expectExceptionMessage('Path "/'.$name.'" already exists.');
-
-        MockFileSystem::createBlock('/'.$name);
     }
 
     public function testCreateBlockSetsPermissions(): void
@@ -620,7 +528,7 @@ class MockFileSystemTest extends TestCase
      */
     public function testExplodePath(array $options, string $path, ?string $sep, array $expected): void
     {
-        MockFileSystem::create('', null, $options);
+        MockFileSystem::create('', null, [], $options);
 
         $actual = @MockFileSystem::explodePath($path, $sep);
 
@@ -706,7 +614,7 @@ class MockFileSystemTest extends TestCase
      */
     public function testGetPath(array $options, string $path, string $expected): void
     {
-        MockFileSystem::create('/', null, $options);
+        MockFileSystem::create('/', null, [], $options);
 
         $actual = MockFileSystem::getPath($path);
 
@@ -718,7 +626,7 @@ class MockFileSystemTest extends TestCase
      */
     public function testGetUrl(array $options, string $path, string $expected): void
     {
-        MockFileSystem::create('/', null, $options);
+        MockFileSystem::create('/', null, [], $options);
 
         $actual = MockFileSystem::getUrl($path);
 

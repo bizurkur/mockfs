@@ -8,6 +8,9 @@ use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\NullContent;
 use MockFileSystem\Content\StreamContent;
+use MockFileSystem\Content\ContentInterface;
+use MockFileSystem\Exception\InvalidArgumentException;
+
 use MockFileSystem\Tests\Components\RegularFileTestCase;
 
 class RegularFileTest extends RegularFileTestCase
@@ -64,10 +67,30 @@ class RegularFileTest extends RegularFileTestCase
         self::assertSame($content, $fixture->getContent());
     }
 
+    public function testSetsContentWhenStringOnConstruction(): void
+    {
+        $content = uniqid();
+
+        $fixture = new RegularFile(uniqid(), rand(), $content);
+
+        self::assertSame($content, $fixture->getContent()->read(1024));
+    }
+
     public function testSetsContentWhenNullOnConstruction(): void
     {
         $fixture = new RegularFile(uniqid());
 
         self::assertInstanceOf(StreamContent::class, $fixture->getContent());
+    }
+
+    public function testInvalidContent(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage(
+            'Content must be an instance of '.ContentInterface::class
+            .', a string, or null; integer given'
+        );
+
+        new RegularFile(uniqid(), null, rand());
     }
 }

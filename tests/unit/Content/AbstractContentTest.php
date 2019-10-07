@@ -26,6 +26,20 @@ class AbstractContentTest extends TestCase
         self::assertInstanceOf(ContentInterface::class, $this->fixture);
     }
 
+    public function testOpen(): void
+    {
+        $actual = $this->fixture->open();
+
+        self::assertTrue($actual);
+    }
+
+    public function testClose(): void
+    {
+        $actual = $this->fixture->close();
+
+        self::assertTrue($actual);
+    }
+
     /**
      * @dataProvider sampleIsEof
      */

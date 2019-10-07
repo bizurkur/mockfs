@@ -6,6 +6,7 @@ use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Content\StreamContent;
+use MockFileSystem\Exception\InvalidArgumentException;
 
 /**
  * Class to represent a regular file.
@@ -20,18 +21,30 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     /**
      * @param string $name
      * @param int|null $permissions
-     * @param ContentInterface|null $content
+     * @param ContentInterface|string|null $content
      */
     public function __construct(
         string $name,
         ?int $permissions = null,
-        ?ContentInterface $content = null
+        $content = null
     ) {
         parent::__construct($name, $permissions);
         $this->type = self::TYPE_FILE;
+
         if ($content === null) {
             $content = new StreamContent('');
+        } elseif (is_string($content)) {
+            $content = new StreamContent($content);
+        } elseif (!$content instanceof ContentInterface) {
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Content must be an instance of %s, a string, or null; %s given',
+                    ContentInterface::class,
+                    gettype($content)
+                )
+            );
         }
+
         $this->content = $content;
     }
 

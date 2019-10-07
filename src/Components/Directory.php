@@ -179,6 +179,13 @@ class Directory extends AbstractFile implements DirectoryInterface
             throw new NoDiskSpaceException('Not enough disk space');
         }
 
+        if ($child instanceof PartitionInterface) {
+            $root = $this->getRoot();
+            if ($root) {
+                $root->addChild($child);
+            }
+        }
+
         $child->setParent($this);
         $this->setLastModifyTime();
 
@@ -279,5 +286,25 @@ class Directory extends AbstractFile implements DirectoryInterface
         }
 
         return $name;
+    }
+
+    /**
+     * Gets the file system.
+     *
+     * @return FileSystemInterface|null
+     */
+    private function getRoot(): ?FileSystemInterface
+    {
+        $root = $this->getParent();
+
+        while ($root) {
+            $parent = $root->getParent();
+            if ($parent instanceof FileSystemInterface) {
+                return $parent;
+            }
+            $root = $parent;
+        }
+
+        return null;
     }
 }
