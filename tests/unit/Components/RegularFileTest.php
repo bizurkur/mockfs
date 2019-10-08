@@ -6,11 +6,10 @@ use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Components\RegularFileInterface;
+use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Content\NullContent;
 use MockFileSystem\Content\StreamContent;
-use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
-
 use MockFileSystem\Tests\Components\RegularFileTestCase;
 
 class RegularFileTest extends RegularFileTestCase
