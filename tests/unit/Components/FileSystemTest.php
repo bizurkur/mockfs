@@ -194,8 +194,8 @@ class FileSystemTest extends TestCase
 
     public function testAddChildNormalizesName(): void
     {
-        $partitionA = $this->createPartition(['getPath' => 'some name']);
-        $partitionB = $this->createPartition(['getPath' => 'SoMe NaMe']);
+        $partitionA = $this->createPartition(['getName' => 'some name']);
+        $partitionB = $this->createPartition(['getName' => 'SoMe NaMe']);
 
         $this->fixture = new FileSystem(new Config(['ignoreCase' => true]));
         $this->fixture->addChild($partitionA);
@@ -209,8 +209,8 @@ class FileSystemTest extends TestCase
 
     public function testAddChildDoesNotNormalizeNames(): void
     {
-        $partitionA = $this->createPartition(['getPath' => 'some name']);
-        $partitionB = $this->createPartition(['getPath' => 'SoMe NaMe']);
+        $partitionA = $this->createPartition(['getName' => 'some name']);
+        $partitionB = $this->createPartition(['getName' => 'SoMe NaMe']);
 
         $this->fixture = new FileSystem(new Config(['ignoreCase' => false]));
         $this->fixture->addChild($partitionA);
@@ -251,9 +251,9 @@ class FileSystemTest extends TestCase
     ): void {
         $this->fixture = new FileSystem(new Config(['ignoreCase' => $normalize]));
 
-        $partitionA = $this->createPartition(['getPath' => uniqid()]);
-        $partitionB = $this->createPartition(['getPath' => $path]);
-        $partitionC = $this->createPartition(['getPath' => uniqid()]);
+        $partitionA = $this->createPartition(['getName' => uniqid()]);
+        $partitionB = $this->createPartition(['getName' => $path]);
+        $partitionC = $this->createPartition(['getName' => uniqid()]);
         $this->fixture->addChild($partitionA);
         $this->fixture->addChild($partitionB);
         $this->fixture->addChild($partitionC);
@@ -302,9 +302,9 @@ class FileSystemTest extends TestCase
     ): void {
         $this->fixture = new FileSystem(new Config(['ignoreCase' => $normalize]));
 
-        $partitionA = $this->createPartition(['getPath' => uniqid()]);
-        $partitionB = $this->createPartition(['getPath' => $path]);
-        $partitionC = $this->createPartition(['getPath' => uniqid()]);
+        $partitionA = $this->createPartition(['getName' => uniqid()]);
+        $partitionB = $this->createPartition(['getName' => $path]);
+        $partitionC = $this->createPartition(['getName' => uniqid()]);
         $this->fixture->addChild($partitionA);
         $this->fixture->addChild($partitionB);
         $this->fixture->addChild($partitionC);
@@ -332,9 +332,9 @@ class FileSystemTest extends TestCase
     ): void {
         $this->fixture = new FileSystem(new Config(['ignoreCase' => $normalize]));
 
-        $partitionA = $this->createPartition(['getPath' => uniqid()]);
-        $partitionB = $this->createPartition(['getPath' => $path]);
-        $partitionC = $this->createPartition(['getPath' => uniqid()]);
+        $partitionA = $this->createPartition(['getName' => uniqid()]);
+        $partitionB = $this->createPartition(['getName' => $path]);
+        $partitionC = $this->createPartition(['getName' => uniqid()]);
         $this->fixture->addChild($partitionA);
         $this->fixture->addChild($partitionB);
         $this->fixture->addChild($partitionC);
@@ -360,8 +360,8 @@ class FileSystemTest extends TestCase
      */
     public function testGetSummaryCallsPartitionGetSummary(?int $user, ?int $group): void
     {
-        $partitionA = $this->createPartition(['getPath' => uniqid()]);
-        $partitionB = $this->createPartition(['getPath' => uniqid()]);
+        $partitionA = $this->createPartition(['getName' => uniqid()]);
+        $partitionB = $this->createPartition(['getName' => uniqid()]);
 
         $this->fixture->addChild($partitionA);
         $this->fixture->addChild($partitionB);
@@ -410,8 +410,8 @@ class FileSystemTest extends TestCase
         $countB = rand(1, 100);
         $summaryA = $this->createSummary(['getSize' => $sizeA, 'getFileCount' => $countA]);
         $summaryB = $this->createSummary(['getSize' => $sizeB, 'getFileCount' => $countB]);
-        $partitionA = $this->createPartition(['getSummary' => $summaryA, 'getPath' => uniqid()]);
-        $partitionB = $this->createPartition(['getSummary' => $summaryB, 'getPath' => uniqid()]);
+        $partitionA = $this->createPartition(['getSummary' => $summaryA, 'getName' => uniqid()]);
+        $partitionB = $this->createPartition(['getSummary' => $summaryB, 'getName' => uniqid()]);
 
         $this->fixture->addChild($partitionA);
         $this->fixture->addChild($partitionB);

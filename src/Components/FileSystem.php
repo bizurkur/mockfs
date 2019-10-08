@@ -147,8 +147,8 @@ final class FileSystem implements FileSystemInterface
         $partition->setConfig($this->config);
         $partition->setParent($this);
 
-        $path = $partition->getPath();
-        $normalized = $this->normalizeName($path);
+        $name = $partition->getName();
+        $normalized = $this->normalizeName($name);
 
         $this->partitions[$normalized] = $partition;
     }
@@ -223,6 +223,13 @@ final class FileSystem implements FileSystemInterface
      */
     private function normalizeName(string $name): string
     {
+        $fileSeparator = $this->config->getFileSeparator();
+        $partitionSeparator = $this->config->getPartitionSeparator();
+
+        $name = rtrim($name, $fileSeparator);
+        $name = rtrim($name, $partitionSeparator);
+        $name = $name.$partitionSeparator.$fileSeparator;
+
         if ($this->config->getIgnoreCase()) {
             $name = mb_strtoupper($name);
         }
