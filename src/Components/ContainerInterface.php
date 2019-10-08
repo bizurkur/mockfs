@@ -14,15 +14,6 @@ use MockFileSystem\Exception\NotFoundException;
 interface ContainerInterface extends ChildInterface, ReferenceableInterface, SummarizableInterface
 {
     /**
-     * Finds the given file, if applicable.
-     *
-     * @param string $path
-     *
-     * @return FileInterface|null
-     */
-    public function find(string $path): ?FileInterface;
-
-    /**
      * Gets all of the children.
      *
      * @return FileInterface[]

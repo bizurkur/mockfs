@@ -124,35 +124,6 @@ final class FileSystem implements FileSystemInterface
     /**
      * {@inheritDoc}
      */
-    public function find(string $path): ?FileInterface
-    {
-        $clean = $this->getPath($path);
-
-        $sep = $this->config->getFileSeparator();
-
-        foreach ($this->partitions as $partition) {
-            $prefix = $partition->getPath();
-            $length = mb_strlen($prefix);
-            $dirPath = mb_substr($clean.$sep, 0, $length);
-            $filePath = mb_substr($clean, $length);
-
-            if (strcmp($prefix, $dirPath) === 0) {
-                return $partition->find($filePath);
-            }
-
-            if ($this->config->getIgnoreCase()
-                && strcmp(mb_strtoupper($prefix), mb_strtoupper($dirPath)) === 0
-            ) {
-                return $partition->find($filePath);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
     public function getChildren(): array
     {
         return array_values($this->partitions);

@@ -3,6 +3,7 @@
 namespace MockFileSystem;
 
 use MockFileSystem\Components\Block;
+use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
@@ -318,7 +319,24 @@ final class MockFileSystem
      */
     public static function find(string $path): ?FileInterface
     {
-        return self::getFileSystem()->find($path);
+        $clean = self::getPath($path);
+        $parts = self::explodePath($clean);
+        $file = self::getFileSystem();
+
+        do {
+            if (!$file instanceof ContainerInterface) {
+                return null;
+            }
+
+            $part = array_shift($parts);
+            if (!$file->hasChild($part)) {
+                return null;
+            }
+
+            $file = $file->getChild($part);
+        } while (!empty($parts));
+
+        return $file;
     }
 
     /**

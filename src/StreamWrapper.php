@@ -226,7 +226,11 @@ final class StreamWrapper
                 return false;
             }
 
-            $file = $parent->find($parts[$i]);
+            $file = null;
+            if ($parent->hasChild($parts[$i])) {
+                $file = $parent->getChild($parts[$i]);
+            }
+
             if ($file instanceof DirectoryInterface) {
                 $parent = $file;
 
