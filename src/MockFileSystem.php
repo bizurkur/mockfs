@@ -329,6 +329,10 @@ final class MockFileSystem
             }
 
             $part = array_shift($parts);
+            if ($part === null) {
+                return null;
+            }
+
             if (!$file->hasChild($part)) {
                 return null;
             }

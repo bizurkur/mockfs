@@ -444,12 +444,4 @@ class FileSystemTest extends TestCase
     {
         return $this->createConfiguredMock(SummaryInterface::class, $methods);
     }
-
-    /**
-     * @return FileInterface&MockObject
-     */
-    private function createFile(array $methods = []): FileInterface
-    {
-        return $this->createConfiguredMock(FileInterface::class, $methods);
-    }
 }
