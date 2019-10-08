@@ -118,7 +118,7 @@ The following are all of the valid configuration options that can be used:
 | `ignoreCase` | `bool` | Whether or not to ignore filename casing (e.g. is `test.txt` the same as `TesT.txT`). Defaults to `false` |
 | `includeDotFiles` | `bool` | Whether or not to include dot files (`.` and `..`) when listing directory contents. Defaults to `true` |
 | `normalizeSlashes` | `bool` | Whether or not to convert `\` and `/` to whatever the `fileSeparator` option is set to. Defaults to `false` |
-| `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `fileSeparator` option and the `null` character are always in the blacklist, even when the array is empty |
+| `blacklist` | `string[]` | Array of characters to blacklist in filenames. Can be indexed by a human-friendly name. Defaults to an empty array (`[]`). Please note that the value of the `fileSeparator` and `partitionSeparator` options, as well as the `null` character are always in the blacklist, even when the array is empty |
 | `user` | `int|null` | The user ID of the current user. Defaults to `null` (gets the UID from the system) |
 | `group` | `int|null` | The group ID of the current user. Defaults to `null` (gets the GID from the system) |
 

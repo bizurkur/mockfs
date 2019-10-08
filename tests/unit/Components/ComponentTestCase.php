@@ -60,6 +60,8 @@ abstract class ComponentTestCase extends TestCase
     public function sampleInvalidNames(): array
     {
         $config = [
+            'fileSeparator' => '/',
+            'partitionSeparator' => ':',
             'blacklist' => [
                 '>',
                 'tab' => "\t",
@@ -77,10 +79,15 @@ abstract class ComponentTestCase extends TestCase
                 'name' => '..',
                 'expected' => 'Name cannot be "." or ".."',
             ],
-            'has slash' => [
+            'has fileSeparator' => [
                 'config' => $config,
                 'name' => 'test/ing',
                 'expected' => 'Name cannot contain a "/" character.',
+            ],
+            'has partitionSeparator' => [
+                'config' => $config,
+                'name' => 'test:ing',
+                'expected' => 'Name cannot contain a ":" character.',
             ],
             'has null character' => [
                 'config' => $config,

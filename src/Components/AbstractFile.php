@@ -544,11 +544,16 @@ abstract class AbstractFile implements FileInterface
             $config->getBlacklist(),
             [
                 $config->getFileSeparator(),
+                $config->getPartitionSeparator(),
                 'null' => "\0",
             ]
         );
 
         foreach ($blacklist as $key => $character) {
+            if (mb_strlen($character) === 0) {
+                continue;
+            }
+
             if (is_int($key)) {
                 $key = $character;
             }
