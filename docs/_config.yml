@@ -10,7 +10,6 @@ project:
 license:
     software: MIT License
     software_url: http://opensource.org/licenses/MIT
-
     docs: CC BY 3.0
     docs_url: http://creativecommons.org/licenses/by/3.0/
 
@@ -30,14 +29,14 @@ social:
 
 links:
     header:
-      - title: GitHub
-        url: https://github.com/bizurkur/mockfs
-        icon: github
+        - title: GitHub
+          url: https://github.com/bizurkur/mockfs
+          icon: github
     footer:
-      - title: GitHub
-        url: https://github.com/bizurkur/mockfs
-      - title: Issues
-        url: https://github.com/bizurkur/mockfs/issues?state=open
+        - title: GitHub
+          url: https://github.com/bizurkur/mockfs
+        - title: Issues
+          url: https://github.com/bizurkur/mockfs/issues
 
 ui:
     header:
@@ -49,20 +48,20 @@ ui:
 #     google: UA-123456-1
 
 defaults:
-  - scope:
-      path: 'assets/'
-    values:
-      hide: true
-  - scope:
-      path: ''
-    values:
-      layout: 'default'
+    - scope:
+          path: 'assets/'
+      values:
+          hide: true
+    - scope:
+          path: ''
+      values:
+          layout: 'default'
 
 permalink: /:title
 
 plugins:
-  - jekyll-sitemap
-  - jekyll-seo-tag
+    - jekyll-sitemap
+    - jekyll-seo-tag
 
 # Build settings
 markdown: kramdown
