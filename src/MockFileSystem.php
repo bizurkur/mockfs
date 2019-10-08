@@ -43,7 +43,7 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
-     * @param array[] $structure
+     * @param array<string, array|string|ContentInterface|null> $structure
      * @param mixed[]|ConfigInterface $options
      *
      * @return Partition
@@ -132,7 +132,7 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
-     * @param array[] $structure
+     * @param array<string, array|string|ContentInterface|null> $structure
      *
      * @return Partition
      */
@@ -244,15 +244,21 @@ final class MockFileSystem
      *
      * @param string $name
      * @param int|null $permissions
+     * @param array<string, array|string|ContentInterface|null> $structure
      *
      * @return Directory
      */
-    public static function createDirectory(string $name, ?int $permissions = null): Directory
-    {
+    public static function createDirectory(
+        string $name,
+        ?int $permissions = null,
+        array $structure = []
+    ): Directory {
         $config = self::getFileSystem()->getConfig();
 
         $directory = new Directory($name, $permissions);
         $directory->setConfig($config);
+
+        self::addStructure($structure, $directory);
 
         return $directory;
     }
