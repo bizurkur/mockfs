@@ -178,7 +178,7 @@ final class MockFileSystem
      *     ],
      * ]
      *
-     * @param array[] $structure
+     * @param array<string, array|string|ContentInterface|null> $structure
      * @param DirectoryInterface $parent
      */
     public static function addStructure(array $structure, DirectoryInterface $parent): void

@@ -16,6 +16,9 @@ parameters:
         -
             message: '/^Parameter #1 \$stream of class MockFileSystem\\Content\\StreamContent constructor expects resource\|string, int given\.$/'
             path: tests/unit/Content/StreamContentTest.php
+        -
+            message: '/^Parameter #3 \$content of class MockFileSystem\\Components\\RegularFile constructor expects MockFileSystem\\Content\\ContentInterface\|string\|null, int given\.$/'
+            path: tests/unit/Components/RegularFileTest.php
 
 # some of the strict rules
 services:
