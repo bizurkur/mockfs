@@ -400,7 +400,7 @@ final class MockFileSystem
         }
 
         if (substr($name, 0, 1) === '[' && substr($name, -1) === ']') {
-            self::addStructureBlock($name, null, $data)->addTo($parent);
+            self::addStructureBlock($parent, $name, $data);
 
             return;
         }
