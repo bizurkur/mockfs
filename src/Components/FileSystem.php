@@ -5,6 +5,8 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystemInterface;
+use MockFileSystem\Components\Finder;
+use MockFileSystem\Components\FinderInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config\ConfigInterface;
@@ -29,11 +31,17 @@ final class FileSystem implements FileSystemInterface
     private $config = null;
 
     /**
+     * @var FinderInterface
+     */
+    private $finder = null;
+
+    /**
      * @param ConfigInterface $config
      */
     public function __construct(ConfigInterface $config)
     {
         $this->config = $config;
+        $this->finder = new Finder($this);
     }
 
     /**
@@ -42,6 +50,24 @@ final class FileSystem implements FileSystemInterface
     public function getConfig(): ConfigInterface
     {
         return $this->config;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setFinder(FinderInterface $finder): FileSystemInterface
+    {
+        $this->finder = $finder;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getFinder(): FinderInterface
+    {
+        return $this->finder;
     }
 
     /**
@@ -62,6 +88,14 @@ final class FileSystem implements FileSystemInterface
         }
 
         return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function find(string $path): ?FileInterface
+    {
+        return $this->finder->find($path);
     }
 
     /**

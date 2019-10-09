@@ -3,6 +3,7 @@
 namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\ContainerInterface;
+use MockFileSystem\Components\FinderInterface;
 use MockFileSystem\Config\ConfigInterface;
 
 /**
@@ -18,6 +19,31 @@ interface FileSystemInterface extends ContainerInterface
      * @return ConfigInterface
      */
     public function getConfig(): ConfigInterface;
+
+    /**
+     * Sets the finder used by the file system.
+     *
+     * @param FinderInterface $finder
+     *
+     * @return FileSystemInterface
+     */
+    public function setFinder(FinderInterface $finder): FileSystemInterface;
+
+    /**
+     * Gets the finder used by the file system.
+     *
+     * @return FinderInterface
+     */
+    public function getFinder(): FinderInterface;
+
+    /**
+     * Finds a file, if it exists.
+     *
+     * @param string $path
+     *
+     * @return FileInterface|null
+     */
+    public function find(string $path): ?FileInterface;
 
     /**
      * Gets the full path for the file.

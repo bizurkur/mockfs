@@ -319,28 +319,7 @@ final class MockFileSystem
      */
     public static function find(string $path): ?FileInterface
     {
-        $clean = self::getPath($path);
-        $parts = self::explodePath($clean);
-        $file = self::getFileSystem();
-
-        do {
-            if (!$file instanceof ContainerInterface) {
-                return null;
-            }
-
-            $part = array_shift($parts);
-            if ($part === null) {
-                return null;
-            }
-
-            if (!$file->hasChild($part)) {
-                return null;
-            }
-
-            $file = $file->getChild($part);
-        } while (!empty($parts));
-
-        return $file;
+        return self::getFileSystem()->find($path);
     }
 
     /**
