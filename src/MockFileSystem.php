@@ -3,7 +3,6 @@
 namespace MockFileSystem;
 
 use MockFileSystem\Components\Block;
-use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
@@ -191,52 +190,7 @@ final class MockFileSystem
                 );
             }
 
-            if (is_array($data)) {
-                $child = self::createDirectory($name, null);
-                $child->addTo($parent);
-                self::addStructure($data, $child);
-
-                continue;
-            }
-
-            if (substr($name, 0, 1) === '[' && substr($name, -1) === ']') {
-                $name = substr($name, 1, -1);
-                if ($data === null) {
-                    switch ($name) {
-                        case 'null':
-                            $data = new NullContent();
-                            break;
-                        case 'full':
-                            $data = new FullContent();
-                            break;
-                        case 'random':
-                            $data = new RandomContent();
-                            break;
-                        case 'zero':
-                            $data = new ZeroContent();
-                            break;
-                        default:
-                            break;
-                    }
-                }
-
-                self::createBlock($name, null, $data)->addTo($parent);
-
-                continue;
-            }
-
-            if (is_string($data) || $data instanceof ContentInterface) {
-                self::createFile($name, null, $data)->addTo($parent);
-
-                continue;
-            }
-
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Data must be a string (file) or array (directory); received %s',
-                    gettype($data)
-                )
-            );
+            self::addStructureComponent($parent, $name, $data);
         }
     }
 
@@ -428,6 +382,68 @@ final class MockFileSystem
         }
 
         return $parts;
+    }
+
+    /**
+     * Adds a component to the parent.
+     *
+     * @param DirectoryInterface $parent
+     * @param string $name
+     * @param array|string|ContentInterface|null $data
+     */
+    private static function addStructureComponent(DirectoryInterface $parent, string $name, $data): void
+    {
+        if (is_array($data)) {
+            self::createDirectory($name, null, $data)->addTo($parent);
+
+            return;
+        }
+
+        if (substr($name, 0, 1) === '[' && substr($name, -1) === ']') {
+            self::addStructureBlock($name, null, $data)->addTo($parent);
+
+            return;
+        }
+
+        if (is_string($data) || $data instanceof ContentInterface) {
+            self::createFile($name, null, $data)->addTo($parent);
+
+            return;
+        }
+
+        throw new InvalidArgumentException(
+            sprintf(
+                'Data must be a string (file) or array (directory); received %s',
+                gettype($data)
+            )
+        );
+    }
+
+    /**
+     * Adds a block file to the parent.
+     *
+     * @param DirectoryInterface $parent
+     * @param string $name
+     * @param array|string|ContentInterface|null $data
+     */
+    private static function addStructureBlock(DirectoryInterface $parent, string $name, $data): void
+    {
+        $name = substr($name, 1, -1);
+        if ($data === null) {
+            $namedContent = [
+                'full' => FullContent::class,
+                'null' => NullContent::class,
+                'random' => RandomContent::class,
+                'zero' => ZeroContent::class,
+            ];
+
+            $normalized = mb_strtolower($name);
+            if (isset($namedContent[$normalized])) {
+                $data = new $namedContent[$normalized]();
+            }
+        }
+
+        self::createBlock($name, null, $data)->addTo($parent);
     }
 
     /**

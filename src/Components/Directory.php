@@ -175,23 +175,51 @@ class Directory extends AbstractFile implements DirectoryInterface
 
         foreach ($this->children as $child) {
             if ($child instanceof PartitionInterface) {
-                // Don't count child partition contents
+                // Don't count child partitions.
+                // They have their own summary
                 continue;
-            } elseif ($child instanceof DirectoryInterface) {
-                $summary = $child->getSummary($user, $group);
-                $count += $summary->getFileCount();
-                $size += $summary->getSize();
-            } elseif ($user !== null && $user !== $child->getUser()) {
-                continue;
-            } elseif ($group !== null && $group !== $child->getGroup()) {
-                continue;
-            } else {
-                $size += $child->getSize();
-                $count++;
             }
+
+            $this->addChildSummary($child, $user, $group, $count, $size);
         }
 
         return new Summary($size, $count);
+    }
+
+    /**
+     * Adds a file to the summary.
+     *
+     * @param FileInterface $child
+     * @param int|null $user
+     * @param int|null $group
+     * @param int $count
+     * @param int $size
+     */
+    private function addChildSummary(
+        FileInterface $child,
+        ?int $user,
+        ?int $group,
+        int &$count,
+        int &$size
+    ): void {
+        if ($child instanceof DirectoryInterface) {
+            $summary = $child->getSummary($user, $group);
+            $count += $summary->getFileCount();
+            $size += $summary->getSize();
+        }
+
+        if ($user !== null && $user !== $child->getUser()) {
+            // File doesn't belong to this user
+            return;
+        }
+
+        if ($group !== null && $group !== $child->getGroup()) {
+            // File doesn't belong to this group
+            return;
+        }
+
+        $size += $child->getSize();
+        $count++;
     }
 
     /**

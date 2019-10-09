@@ -52,7 +52,7 @@ interface ContainerInterface extends ChildInterface, ReferenceableInterface, Sum
      *
      * @param string $name
      *
-     * @return bool
+     * @return bool True if the child existed and was removed; else false.
      */
     public function removeChild(string $name): bool;
 }

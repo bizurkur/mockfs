@@ -17,6 +17,7 @@ use MockFileSystem\StreamWrapper;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
+// phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class FileSystemTest extends TestCase
 {
     /**

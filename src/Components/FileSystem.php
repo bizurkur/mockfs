@@ -107,44 +107,15 @@ final class FileSystem implements FileSystemInterface
             return '';
         }
 
-        $clean = trim($file);
+        $separator = $this->config->getFileSeparator();
+        $clean = $this->sanitizePath($file, $separator);
 
-        $prefix = StreamWrapper::PROTOCOL.'://';
-        $pathPrefix = mb_substr($clean, 0, mb_strlen($prefix));
-        if (strcmp(mb_strtoupper($prefix), mb_strtoupper($pathPrefix)) === 0) {
-            $clean = mb_substr($clean, mb_strlen($prefix));
-        }
-
-        $sep = $this->config->getFileSeparator();
-        if ($this->config->getNormalizeSlashes()) {
-            $clean = str_replace(['\\', '/'], $sep, $clean);
-        }
-
-        if (mb_substr($clean, -strlen($sep)) === $sep) {
-            // Remove trailing slash
-            $clean = mb_substr($clean, 0, -strlen($sep));
-        }
-
-        $parts = explode($sep, $clean);
+        $parts = explode($separator, $clean);
         if ($parts === false) {
             return $clean;
         }
 
-        $files = [];
-
-        foreach ($parts as $part) {
-            if ($part === '.') {
-                continue;
-            }
-
-            if ($part !== '..') {
-                $files[] = $part;
-            } elseif (count($files) > 1) {
-                array_pop($files);
-            }
-        }
-
-        return implode($sep, $files);
+        return $this->resolvePath($parts, $separator);
     }
 
     /**
@@ -269,5 +240,68 @@ final class FileSystem implements FileSystemInterface
         }
 
         return $name;
+    }
+
+    /**
+     * Sanitizes a path.
+     *
+     * - Removes the Mock File System prefix, if present
+     * - Normalizes slashes, if enabled
+     * - Removes any trailing separator
+     *
+     * @param string $path
+     * @param string $separator
+     *
+     * @return string
+     */
+    private function sanitizePath(string $path, string $separator): string
+    {
+        $clean = trim($path);
+
+        $prefix = StreamWrapper::PROTOCOL.'://';
+        $pathPrefix = mb_substr($clean, 0, mb_strlen($prefix));
+        if (strcmp(mb_strtoupper($prefix), mb_strtoupper($pathPrefix)) === 0) {
+            $clean = mb_substr($clean, mb_strlen($prefix));
+        }
+
+        if ($this->config->getNormalizeSlashes()) {
+            $clean = str_replace(['\\', '/'], $separator, $clean);
+        }
+
+        if (mb_substr($clean, -strlen($separator)) === $separator) {
+            // Remove trailing slash
+            $clean = mb_substr($clean, 0, -strlen($separator));
+        }
+
+        return $clean;
+    }
+
+    /**
+     * Resolves the path parts into a usable string.
+     *
+     * Removes dot navigation from the parts.
+     *
+     * @param string[] $parts
+     * @param string $separator
+     *
+     * @return string
+     */
+    private function resolvePath(array $parts, string $separator): string
+    {
+        $files = [];
+
+        foreach ($parts as $part) {
+            if ($part === '.') {
+                continue;
+            }
+
+            if ($part !== '..') {
+                $files[] = $part;
+            } elseif (count($files) > 1) {
+                array_pop($files);
+            }
+        }
+
+        return implode($separator, $files);
     }
 }

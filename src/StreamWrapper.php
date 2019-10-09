@@ -9,7 +9,6 @@ use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\RegularFile\MultiInstanceDecorator;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Exception\BaseException;
-use MockFileSystem\Exception\RuntimeException;
 
 // phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 // phpcs:disable Generic.Metrics.CyclomaticComplexity.MaxExceeded
