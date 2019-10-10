@@ -24,37 +24,12 @@ use PHPUnit\Framework\Error\Warning;
  * - ftell()
  * - ftruncate()
  * - fflush()
- * - fstat() // TODO: Missing fstat() tests
+ * - fstat()
  *
  * phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
  */
 class FileOperationsTest extends AbstractTestCase
 {
-    /**
-     * @dataProvider sampleInvalidModes
-     */
-    public function testFileOpenInvalidModeCreatesError(string $mode): void
-    {
-        $url = uniqid('mfs_');
-        $path = uniqid();
-
-        $fixture = new StreamWrapper();
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage('Illegal mode "'.$mode.'"');
-
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
-    }
-
-    public function sampleInvalidModes(): array
-    {
-        return [
-            'unknown mode' => ['q'],
-            'unknown modifier' => ['rq'],
-            'extra characters' => ['rbq'],
-        ];
-    }
-
     /**
      * @dataProvider samplePrefixes
      */
@@ -66,32 +41,18 @@ class FileOperationsTest extends AbstractTestCase
         self::assertFalse(@fopen($url, 'q'));
     }
 
-    // TODO: Test this
-    // /**
-    //  * @dataProvider samplePrefixes
-    //  */
-    // public function testFileOpenForReadOnNonExistentFileCreatesError(string $prefix): void
-    // {
-    //     $url = $prefix.'/'.uniqid('mfs_');
-    //     $this->cleanup($url);
-    //
-    //     self::expectException(Warning::class);
-    //     self::expectExceptionMessage('fopen('.$url.'): failed to open stream: No such file or directory');
-    //
-    //     fopen($url, 'r');
-    // }
-
-    public function testFileOpenForReadOnNonExistentFileCreatesError(): void
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileOpenForReadOnNonExistentFileCreatesError(string $prefix): void
     {
-        $url = uniqid('mfs_');
-        $path = uniqid();
-
-        $fixture = new StreamWrapper();
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Cannot open non-existent file "'.$url.'" for reading.');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, 'r', \STREAM_REPORT_ERRORS, $path);
+        fopen($url, 'r');
     }
 
     /**
@@ -111,31 +72,12 @@ class FileOperationsTest extends AbstractTestCase
     public function testFileOpenForCreateNewWhenExistsCreatesError(string $mode): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
         file_put_contents($url, uniqid());
-
-        $fixture = new StreamWrapper();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" already exists; cannot open in mode '.$mode);
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
-    }
-
-    /**
-     * @dataProvider sampleCreateNewModes
-     */
-    public function testFileOpenForCreateNewWhenExistsDoesNotCreateError(string $mode): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
-
-        self::assertFalse($actual);
+        fopen($url, $mode);
     }
 
     public function sampleCreateNewModes(): array
@@ -166,33 +108,13 @@ class FileOperationsTest extends AbstractTestCase
     public function testFileOpenForReadWhenNotReadableCreatesError(string $mode): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
         file_put_contents($url, uniqid());
         chmod($url, 0200);
-
-        $fixture = new StreamWrapper();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" is not readable.');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
-    }
-
-    /**
-     * @dataProvider sampleReadModes
-     */
-    public function testFileOpenForReadWhenNotReadableDoesNotCreateError(string $mode): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0200);
-
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
-
-        self::assertFalse($actual);
+        fopen($url, $mode);
     }
 
     public function sampleReadModes(): array
@@ -226,33 +148,13 @@ class FileOperationsTest extends AbstractTestCase
     public function testFileOpenForWriteWhenNotWritableCreatesError(string $mode): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
         file_put_contents($url, uniqid());
         chmod($url, 0500);
-
-        $fixture = new StreamWrapper();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('File "'.$url.'" is not writeable.');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, $mode, \STREAM_REPORT_ERRORS, $path);
-    }
-
-    /**
-     * @dataProvider sampleWriteModes
-     */
-    public function testFileOpenForWriteWhenNotWritableDoesNotCreateError(string $mode): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = uniqid();
-        file_put_contents($url, uniqid());
-        chmod($url, 0500);
-
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, $mode, 0, $path);
-
-        self::assertFalse($actual);
+        fopen($url, $mode);
     }
 
     public function sampleWriteModes(): array
@@ -278,30 +180,6 @@ class FileOperationsTest extends AbstractTestCase
         chmod($url, 0500);
 
         self::assertFalse(@fopen($url, 'w'));
-    }
-
-    public function testFileOpenSetsOpenPath(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, 'w', \STREAM_USE_PATH, $path);
-
-        self::assertEquals($url, $path);
-    }
-
-    public function testFileOpenDoesNotSetOpenPath(): void
-    {
-        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
-
-        $actual = $fixture->stream_open($url, 'w', 0, $path);
-
-        self::assertNull($path);
     }
 
     /**
@@ -570,14 +448,11 @@ class FileOperationsTest extends AbstractTestCase
     public function testWriteParentDirDoesNotExistCreatesError(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
-        $path = null;
-
-        $fixture = new StreamWrapper();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Path "'.$url.'" does not exist.');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+        fopen($url, 'w');
     }
 
     /**
@@ -599,23 +474,18 @@ class FileOperationsTest extends AbstractTestCase
         $path = null;
         mkdir($base, 0500);
 
-        $fixture = new StreamWrapper();
-
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Directory "'.$base.'" is not writable.');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+        fopen($url, 'w');
     }
 
     public function testCreateFileThrowsExceptionCreatesError(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('Not enough disk space');
+        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
 
         $quota = new Quota(-1, 0);
         $partition = MockFileSystem::getFileSystem()->getChild('/');
@@ -623,15 +493,12 @@ class FileOperationsTest extends AbstractTestCase
             $partition->setQuota($quota);
         }
 
-        $fixture->stream_open($url, 'w', \STREAM_REPORT_ERRORS, $path);
+        fopen($url, 'w');
     }
 
     public function testCreateFileThrowsExceptionResponse(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
-        $path = null;
-
-        $fixture = new StreamWrapper();
 
         $quota = new Quota(-1, 0);
         $partition = MockFileSystem::getFileSystem()->getChild('/');
@@ -639,7 +506,7 @@ class FileOperationsTest extends AbstractTestCase
             $partition->setQuota($quota);
         }
 
-        $actual = $fixture->stream_open($url, 'w', 0, $path);
+        $actual = @fopen($url, 'w');
 
         self::assertFalse($actual);
     }
@@ -733,27 +600,6 @@ class FileOperationsTest extends AbstractTestCase
         $actual = @fopen($path, 'w');
 
         self::assertFalse($actual);
-    }
-
-    public function testFileOpenContextFailCreatesError(): void
-    {
-        $path = uniqid('mfs_');
-        $junk = uniqid();
-        $message = uniqid();
-
-        $this->setContext(
-            [
-                'fopen_fail' => true,
-                'fopen_message' => $message,
-            ]
-        );
-
-        $fixture = new StreamWrapper();
-
-        self::expectException(Warning::class);
-        self::expectExceptionMessage($message);
-
-        $fixture->stream_open($path, 'w', \STREAM_REPORT_ERRORS, $junk);
     }
 
     public function testFileCloseContextFailResponse(): void
@@ -940,6 +786,44 @@ class FileOperationsTest extends AbstractTestCase
             self::fail('Failed to open handle');
         }
         $actual = @ftruncate($handle, 2);
+        fclose($handle);
+
+        self::assertFalse($actual);
+    }
+
+    /**
+     * @dataProvider samplePrefixes
+     */
+    public function testFileStat(string $prefix): void
+    {
+        $url = $prefix.'/'.uniqid('mfs_');
+        $this->cleanup($url);
+        file_put_contents($url, uniqid());
+
+        $handle = fopen($url, 'w+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fstat($handle);
+        fclose($handle);
+
+        $expected = stat($url);
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function testFileStatFailResponse(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid();
+        file_put_contents($url, uniqid());
+
+        $this->setContext(['fstat_fail' => true]);
+
+        $handle = fopen($url, 'w+');
+        if ($handle === false) {
+            self::fail('Failed to open handle');
+        }
+        $actual = fstat($handle);
         fclose($handle);
 
         self::assertFalse($actual);
