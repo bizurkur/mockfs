@@ -309,7 +309,7 @@ abstract class AbstractFile implements FileInterface
             $check = 0004;
         }
 
-        return (bool) ($this->permissions & $check);
+        return ($this->permissions & $check) === $check;
     }
 
     /**
@@ -325,7 +325,7 @@ abstract class AbstractFile implements FileInterface
             $check = 0002;
         }
 
-        return (bool) ($this->permissions & $check);
+        return ($this->permissions & $check) === $check;
     }
 
     /**
@@ -341,7 +341,7 @@ abstract class AbstractFile implements FileInterface
             $check = 0001;
         }
 
-        return (bool) ($this->permissions & $check);
+        return ($this->permissions & $check) === $check;
     }
 
     /**

@@ -6,6 +6,7 @@ namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\StreamWrapper;
+use MockFileSystem\MockFileSystem;
 use MockFileSystem\Tests\AbstractTestCase;
 
 /**
@@ -79,6 +80,20 @@ class PermissionsTest extends AbstractTestCase
         self::assertFalse(is_writable($url), 'File ended as writable');
     }
 
+    public function testChownUpdatesLastChangeTime(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+        $file = MockFileSystem::find($url);
+        $file->setLastChangeTime(rand());
+
+        $now = time();
+        chown($url, 123);
+
+        $actual = stat($url)['ctime'];
+        self::assertEquals($now, $actual);
+    }
+
     public function testChgrpWhenPathNotExists(): void
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
@@ -101,6 +116,20 @@ class PermissionsTest extends AbstractTestCase
         file_put_contents($url, uniqid());
 
         self::assertFalse(chgrp($url, get_current_user()));
+    }
+
+    public function testChgrpUpdatesLastChangeTime(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+        $file = MockFileSystem::find($url);
+        $file->setLastChangeTime(rand());
+
+        $now = time();
+        chgrp($url, 123);
+
+        $actual = stat($url)['ctime'];
+        self::assertEquals($now, $actual);
     }
 
     public function testChmodWhenPathNotExists(): void
@@ -126,5 +155,238 @@ class PermissionsTest extends AbstractTestCase
 
         self::assertTrue(chmod($url, 0440));
         self::assertEquals(FileInterface::TYPE_DIR|0440, fileperms($url));
+    }
+
+    public function testChmodUpdatesLastChangeTime(): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+        $file = MockFileSystem::find($url);
+        $file->setLastChangeTime(rand());
+
+        $now = time();
+        chmod($url, 0440);
+
+        $actual = stat($url)['ctime'];
+        self::assertEquals($now, $actual);
+    }
+
+    /**
+     * @dataProvider sampleIsReadable
+     */
+    public function testIsReadable(?int $permissions, ?int $user, ?int $group, bool $expected): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+
+        if ($permissions !== null) {
+            self::assertTrue(chmod($url, $permissions), 'chmod failed');
+        }
+        if ($group !== null) {
+            self::assertTrue(chgrp($url, $group), 'chgrp failed');
+        }
+        if ($user !== null) {
+            self::assertTrue(chown($url, $user), 'chown failed');
+        }
+
+        $file = MockFileSystem::find($url);
+        $config = $file->getConfig();
+        $actual = $file->isReadable($config->getUser(), $config->getGroup());
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function sampleIsReadable(): array
+    {
+        return [
+            'readable to user' => [
+                'permissions' => 0400,
+                'user' => null,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not readable to user' => [
+                'permissions' => 0200,
+                'user' => null,
+                'group' => null,
+                'expected' => false,
+            ],
+            'readable to group' => [
+                'permissions' => 0040,
+                'user' => 123,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not readable to group' => [
+                'permissions' => 0020,
+                'user' => 123,
+                'group' => null,
+                'expected' => false,
+            ],
+            'readable to other' => [
+                'permissions' => 0004,
+                'user' => 123,
+                'group' => 123,
+                'expected' => true,
+            ],
+            'not readable to other' => [
+                'permissions' => 0002,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+            'readable to nobody' => [
+                'permissions' => 0000,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider sampleIsWritable
+     */
+    public function testIsWritable(?int $permissions, ?int $user, ?int $group, bool $expected): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+
+        if ($permissions !== null) {
+            self::assertTrue(chmod($url, $permissions), 'chmod failed');
+        }
+        if ($group !== null) {
+            self::assertTrue(chgrp($url, $group), 'chgrp failed');
+        }
+        if ($user !== null) {
+            self::assertTrue(chown($url, $user), 'chown failed');
+        }
+
+        $file = MockFileSystem::find($url);
+        $config = $file->getConfig();
+        $actual = $file->isWritable($config->getUser(), $config->getGroup());
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function sampleIsWritable(): array
+    {
+        return [
+            'writable to user' => [
+                'permissions' => 0200,
+                'user' => null,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not writable to user' => [
+                'permissions' => 0400,
+                'user' => null,
+                'group' => null,
+                'expected' => false,
+            ],
+            'writable to group' => [
+                'permissions' => 0020,
+                'user' => 123,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not writable to group' => [
+                'permissions' => 0040,
+                'user' => 123,
+                'group' => null,
+                'expected' => false,
+            ],
+            'writable to other' => [
+                'permissions' => 0002,
+                'user' => 123,
+                'group' => 123,
+                'expected' => true,
+            ],
+            'not writable to other' => [
+                'permissions' => 0004,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+            'writable to nobody' => [
+                'permissions' => 0000,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+        ];
+    }
+
+    /**
+     * @dataProvider sampleIsExecutable
+     */
+    public function testIsExecutable(?int $permissions, ?int $user, ?int $group, bool $expected): void
+    {
+        $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
+        file_put_contents($url, uniqid());
+
+        if ($permissions !== null) {
+            self::assertTrue(chmod($url, $permissions), 'chmod failed');
+        }
+        if ($group !== null) {
+            self::assertTrue(chgrp($url, $group), 'chgrp failed');
+        }
+        if ($user !== null) {
+            self::assertTrue(chown($url, $user), 'chown failed');
+        }
+
+        $file = MockFileSystem::find($url);
+        $config = $file->getConfig();
+        $actual = $file->isExecutable($config->getUser(), $config->getGroup());
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function sampleIsExecutable(): array
+    {
+        return [
+            'executable to user' => [
+                'permissions' => 0100,
+                'user' => null,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not executable to user' => [
+                'permissions' => 0200,
+                'user' => null,
+                'group' => null,
+                'expected' => false,
+            ],
+            'executable to group' => [
+                'permissions' => 0010,
+                'user' => 123,
+                'group' => null,
+                'expected' => true,
+            ],
+            'not executable to group' => [
+                'permissions' => 0020,
+                'user' => 123,
+                'group' => null,
+                'expected' => false,
+            ],
+            'executable to other' => [
+                'permissions' => 0001,
+                'user' => 123,
+                'group' => 123,
+                'expected' => true,
+            ],
+            'not executable to other' => [
+                'permissions' => 0002,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+            'executable to nobody' => [
+                'permissions' => 0000,
+                'user' => 123,
+                'group' => 123,
+                'expected' => false,
+            ],
+        ];
     }
 }
