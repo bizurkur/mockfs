@@ -202,7 +202,7 @@ final class StreamWrapper
             return false;
         }
 
-        $parts = MockFileSystem::explodePath($path);
+        $parts = $this->explodePath($path);
         if (count($parts) < 2) {
             trigger_error('mkdir(): No such file or directory', \E_USER_WARNING);
 
@@ -714,7 +714,7 @@ final class StreamWrapper
         }
 
         $src = MockFileSystem::find($pathFrom);
-        $parts = MockFileSystem::getFileParts($pathTo);
+        $parts = $this->getFileParts($pathTo);
         $dest = MockFileSystem::find($parts['dirname']);
 
         if ($src === null || $dest === null) {
@@ -928,7 +928,7 @@ final class StreamWrapper
      */
     private function createFile(string $path, int $options = 0): ?RegularFileInterface
     {
-        $parts = MockFileSystem::getFileParts($path);
+        $parts = $this->getFileParts($path);
 
         /** @var DirectoryInterface|null $parent */
         $parent = MockFileSystem::findByType($parts['dirname'], FileInterface::TYPE_DIR);
@@ -1013,6 +1013,52 @@ final class StreamWrapper
         $file->setLastAccessTime($value[1] ?? $now);
 
         return true;
+    }
+
+    /**
+     * Splits the path into "dirname" and "basename" parts.
+     *
+     * @param string $path
+     *
+     * @return array<string, string>
+     */
+    private function getFileParts(string $path): array
+    {
+        $fileSystem = MockFileSystem::getFileSystem();
+        $clean = $fileSystem->getPath($path);
+
+        $sep = $fileSystem->getConfig()->getFileSeparator();
+        $pos = mb_strrpos($clean, $sep);
+
+        if ($pos === false) {
+            return ['dirname' => '', 'basename' => $clean];
+        }
+
+        return [
+            'dirname' => mb_substr($clean, 0, $pos),
+            'basename' => mb_substr($clean, $pos + 1),
+        ];
+    }
+
+    /**
+     * Splits the path into segmented sections.
+     *
+     * Each directory or file is an item in the array, e.g.:
+     *
+     *  - /home/foo/file.txt -> ['', 'home', 'foo', 'file.txt']
+     *
+     * @param string $path
+     *
+     * @return string[]
+     */
+    private function explodePath(string $path): array
+    {
+        $fileSystem = MockFileSystem::getFileSystem();
+        $clean = $fileSystem->getPath($path);
+
+        $sep = $fileSystem->getConfig()->getFileSeparator();
+
+        return explode($sep, $clean) ?: [$clean];
     }
 
     /**

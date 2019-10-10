@@ -335,58 +335,6 @@ final class MockFileSystem
     }
 
     /**
-     * Splits the path into "dirname" and "basename" parts.
-     *
-     * @param string $path
-     *
-     * @return array<string, string>
-     */
-    public static function getFileParts(string $path): array
-    {
-        $clean = self::getPath($path);
-
-        $sep = self::getFileSystem()->getConfig()->getFileSeparator();
-        $pos = mb_strrpos($clean, $sep);
-
-        if ($pos === false) {
-            return ['dirname' => '', 'basename' => $clean];
-        }
-
-        return [
-            'dirname' => mb_substr($clean, 0, $pos),
-            'basename' => mb_substr($clean, $pos + 1),
-        ];
-    }
-
-    /**
-     * Splits the path into segmented sections.
-     *
-     * Each directory or file is an item in the array, e.g.:
-     *
-     *  - /home/foo/file.txt -> ['', 'home', 'foo', 'file.txt']
-     *
-     * @param string $path
-     * @param string|null $sep File separator; defaults to config.
-     *
-     * @return string[]
-     */
-    public static function explodePath(string $path, ?string $sep = null): array
-    {
-        $clean = self::getPath($path);
-
-        if ($sep === null) {
-            $sep = self::getFileSystem()->getConfig()->getFileSeparator();
-        }
-
-        $parts = explode($sep, $clean);
-        if ($parts === false) {
-            return [$clean];
-        }
-
-        return $parts;
-    }
-
-    /**
      * Adds a component to the parent.
      *
      * @param DirectoryInterface $parent

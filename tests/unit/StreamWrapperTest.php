@@ -1697,6 +1697,19 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
+    public function testRenameWithPartialFilename(): void
+    {
+        $src = MockFileSystem::getUrl(uniqid('/mfs_src'));
+        $dest = uniqid('mfs_dest');
+        mkdir($src, 0777);
+
+        $actual = $this->fixture->rename($src, StreamWrapper::PROTOCOL.'://'.$dest);
+
+        self::assertTrue($actual);
+        self::assertFalse(file_exists($src), 'Source not removed');
+        self::assertTrue(is_dir(StreamWrapper::PROTOCOL.':///'.$dest), 'Destination not created');
+    }
+
     public function testTouchWhenNotExists(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
@@ -2129,7 +2142,7 @@ class StreamWrapperTest extends TestCase
         $content = $this->createMock(ContentInterface::class);
 
         /** @var RegularFileInterface $file */
-        $file = MockFileSystem::findByType($path, FileInterface::TYPE_FILE);
+        $file = MockFileSystem::find($path);
         $file->setContent($content);
 
         return $content;
