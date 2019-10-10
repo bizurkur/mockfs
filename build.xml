@@ -156,10 +156,12 @@
             checkreturn="true"
         >
             <arg value="-qrr" />
+            <arg value="-d" />
+            <arg value="memory_limit=-1" />
             <arg value="vendor/bin/infection" />
             <arg value="--threads=4" />
-            <arg value="--min-msi=35" />
-            <arg value="--min-covered-msi=35" />
+            <arg value="--min-msi=80" />
+            <arg value="--min-covered-msi=80" />
         </exec>
     </target>
 </project>
