@@ -9,9 +9,14 @@ use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
+use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Config\ConfigInterface;
+use MockFileSystem\Content\FullContent;
+use MockFileSystem\Content\NullContent;
+use MockFileSystem\Content\RandomContent;
 use MockFileSystem\Content\StreamContent;
+use MockFileSystem\Content\ZeroContent;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
@@ -30,8 +35,9 @@ class MockFileSystemTest extends TestCase
         $wrappers = stream_get_wrappers();
         if (in_array(StreamWrapper::PROTOCOL, $wrappers, true)) {
             stream_wrapper_unregister(StreamWrapper::PROTOCOL);
-            MockFileSystem::destroy();
         }
+
+        MockFileSystem::destroy();
     }
 
     public function testCreateRegistersStreamWrapper(): void
@@ -203,6 +209,137 @@ class MockFileSystemTest extends TestCase
         self::assertEquals(0, $summary->getFileCount());
     }
 
+    public function testCreateMakesStructure(): void
+    {
+        $structure = [
+            'a' => 'a',
+            'b' => [
+                'c' => 'c',
+                'd' => [
+                    'e' => 'e',
+                    '[f]' => 'f',
+                ],
+            ],
+        ];
+
+        MockFileSystem::create('', null, $structure);
+
+        $actual = $this->getStructure('mfs://');
+
+        self::assertEquals($structure, $actual);
+        self::assertInstanceOf(Block::class, MockFileSystem::find('mfs:///b/d/f'));
+    }
+
+    /**
+     * @dataProvider sampleSpecialBlocks
+     */
+    public function testCreateMakesStructureSpecialBlock(
+        array $structure,
+        string $file,
+        string $expected
+    ): void {
+        MockFileSystem::create('', null, $structure);
+
+        $actual = MockFileSystem::find($file);
+
+        self::assertInstanceOf(Block::class, $actual);
+        self::assertInstanceOf($expected, $actual->getContent());
+    }
+
+    public function sampleSpecialBlocks(): array
+    {
+        return [
+            'null' => [
+                'structure' => [
+                    'dev' => [
+                        '[null]' => null,
+                    ],
+                ],
+                'file' => 'mfs:///dev/null',
+                'expected' => NullContent::class,
+            ],
+            'null, with content' => [
+                'structure' => [
+                    'dev' => [
+                        '[null]' => uniqid(),
+                    ],
+                ],
+                'file' => 'mfs:///dev/null',
+                'expected' => StreamContent::class,
+            ],
+            'full' => [
+                'structure' => [
+                    'dev' => [
+                        '[full]' => null,
+                    ],
+                ],
+                'file' => 'mfs:///dev/full',
+                'expected' => FullContent::class,
+            ],
+            'full, with content' => [
+                'structure' => [
+                    'dev' => [
+                        '[full]' => uniqid(),
+                    ],
+                ],
+                'file' => 'mfs:///dev/full',
+                'expected' => StreamContent::class,
+            ],
+            'random' => [
+                'structure' => [
+                    'dev' => [
+                        '[random]' => null,
+                    ],
+                ],
+                'file' => 'mfs:///dev/random',
+                'expected' => RandomContent::class,
+            ],
+            'random, with content' => [
+                'structure' => [
+                    'dev' => [
+                        '[random]' => uniqid(),
+                    ],
+                ],
+                'file' => 'mfs:///dev/random',
+                'expected' => StreamContent::class,
+            ],
+            'zero' => [
+                'structure' => [
+                    'dev' => [
+                        '[zero]' => null,
+                    ],
+                ],
+                'file' => 'mfs:///dev/zero',
+                'expected' => ZeroContent::class,
+            ],
+            'zero, with content' => [
+                'structure' => [
+                    'dev' => [
+                        '[zero]' => uniqid(),
+                    ],
+                ],
+                'file' => 'mfs:///dev/zero',
+                'expected' => StreamContent::class,
+            ],
+        ];
+    }
+
+    public function testCreateThrowsExceptionForInvalidStructureKey(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('File name must be a string; received integer');
+
+        MockFileSystem::create('', null, [0 => uniqid()]);
+    }
+
+    public function testCreateThrowsExceptionForInvalidStructureData(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Data must be a string (file) or array (directory); received NULL');
+
+        MockFileSystem::create('', null, [uniqid() => null]);
+    }
+
     public function testDestroyUnregistersStreamWrapper(): void
     {
         MockFileSystem::create();
@@ -279,6 +416,63 @@ class MockFileSystemTest extends TestCase
         self::assertInstanceOf(Partition::class, $actual);
     }
 
+    public function testCreatePartitionMakesStructure(): void
+    {
+        $structure = [
+            'a' => 'a',
+            'b' => [
+                'c' => 'c',
+                'd' => [
+                    'e' => 'e',
+                    '[f]' => 'f',
+                ],
+            ],
+        ];
+
+        MockFileSystem::create();
+        MockFileSystem::createPartition('', null, $structure)->addTo(MockFileSystem::getFileSystem());
+
+        $actual = $this->getStructure('mfs://');
+
+        self::assertEquals($structure, $actual);
+        self::assertInstanceOf(Block::class, MockFileSystem::find('mfs:///b/d/f'));
+    }
+
+    /**
+     * @dataProvider sampleSpecialBlocks
+     */
+    public function testCreatePartitionMakesStructureSpecialBlock(
+        array $structure,
+        string $file,
+        string $expected
+    ): void {
+        MockFileSystem::create();
+        MockFileSystem::createPartition('', null, $structure)->addTo(MockFileSystem::getFileSystem());
+
+        $actual = MockFileSystem::find($file);
+
+        self::assertInstanceOf(Block::class, $actual);
+        self::assertInstanceOf($expected, $actual->getContent());
+    }
+
+    public function testCreatePartitionThrowsExceptionForInvalidStructureKey(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('File name must be a string; received integer');
+
+        MockFileSystem::create();
+        MockFileSystem::createPartition('', null, [0 => uniqid()]);
+    }
+
+    public function testCreatePartitionThrowsExceptionForInvalidStructureData(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Data must be a string (file) or array (directory); received NULL');
+
+        MockFileSystem::create();
+        MockFileSystem::createPartition('', null, [uniqid() => null]);
+    }
+
     /**
      * @dataProvider samplePartitionNames
      */
@@ -347,6 +541,63 @@ class MockFileSystemTest extends TestCase
         $actual = MockFileSystem::createDirectory(uniqid());
 
         self::assertInstanceOf(Directory::class, $actual);
+    }
+
+    public function testCreateDirectoryMakesStructure(): void
+    {
+        $structure = [
+            'a' => 'a',
+            'b' => [
+                'c' => 'c',
+                'd' => [
+                    'e' => 'e',
+                    '[f]' => 'f',
+                ],
+            ],
+        ];
+
+        $root = MockFileSystem::create();
+        MockFileSystem::createDirectory('foo', null, $structure)->addTo($root);
+
+        $actual = $this->getStructure('mfs:///foo');
+
+        self::assertEquals($structure, $actual);
+        self::assertInstanceOf(Block::class, MockFileSystem::find('mfs:///foo/b/d/f'));
+    }
+
+    /**
+     * @dataProvider sampleSpecialBlocks
+     */
+    public function testCreateDirectoryMakesStructureSpecialBlock(
+        array $structure,
+        string $file,
+        string $expected
+    ): void {
+        $root = MockFileSystem::create();
+        MockFileSystem::createDirectory('foo', null, $structure)->addTo($root);
+
+        $actual = MockFileSystem::find(str_replace('mfs://', 'mfs:///foo', $file));
+
+        self::assertInstanceOf(Block::class, $actual);
+        self::assertInstanceOf($expected, $actual->getContent());
+    }
+
+    public function testCreateDirectoryThrowsExceptionForInvalidStructureKey(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('File name must be a string; received integer');
+
+        MockFileSystem::create();
+        MockFileSystem::createDirectory(uniqid(), null, [0 => uniqid()]);
+    }
+
+    public function testCreateDirectoryThrowsExceptionForInvalidStructureData(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Data must be a string (file) or array (directory); received NULL');
+
+        MockFileSystem::create();
+        MockFileSystem::createDirectory(uniqid(), null, [uniqid() => null]);
     }
 
     public function testCreateDirectorySetsName(): void
@@ -605,5 +856,105 @@ class MockFileSystemTest extends TestCase
                 'expected' => '/foo/bar>baz>hot/../cakes',
             ],
         ];
+    }
+
+    public function testAddStructureMakesStructure(): void
+    {
+        $structure = [
+            'a' => 'a',
+            'b' => [
+                'c' => 'c',
+                'd' => [
+                    'e' => 'e',
+                    '[f]' => 'f',
+                ],
+            ],
+        ];
+
+        $root = MockFileSystem::create();
+        MockFileSystem::addStructure($structure, $root);
+
+        $actual = $this->getStructure('mfs://');
+
+        self::assertEquals($structure, $actual);
+        self::assertInstanceOf(Block::class, MockFileSystem::find('mfs:///b/d/f'));
+    }
+
+    /**
+     * @dataProvider sampleSpecialBlocks
+     */
+    public function testAddStructureMakesStructureSpecialBlock(
+        array $structure,
+        string $file,
+        string $expected
+    ): void {
+        $root = MockFileSystem::create();
+        MockFileSystem::addStructure($structure, $root);
+
+        $actual = MockFileSystem::find($file);
+
+        self::assertInstanceOf(Block::class, $actual);
+        self::assertInstanceOf($expected, $actual->getContent());
+    }
+
+    public function testAddStructureThrowsExceptionForInvalidStructureKey(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('File name must be a string; received integer');
+
+        $root = MockFileSystem::create();
+        MockFileSystem::addStructure([0 => uniqid()], $root);
+    }
+
+    public function testAddStructureThrowsExceptionForInvalidStructureData(): void
+    {
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage('Data must be a string (file) or array (directory); received NULL');
+
+        $root = MockFileSystem::create();
+        MockFileSystem::addStructure([uniqid() => null], $root);
+    }
+
+    /**
+     * Gets the file structure of a given directory.
+     *
+     * @param string $dir
+     *
+     * @return array[]
+     */
+    private function getStructure(string $dir): array
+    {
+        $actual = [];
+
+        $files = array_filter(
+            scandir($dir),
+            function ($file) {
+                return $file !== '.' && $file !== '..';
+            }
+        );
+
+        foreach ($files as $file) {
+            $path = $dir.'/'.$file;
+            if (is_dir($path)) {
+                $actual[$file] = $this->getStructure($path);
+
+                continue;
+            }
+
+            /** @var RegularFileInterface $object **/
+            $object = MockFileSystem::find($path);
+            if ($object instanceof Block) {
+                $file = '['.$file.']';
+            }
+
+            $content = $object->getContent();
+            if ($content instanceof StreamContent) {
+                $actual[$file] = $content->read(1024);
+            } else {
+                $actual[$file] = get_class($content);
+            }
+        }
+
+        return $actual;
     }
 }
