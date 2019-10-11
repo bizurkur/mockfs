@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\StreamWrapper;
 use MockFileSystem\MockFileSystem;
+use MockFileSystem\StreamWrapper;
 use MockFileSystem\Tests\AbstractTestCase;
 
 /**
@@ -84,6 +84,7 @@ class PermissionsTest extends AbstractTestCase
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         file_put_contents($url, uniqid());
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $file->setLastChangeTime(rand());
 
@@ -122,6 +123,7 @@ class PermissionsTest extends AbstractTestCase
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         file_put_contents($url, uniqid());
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $file->setLastChangeTime(rand());
 
@@ -161,6 +163,7 @@ class PermissionsTest extends AbstractTestCase
     {
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         file_put_contents($url, uniqid());
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $file->setLastChangeTime(rand());
 
@@ -189,6 +192,7 @@ class PermissionsTest extends AbstractTestCase
             self::assertTrue(chown($url, $user), 'chown failed');
         }
 
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $config = $file->getConfig();
         $actual = $file->isReadable($config->getUser(), $config->getGroup());
@@ -262,6 +266,7 @@ class PermissionsTest extends AbstractTestCase
             self::assertTrue(chown($url, $user), 'chown failed');
         }
 
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $config = $file->getConfig();
         $actual = $file->isWritable($config->getUser(), $config->getGroup());
@@ -335,6 +340,7 @@ class PermissionsTest extends AbstractTestCase
             self::assertTrue(chown($url, $user), 'chown failed');
         }
 
+        /** @var FileInterface $file */
         $file = MockFileSystem::find($url);
         $config = $file->getConfig();
         $actual = $file->isExecutable($config->getUser(), $config->getGroup());

@@ -8,6 +8,7 @@ use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\FileSystemInterface;
+use MockFileSystem\Components\FinderInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config\Config;
@@ -71,6 +72,54 @@ class FileSystemTest extends TestCase
         $actual = $this->fixture->setParent(null);
 
         self::assertSame($this->fixture, $actual);
+    }
+
+    public function testSetFinder(): void
+    {
+        $finder = $this->createMock(FinderInterface::class);
+
+        $this->fixture->setFinder($finder);
+
+        $actual = $this->fixture->getFinder();
+
+        self::assertSame($finder, $actual);
+    }
+
+    public function testSetFinderResponse(): void
+    {
+        $finder = $this->createMock(FinderInterface::class);
+
+        $actual = $this->fixture->setFinder($finder);
+
+        self::assertSame($this->fixture, $actual);
+    }
+
+    public function testFindCallsFinder(): void
+    {
+        $path = uniqid();
+
+        $finder = $this->createMock(FinderInterface::class);
+        $this->fixture->setFinder($finder);
+
+        $finder->expects(self::once())
+            ->method('find')
+            ->with($path);
+
+        $this->fixture->find($path);
+    }
+
+    public function testFindResponse(): void
+    {
+        $file = $this->createMock(FileInterface::class);
+        $finder = $this->createConfiguredMock(
+            FinderInterface::class,
+            ['find' => $file]
+        );
+        $this->fixture->setFinder($finder);
+
+        $actual = $this->fixture->find(uniqid());
+
+        self::assertSame($file, $actual);
     }
 
     /**
