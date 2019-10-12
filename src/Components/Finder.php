@@ -33,17 +33,24 @@ class Finder implements FinderInterface
     public function find(string $path): ?FileInterface
     {
         $parts = $this->getParts($path);
+
+        /** @var FileInterface $file */
         $file = $this->fileSystem;
 
-        do {
+        while ($file) {
+            $part = array_shift($parts);
+            if ($part === null) {
+                return $file;
+            }
+
             if (!$file instanceof ContainerInterface) {
                 return null;
             }
 
-            $file = $this->getNextPart($file, $parts);
-        } while ($file && !empty($parts));
+            $file = $this->getNextPart($file, $part);
+        }
 
-        return $file;
+        return null;
     }
 
     /**
@@ -70,17 +77,12 @@ class Finder implements FinderInterface
      * Gets the next piece of the path.
      *
      * @param ContainerInterface $file
-     * @param string[] $parts
+     * @param string $part
      *
      * @return FileInterface|null
      */
-    private function getNextPart(ContainerInterface $file, array &$parts): ?FileInterface
+    private function getNextPart(ContainerInterface $file, string $part): ?FileInterface
     {
-        $part = array_shift($parts);
-        if ($part === null) {
-            return null;
-        }
-
         if (!$file->hasChild($part)) {
             return null;
         }
