@@ -81,6 +81,11 @@ abstract class ComponentTestCase extends TestCase
                 'name' => '..',
                 'expected' => 'Name cannot be "." or ".."',
             ],
+            'no name' => [
+                'config' => $config,
+                'name' => '',
+                'expected' => 'Name cannot be empty.',
+            ],
             'has fileSeparator' => [
                 'config' => $config,
                 'name' => 'test/ing',

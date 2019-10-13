@@ -508,6 +508,16 @@ abstract class AbstractFile implements FileInterface
     }
 
     /**
+     * Whether or not to allow an empty file name.
+     *
+     * @return bool
+     */
+    protected function allowEmptyName(): bool
+    {
+        return false;
+    }
+
+    /**
      * Gets the partition this file is in.
      *
      * @return PartitionInterface|null
@@ -538,6 +548,10 @@ abstract class AbstractFile implements FileInterface
     {
         if ($name === '.' || $name === '..') {
             throw new InvalidArgumentException('Name cannot be "." or ".."');
+        }
+
+        if (empty($name) && !$this->allowEmptyName()) {
+            throw new InvalidArgumentException('Name cannot be empty.');
         }
 
         $config = $this->getConfig();

@@ -141,4 +141,26 @@ class PartitionTest extends ComponentTestCase
 
         self::assertSame($this->fixture, $actual);
     }
+
+    public function testSetEmptyNameIsAllowed(): void
+    {
+        $this->fixture->setConfig(new Config());
+
+        $this->fixture->setName('');
+
+        $actual = $this->fixture->getName();
+
+        self::assertEquals('', $actual);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function sampleInvalidNames(): array
+    {
+        $data = parent::sampleInvalidNames();
+        unset($data['no name']);
+
+        return $data;
+    }
 }

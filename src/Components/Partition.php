@@ -57,4 +57,12 @@ final class Partition extends Directory implements PartitionInterface
 
         return $this;
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected function allowEmptyName(): bool
+    {
+        return true;
+    }
 }
