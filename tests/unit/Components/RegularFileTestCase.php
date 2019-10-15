@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\ContainerInterface;
+use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFileInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Content\ContentInterface;
 use MockFileSystem\Content\StreamContent;
+use MockFileSystem\Quota\QuotaManagerInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -143,6 +145,55 @@ abstract class RegularFileTestCase extends ComponentTestCase
         self::assertEqualsWithDelta(time(), $this->fixture->getLastModifyTime(), 1);
     }
 
+    public function testWriteWhenLimitedDiskSpace(): void
+    {
+        $remaining = rand(1, 9);
+        $data = str_repeat("\0", $remaining * 2);
+        $this->setUpQuotaManager($remaining);
+
+        $content = $this->createContent();
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('write')
+            ->with(substr($data, 0, $remaining));
+
+        $this->fixture->write($data);
+    }
+
+    public function testWriteWhenLimitedDiskSpaceAccountsForFileOffset(): void
+    {
+        $remaining = rand(1, 9);
+        $size = rand(1000, 9999);
+        $tell = $size - intval(floor($remaining / 2));
+        $data = str_repeat("\0", $remaining * 2);
+        $this->setUpQuotaManager($remaining);
+
+        $content = $this->createContent(['getSize' => $size, 'tell' => $tell]);
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('write')
+            ->with(substr($data, 0, $remaining + $tell - $size));
+
+        $this->fixture->write($data);
+    }
+
+    public function testWriteWhenUnlimitedDiskSpace(): void
+    {
+        $data = uniqid();
+        $this->setUpQuotaManager(-1);
+
+        $content = $this->createContent();
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('write')
+            ->with($data);
+
+        $this->fixture->write($data);
+    }
+
     public function testTruncateCallsContentTruncate(): void
     {
         $size = rand();
@@ -180,6 +231,69 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $this->fixture->truncate(rand());
 
         self::assertEqualsWithDelta(time(), $this->fixture->getLastModifyTime(), 1);
+    }
+
+    public function testTruncateUpWhenLimitedDiskSpaceNotEnoughSpace(): void
+    {
+        $remaining = rand(1, 9);
+        $size = $remaining * 2;
+        $this->setUpQuotaManager($remaining);
+
+        $content = $this->createContent(['getSize' => 0]);
+        $this->fixture->setContent($content);
+
+        $content->expects(self::never())->method('truncate');
+
+        $actual = $this->fixture->truncate($size);
+
+        self::assertFalse($actual);
+    }
+
+    public function testTruncateUpWhenLimitedDiskSpaceHasEnoughSpace(): void
+    {
+        $remaining = rand(1, 9);
+        $size = rand(1, 999);
+        $this->setUpQuotaManager($remaining);
+
+        $content = $this->createContent(['getSize' => $size]);
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('truncate')
+            ->with($size + $remaining);
+
+        $this->fixture->truncate($size + $remaining);
+    }
+
+    public function testTruncateDownWhenLimitedDiskSpace(): void
+    {
+        $remaining = rand(1, 9);
+        $size = $remaining * 2;
+        $this->setUpQuotaManager($remaining);
+
+        $content = $this->createContent(['getSize' => $size + rand(0, 999)]);
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('truncate')
+            ->with($size);
+
+        $this->fixture->truncate($size);
+    }
+
+    public function testTruncateWhenUnlimitedDiskSpace(): void
+    {
+        $size = rand();
+        $this->setUpQuotaManager(-1);
+
+        $content = $this->createContent();
+        $this->fixture->setContent($content);
+
+        $content->expects(self::once())
+            ->method('truncate')
+            ->with($size);
+
+        $this->fixture->truncate($size);
     }
 
     public function testSeekCallsContentSeek(): void
@@ -401,5 +515,29 @@ abstract class RegularFileTestCase extends ComponentTestCase
             ContainerInterface::class,
             $methods
         );
+    }
+
+    /**
+     * @param int $remaining
+     *
+     * @return QuotaManagerInterface&MockObject
+     */
+    private function setUpQuotaManager(int $remaining = -1): QuotaManagerInterface
+    {
+        $manager = $this->createConfiguredMock(
+            QuotaManagerInterface::class,
+            ['getFreeDiskSpace' => $remaining]
+        );
+        $partition = $this->createConfiguredMock(
+            PartitionInterface::class,
+            ['getQuotaManager' => $manager]
+        );
+        $this->fixture->setParent($partition);
+
+        $manager->expects(self::once())
+            ->method('getFreeDiskSpace')
+            ->with(self::isNull());
+
+        return $manager;
     }
 }

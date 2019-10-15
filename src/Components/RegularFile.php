@@ -116,7 +116,10 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     public function truncate(int $size): bool
     {
         $remaining = $this->getFreeDiskSpace();
-        if ($remaining >= 0 && $size > $remaining) {
+        if ($remaining >= 0
+            && $size > $this->content->getSize()
+            && ($size - $this->content->getSize()) > $remaining
+        ) {
             return false;
         }
 

@@ -13,7 +13,9 @@ use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFile;
 use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config\Config;
+use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
+use MockFileSystem\Quota\QuotaManagerInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
 
@@ -309,6 +311,45 @@ class DirectoryTest extends ComponentTestCase
 
         self::assertCount(1, $actual);
         self::assertSame($child, $actual[0]);
+    }
+
+    public function testAddChildCallsQuotaManager(): void
+    {
+        $file = $this->createFile();
+        $manager = $this->setUpQuotaManager(rand(1, 999));
+        $this->fixture->setConfig(new Config());
+
+        $manager->expects(self::once())
+            ->method('getFreeDiskSpace')
+            ->with($file);
+
+        $this->fixture->addChild($file);
+    }
+
+    public function testAddChildWhenLimitedDiskSpace(): void
+    {
+        $file = $this->createFile();
+        $this->setUpQuotaManager(0);
+        $this->fixture->setConfig(new Config());
+
+        self::expectException(NoDiskSpaceException::class);
+        self::expectExceptionMessage('Not enough disk space');
+
+        $this->fixture->addChild($file);
+    }
+
+    public function testAddChildWhenUnlimitedDiskSpace(): void
+    {
+        $file = $this->createFile();
+        $this->setUpQuotaManager(-1);
+        $this->fixture->setConfig(new Config());
+
+        $this->fixture->addChild($file);
+
+        $actual = $this->fixture->getChildren();
+
+        self::assertCount(1, $actual);
+        self::assertSame($file, $actual[0]);
     }
 
     public function testGetChildrenEmpty(): void
@@ -765,5 +806,22 @@ class DirectoryTest extends ComponentTestCase
         }
 
         return $this->createConfiguredMock(PartitionInterface::class, $methods);
+    }
+
+    /**
+     * @param int $remaining
+     *
+     * @return QuotaManagerInterface&MockObject
+     */
+    private function setUpQuotaManager(int $remaining = -1): QuotaManagerInterface
+    {
+        $manager = $this->createConfiguredMock(
+            QuotaManagerInterface::class,
+            ['getFreeDiskSpace' => $remaining]
+        );
+        $partition = $this->createPartition(['getQuotaManager' => $manager]);
+        $this->fixture->setParent($partition);
+
+        return $manager;
     }
 }
