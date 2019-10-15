@@ -6,6 +6,7 @@ namespace MockFileSystem\Components;
 
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Quota\QuotaInterface;
+use MockFileSystem\Quota\QuotaManagerInterface;
 
 /**
  * Represents a partition.
@@ -27,4 +28,20 @@ interface PartitionInterface extends DirectoryInterface
      * @return PartitionInterface
      */
     public function setQuota(?QuotaInterface $quota): PartitionInterface;
+
+    /**
+     * Gets the quota manager for the partition.
+     *
+     * @return QuotaManagerInterface
+     */
+    public function getQuotaManager(): QuotaManagerInterface;
+
+    /**
+     * Sets the quota manager for the partition.
+     *
+     * @param QuotaManagerInterface $quotaManager
+     *
+     * @return PartitionInterface
+     */
+    public function setQuotaManager(QuotaManagerInterface $quotaManager): PartitionInterface;
 }

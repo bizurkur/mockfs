@@ -7,7 +7,6 @@ namespace MockFileSystem\Components;
 use MockFileSystem\Components\ChildInterface;
 use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\FileInterface;
-use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Config\ConfigInterface;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RecursionException;
@@ -447,64 +446,12 @@ abstract class AbstractFile implements FileInterface
      */
     protected function getFreeDiskSpace(?FileInterface $child = null): int
     {
-        if ($child instanceof PartitionInterface) {
-            // Partitions don't count against quotas
-            return QuotaInterface::UNLIMITED;
-        }
-
         $partition = $this->getPartition();
         if ($partition === null) {
-            // This file is not attached to the file system
             return QuotaInterface::UNLIMITED;
         }
 
-        $quota = $partition->getQuota();
-        if ($quota === null) {
-            // No quota set
-            return QuotaInterface::UNLIMITED;
-        }
-
-        $config = $this->getConfig();
-        $user = $config->getUser();
-        $group = $config->getGroup();
-
-        if (!$quota->appliesTo($user, $group)) {
-            // Quota doesn't apply to the current user
-            return QuotaInterface::UNLIMITED;
-        }
-
-        $summary = $partition->getSummary($user, $group);
-        $usedCount = $summary->getFileCount();
-        $usedSize = $summary->getSize();
-        $remainingCount = $quota->getRemainingFileCount($usedCount, $user, $group);
-        $remainingSize = $quota->getRemainingSize($usedSize, $user, $group);
-
-        if ($remainingCount === 0 || $remainingSize === 0) {
-            // Out of space or out of files
-            return 0;
-        }
-
-        if ($child === null) {
-            return $remainingSize;
-        }
-
-        if (!$child instanceof ContainerInterface) {
-            return max(0, $remainingSize - $child->getSize());
-        }
-
-        $childSummary = $child->getSummary();
-
-        if ($remainingCount !== QuotaInterface::UNLIMITED
-            && $childSummary->getFileCount() > $remainingCount
-        ) {
-            return 0;
-        }
-
-        if ($remainingSize !== QuotaInterface::UNLIMITED) {
-            return max(0, $remainingSize - $childSummary->getSize());
-        }
-
-        return QuotaInterface::UNLIMITED;
+        return $partition->getQuotaManager()->getFreeDiskSpace($child);
     }
 
     /**
@@ -538,7 +485,7 @@ abstract class AbstractFile implements FileInterface
     }
 
     /**
-     * Validates the file name doesn't contain any blacklisted characters.
+     * Validates the file name meets the config rules.
      *
      * @param string $name
      *
@@ -554,6 +501,18 @@ abstract class AbstractFile implements FileInterface
             throw new InvalidArgumentException('Name cannot be empty.');
         }
 
+        $this->validateBlacklist($name);
+    }
+
+    /**
+     * Validates the file name doesn't contain any blacklisted characters.
+     *
+     * @param string $name
+     *
+     * @throws InvalidArgumentException When not valid.
+     */
+    private function validateBlacklist(string $name): void
+    {
         $config = $this->getConfig();
 
         $blacklist = array_merge(

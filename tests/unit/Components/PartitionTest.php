@@ -11,6 +11,7 @@ use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Quota\QuotaInterface;
+use MockFileSystem\Quota\QuotaManagerInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 
 class PartitionTest extends ComponentTestCase
@@ -162,5 +163,25 @@ class PartitionTest extends ComponentTestCase
         unset($data['no name']);
 
         return $data;
+    }
+
+    public function testSetQuotaManager(): void
+    {
+        $manager = $this->createMock(QuotaManagerInterface::class);
+
+        $this->fixture->setQuotaManager($manager);
+
+        $actual = $this->fixture->getQuotaManager();
+
+        self::assertSame($manager, $actual);
+    }
+
+    public function testSetQuotaManagerReturnsSelf(): void
+    {
+        $manager = $this->createMock(QuotaManagerInterface::class);
+
+        $actual = $this->fixture->setQuotaManager($manager);
+
+        self::assertSame($this->fixture, $actual);
     }
 }

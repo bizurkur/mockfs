@@ -8,6 +8,8 @@ use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Quota\QuotaInterface;
+use MockFileSystem\Quota\QuotaManager;
+use MockFileSystem\Quota\QuotaManagerInterface;
 
 /**
  * Class to represent a partition.
@@ -18,6 +20,21 @@ final class Partition extends Directory implements PartitionInterface
      * @var QuotaInterface|null
      */
     private $quota = null;
+
+    /**
+     * @var QuotaManagerInterface
+     */
+    private $quotaManager = null;
+
+    /**
+     * @param string $name
+     * @param int|null $permissions
+     */
+    public function __construct(string $name, ?int $permissions = null)
+    {
+        parent::__construct($name, $permissions);
+        $this->quotaManager = new QuotaManager($this);
+    }
 
     /**
      * {@inheritDoc}
@@ -54,6 +71,24 @@ final class Partition extends Directory implements PartitionInterface
     public function setQuota(?QuotaInterface $quota): PartitionInterface
     {
         $this->quota = $quota;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getQuotaManager(): QuotaManagerInterface
+    {
+        return $this->quotaManager;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function setQuotaManager(QuotaManagerInterface $quotaManager): PartitionInterface
+    {
+        $this->quotaManager = $quotaManager;
 
         return $this;
     }
