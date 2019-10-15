@@ -8,7 +8,10 @@ use MockFileSystem\Components\AbstractFile;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
+use MockFileSystem\Components\FileSystemInterface;
+use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Components\RegularFile;
+use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Exception\NotFoundException;
 use MockFileSystem\Tests\Components\ComponentTestCase;
@@ -64,6 +67,13 @@ class DirectoryTest extends ComponentTestCase
         self::assertEquals(FileInterface::TYPE_DIR, $this->fixture->getType());
     }
 
+    public function testGetDefaultPermission(): void
+    {
+        $actual = $this->fixture->getDefaultPermissions();
+
+        self::assertEquals(0777, $actual);
+    }
+
     public function testGetSizeWhenEmpty(): void
     {
         self::assertEquals(0, $this->fixture->getSize());
@@ -102,6 +112,68 @@ class DirectoryTest extends ComponentTestCase
         $childA->addChild($childC);
 
         self::assertEquals(2, $this->fixture->getFileCount());
+    }
+
+    /**
+     * @dataProvider sampleGetIterator
+     */
+    public function testGetIterator(array $files, array $options, array $expected): void
+    {
+        $config = new Config($options);
+        $this->fixture->setConfig($config);
+
+        foreach ($files as $data) {
+            $file = $this->createFile($data);
+            $this->fixture->addChild($file);
+        }
+
+        $iterator = $this->fixture->getIterator();
+
+        $actual = [];
+        foreach ($iterator as $file) {
+            $actual[] = $file->getName();
+        }
+
+        self::assertSame($expected, $actual);
+    }
+
+    public function sampleGetIterator(): array
+    {
+        $nameA = uniqid();
+        $nameB = uniqid();
+
+        return [
+            'empty dir, no dots' => [
+                'files' => [],
+                'options' => ['includeDotFiles' => false],
+                'expected' => [],
+            ],
+            'empty dir, with dots' => [
+                'files' => [],
+                'options' => ['includeDotFiles' => true],
+                'expected' => ['.', '..'],
+            ],
+            'one file, no dots' => [
+                'files' => [['getName' => $nameA]],
+                'options' => ['includeDotFiles' => false],
+                'expected' => [$nameA],
+            ],
+            'one file, with dots' => [
+                'files' => [['getName' => $nameA]],
+                'options' => ['includeDotFiles' => true],
+                'expected' => ['.', '..', $nameA],
+            ],
+            'multiple files, no dots' => [
+                'files' => [['getName' => $nameA], ['getName' => $nameB]],
+                'options' => ['includeDotFiles' => false],
+                'expected' => [$nameA, $nameB],
+            ],
+            'multiple files, with dots' => [
+                'files' => [['getName' => $nameA], ['getName' => $nameB]],
+                'options' => ['includeDotFiles' => true],
+                'expected' => ['.', '..', $nameA, $nameB],
+            ],
+        ];
     }
 
     public function testAddChildSetsConfig(): void
@@ -179,6 +251,64 @@ class DirectoryTest extends ComponentTestCase
         $this->fixture->addChild($file);
 
         self::assertEqualsWithDelta($now, $this->fixture->getLastModifyTime(), 1);
+    }
+
+    public function testAddChildPartitionAddsToDirectory(): void
+    {
+        $child = $this->createPartition(['getName' => uniqid()]);
+        $root = $this->createMock(FileSystemInterface::class);
+        $this->fixture->setParent($root);
+        $this->fixture->setConfig(new Config());
+
+        $this->fixture->addChild($child);
+
+        $actual = $this->fixture->getChildren();
+
+        self::assertCount(1, $actual);
+        self::assertSame($child, $actual[0]);
+    }
+
+    public function testAddChildPartitionAddsToRootSingleLevel(): void
+    {
+        $child = $this->createPartition(['getName' => uniqid()]);
+        $root = $this->createMock(FileSystemInterface::class);
+        $this->fixture->setParent($root);
+        $this->fixture->setConfig(new Config());
+
+        $root->expects(self::once())
+            ->method('addChild')
+            ->with(self::identicalTo($child));
+
+        $this->fixture->addChild($child);
+    }
+
+    public function testAddChildPartitionAddsToRootMultipleLevels(): void
+    {
+        $child = $this->createPartition(['getName' => uniqid()]);
+        $root = $this->createMock(FileSystemInterface::class);
+        $parentA = $this->createDirectory(['getParent' => $root]);
+        $parentB = $this->createDirectory(['getParent' => $parentA]);
+        $this->fixture->setParent($parentB);
+        $this->fixture->setConfig(new Config());
+
+        $root->expects(self::once())
+            ->method('addChild')
+            ->with(self::identicalTo($child));
+
+        $this->fixture->addChild($child);
+    }
+
+    public function testAddChildPartitionNoRoot(): void
+    {
+        $child = $this->createPartition(['getName' => uniqid()]);
+        $this->fixture->setConfig(new Config());
+
+        $this->fixture->addChild($child);
+
+        $actual = $this->fixture->getChildren();
+
+        self::assertCount(1, $actual);
+        self::assertSame($child, $actual[0]);
     }
 
     public function testGetChildrenEmpty(): void
@@ -317,11 +447,323 @@ class DirectoryTest extends ComponentTestCase
         self::assertEquals(0, $actual->getFileCount());
     }
 
+    public function testSetConfigWhenNoChildren(): void
+    {
+        $config = new Config();
+        $this->fixture->setConfig($config);
+
+        $actual = $this->fixture->getConfig();
+
+        self::assertSame($config, $actual);
+    }
+
+    public function testSetConfigSetsChildConfigs(): void
+    {
+        $config = new Config();
+        $this->fixture->setConfig($config);
+
+        $fileA = $this->createFile(['getName' => uniqid()]);
+        $fileB = $this->createFile(['getName' => uniqid()]);
+
+        $this->fixture->addChild($fileA);
+        $this->fixture->addChild($fileB);
+
+        $fileA->expects(self::once())
+            ->method('setConfig')
+            ->with(self::identicalTo($config));
+
+        $fileB->expects(self::once())
+            ->method('setConfig')
+            ->with(self::identicalTo($config));
+
+        $this->fixture->setConfig($config);
+    }
+
+    /**
+     * @dataProvider sampleSummaryData
+     */
+    public function testGetSummary(
+        array $partitions,
+        array $directories,
+        array $files,
+        ?int $user,
+        ?int $group,
+        int $expectedSize,
+        int $expectedFileCount
+    ): void {
+        $this->fixture->setConfig(new Config());
+
+        foreach ($partitions as $data) {
+            $child = $this->createPartition($data);
+            $this->fixture->addChild($child);
+        }
+        foreach ($directories as $data) {
+            $child = $this->createDirectory($data);
+            $this->fixture->addChild($child);
+        }
+        foreach ($files as $data) {
+            $child = $this->createFile($data);
+            $this->fixture->addChild($child);
+        }
+
+        $actual = $this->fixture->getSummary($user, $group);
+
+        self::assertInstanceOf(SummaryInterface::class, $actual);
+        self::assertEquals($expectedSize, $actual->getSize(), 'wrong size');
+        self::assertEquals($expectedFileCount, $actual->getFileCount(), 'wrong file count');
+    }
+
+    public function sampleSummaryData(): array
+    {
+        $user = rand(100, 199);
+        $group = rand(100, 199);
+        $sizeA = rand(1, 9999);
+        $sizeB = rand(1, 9999);
+        $sizeC = rand(1, 9999);
+        $sizeD = rand(1, 9999);
+        $countA = rand(1, 999);
+        $countB = rand(1, 999);
+        $countC = rand(1, 999);
+
+        return [
+            'no user, no group' => [
+                'partitions' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                ],
+                'directories' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeA, 'getFileCount' => $countA],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeB, 'getFileCount' => $countB],
+                    ],
+                ],
+                'files' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSize' => $sizeC,
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSize' => $sizeD,
+                    ],
+                ],
+                'user' => null,
+                'group' => null,
+                'expectedSize' => $sizeA + $sizeB + $sizeC + $sizeD,
+                'expectedFileCount' => $countA + $countB + 4,
+            ],
+            'has user, no group' => [
+                'partitions' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                ],
+                'directories' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeA, 'getFileCount' => $countA],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeB, 'getFileCount' => $countB],
+                    ],
+                ],
+                'files' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => rand(),
+                        'getSize' => $sizeC,
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSize' => rand(),
+                    ],
+                ],
+                'user' => $user,
+                'group' => null,
+                'expectedSize' => $sizeA + $sizeB + $sizeC,
+                'expectedFileCount' => $countA + $countB + 2,
+            ],
+            'no user, has group' => [
+                'partitions' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                ],
+                'directories' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => $sizeA, 'getFileCount' => $countA],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeB, 'getFileCount' => $countB],
+                    ],
+                ],
+                'files' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => rand(),
+                        'getSize' => rand(),
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSize' => $sizeD,
+                    ],
+                ],
+                'user' => null,
+                'group' => $group,
+                'expectedSize' => $sizeA + $sizeB + $sizeD,
+                'expectedFileCount' => $countA + $countB + 2,
+            ],
+            'has user, has group' => [
+                'partitions' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => rand(), 'getFileCount' => rand()],
+                    ],
+                ],
+                'directories' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => $sizeA, 'getFileCount' => $countA],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => rand(),
+                        'getSummary' => ['getSize' => $sizeB, 'getFileCount' => $countB],
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => $group,
+                        'getSummary' => ['getSize' => $sizeC, 'getFileCount' => $countC],
+                    ],
+                ],
+                'files' => [
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => rand(),
+                        'getSize' => rand(),
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => $user,
+                        'getGroup' => $group,
+                        'getSize' => $sizeD,
+                    ],
+                    [
+                        'getName' => uniqid(),
+                        'getUser' => rand(),
+                        'getGroup' => $group,
+                        'getSize' => rand(),
+                    ],
+                ],
+                'user' => $user,
+                'group' => $group,
+                'expectedSize' => $sizeA + $sizeB + $sizeC + $sizeD,
+                'expectedFileCount' => $countA + $countB + $countC + 2,
+            ],
+        ];
+    }
+
     /**
      * @return FileInterface&MockObject
      */
     private function createFile(array $methods = []): FileInterface
     {
         return $this->createConfiguredMock(FileInterface::class, $methods);
+    }
+
+    /**
+     * @return DirectoryInterface&MockObject
+     */
+    private function createDirectory(array $methods = []): DirectoryInterface
+    {
+        if (isset($methods['getSummary'])) {
+            $summary = $this->createConfiguredMock(SummaryInterface::class, $methods['getSummary']);
+            $methods['getSummary'] = $summary;
+        }
+
+        return $this->createConfiguredMock(DirectoryInterface::class, $methods);
+    }
+
+    /**
+     * @return PartitionInterface&MockObject
+     */
+    private function createPartition(array $methods = []): PartitionInterface
+    {
+        if (isset($methods['getSummary'])) {
+            $summary = $this->createConfiguredMock(SummaryInterface::class, $methods['getSummary']);
+            $methods['getSummary'] = $summary;
+        }
+
+        return $this->createConfiguredMock(PartitionInterface::class, $methods);
     }
 }

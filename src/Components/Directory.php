@@ -252,11 +252,10 @@ class Directory extends AbstractFile implements DirectoryInterface
         $root = $this->getParent();
 
         while ($root) {
-            $parent = $root->getParent();
-            if ($parent instanceof FileSystemInterface) {
-                return $parent;
+            if ($root instanceof FileSystemInterface) {
+                return $root;
             }
-            $root = $parent;
+            $root = $root->getParent();
         }
 
         return null;
