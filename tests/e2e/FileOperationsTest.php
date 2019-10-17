@@ -233,7 +233,7 @@ class FileOperationsTest extends AbstractTestCase
         if ($handle === false) {
             self::fail('Failed to open handle');
         }
-        $actual = fread($handle, rand(1, 100));
+        $actual = @fread($handle, rand(1, 100));
         fclose($handle);
 
         self::assertEquals('', $actual);
@@ -273,7 +273,7 @@ class FileOperationsTest extends AbstractTestCase
         if ($handle === false) {
             self::fail('Failed to open handle');
         }
-        $actual = fwrite($handle, uniqid());
+        $actual = @fwrite($handle, uniqid());
         fclose($handle);
 
         self::assertEquals(0, $actual);
