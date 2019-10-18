@@ -849,7 +849,7 @@ class StreamWrapperTest extends TestCase
         $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
-        $actual = $this->fixture->stream_open($path, 'w', \STREAM_USE_PATH, $openedPath);
+        $this->fixture->stream_open($path, 'w', \STREAM_USE_PATH, $openedPath);
 
         self::assertEquals($path, $openedPath);
     }
@@ -860,7 +860,7 @@ class StreamWrapperTest extends TestCase
         $path = MockFileSystem::getUrl(uniqid('/'));
         $openedPath = null;
 
-        $actual = $this->fixture->stream_open($path, 'w', 0, $openedPath);
+        $this->fixture->stream_open($path, 'w', 0, $openedPath);
 
         self::assertNull($openedPath);
     }
@@ -1287,6 +1287,7 @@ class StreamWrapperTest extends TestCase
     public function testSeekContextFailResponse(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1301,6 +1302,7 @@ class StreamWrapperTest extends TestCase
     public function testTellContextFailResponse(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1316,6 +1318,7 @@ class StreamWrapperTest extends TestCase
     public function testEof(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         $expected = (bool) rand(0, 1);
         file_put_contents($path, uniqid());
 
@@ -1332,6 +1335,7 @@ class StreamWrapperTest extends TestCase
     public function testEofNotReached(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         file_put_contents($path, uniqid());
 
         $this->fixture->stream_open($path, 'r', 0, $openedPath);
@@ -1344,6 +1348,7 @@ class StreamWrapperTest extends TestCase
     public function testEofContextFailDefaultFalse(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         file_put_contents($path, uniqid());
 
         $this->setContext(['feof_fail' => true]);
@@ -1359,6 +1364,7 @@ class StreamWrapperTest extends TestCase
     public function testEofContextFailOverrideTrue(): void
     {
         $path = MockFileSystem::getUrl(uniqid('/'));
+        $openedPath = null;
         file_put_contents($path, uniqid());
 
         $this->setContext(['feof_fail' => true, 'feof_response' => true]);

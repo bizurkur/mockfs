@@ -471,7 +471,6 @@ class FileOperationsTest extends AbstractTestCase
     {
         $base = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
         $url = $base.'/'.uniqid();
-        $path = null;
         mkdir($base, 0500);
 
         self::expectException(Warning::class);
