@@ -97,6 +97,7 @@ abstract class ComponentTestCase extends TestCase
             'fileSeparator' => '/',
             'partitionSeparator' => ':',
             'blacklist' => [
+                'skipped' => '',
                 '>',
                 'tab' => "\t",
             ],
