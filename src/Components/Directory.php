@@ -23,16 +23,6 @@ class Directory extends AbstractFile implements DirectoryInterface
     private $children = [];
 
     /**
-     * @param string $name
-     * @param int|null $permissions
-     */
-    public function __construct(string $name, ?int $permissions = null)
-    {
-        parent::__construct($name, $permissions);
-        $this->type = self::TYPE_DIR;
-    }
-
-    /**
      * {@inheritDoc}
      */
     public function setConfig(ConfigInterface $config): FileInterface
@@ -60,6 +50,14 @@ class Directory extends AbstractFile implements DirectoryInterface
     public function getSize(): int
     {
         return 0;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getType(): int
+    {
+        return self::TYPE_DIR;
     }
 
     /**

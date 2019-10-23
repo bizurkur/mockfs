@@ -31,7 +31,6 @@ class RegularFile extends AbstractFile implements RegularFileInterface
         $content = null
     ) {
         parent::__construct($name, $permissions);
-        $this->type = self::TYPE_FILE;
 
         if ($content === null) {
             $content = new StreamContent('');
@@ -64,6 +63,14 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     public function getSize(): int
     {
         return $this->content->getSize();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function getType(): int
+    {
+        return self::TYPE_FILE;
     }
 
     /**

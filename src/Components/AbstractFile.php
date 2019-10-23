@@ -22,11 +22,6 @@ use MockFileSystem\StreamWrapper;
 abstract class AbstractFile implements FileInterface
 {
     /**
-     * @var int
-     */
-    protected $type = null;
-
-    /**
      * Last access time.
      *
      * @var int
@@ -144,6 +139,11 @@ abstract class AbstractFile implements FileInterface
     /**
      * {@inheritDoc}
      */
+    abstract public function getType(): int;
+
+    /**
+     * {@inheritDoc}
+     */
     public function setPermissions(int $permissions): FileInterface
     {
         $this->setLastChangeTime();
@@ -196,14 +196,6 @@ abstract class AbstractFile implements FileInterface
     public function getGroup(): int
     {
         return $this->group;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function getType(): int
-    {
-        return $this->type;
     }
 
     /**
