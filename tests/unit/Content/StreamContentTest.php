@@ -69,6 +69,15 @@ class StreamContentTest extends ContentTestCase
         self::assertTrue(flock($streamB, \LOCK_EX | \LOCK_NB));
     }
 
+    public function testCloseResponse(): void
+    {
+        $this->fixture = new StreamContent(uniqid());
+
+        $actual = $this->fixture->close();
+
+        self::assertTrue($actual);
+    }
+
     public function testReadOnClosedHandleCreatesError(): void
     {
         $stream = fopen('php://temp', 'w+');

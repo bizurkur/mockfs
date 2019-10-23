@@ -53,6 +53,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
     {
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setLastAccessTime(rand());
 
         $this->fixture->open();
 
@@ -100,6 +101,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
     {
         $content = $this->createContent();
         $this->fixture->setContent($content);
+        $this->fixture->setLastAccessTime(rand());
 
         $this->fixture->read(rand());
 
@@ -139,6 +141,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $content = $this->createContent();
         $this->fixture->setContent($content);
         $this->fixture->setConfig(new Config());
+        $this->fixture->setLastModifyTime(rand());
 
         $this->fixture->write(uniqid());
 
@@ -227,6 +230,7 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $content = $this->createContent();
         $this->fixture->setContent($content);
         $this->fixture->setConfig(new Config());
+        $this->fixture->setLastModifyTime(rand());
 
         $this->fixture->truncate(rand());
 

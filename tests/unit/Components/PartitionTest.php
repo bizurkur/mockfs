@@ -10,8 +10,10 @@ use MockFileSystem\Components\FileSystemInterface;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\PartitionInterface;
 use MockFileSystem\Config\Config;
+use MockFileSystem\Exception\RecursionException;
 use MockFileSystem\Quota\QuotaInterface;
 use MockFileSystem\Quota\QuotaManagerInterface;
+use MockFileSystem\StreamWrapper;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 
 class PartitionTest extends ComponentTestCase
@@ -116,6 +118,27 @@ class PartitionTest extends ComponentTestCase
         self::assertEquals($path.$fileSeparator.$name, $actual);
     }
 
+    public function testGetUrlWhenNoParent(): void
+    {
+        $name = uniqid();
+        $fileSeparator = '\\';
+        $partitionSeparator = ':';
+        $config = new Config(
+            [
+                'fileSeparator' => $fileSeparator,
+                'partitionSeparator' => $partitionSeparator,
+            ]
+        );
+
+        $this->fixture = new Partition($name);
+        $this->fixture->setConfig($config);
+
+        $actual = $this->fixture->getUrl();
+
+        $expected = StreamWrapper::PROTOCOL.'://'.$name.$partitionSeparator.$fileSeparator;
+        self::assertEquals($expected, $actual);
+    }
+
     public function testSetQuotaNull(): void
     {
         $this->fixture->setQuota(null);
@@ -183,5 +206,26 @@ class PartitionTest extends ComponentTestCase
         $actual = $this->fixture->setQuotaManager($manager);
 
         self::assertSame($this->fixture, $actual);
+    }
+
+    public function testSetParentWithSelfThrowsException(): void
+    {
+        self::expectException(RecursionException::class);
+        self::expectExceptionMessage('A parent cannot contain a child reference to itself.');
+
+        $this->fixture->setParent($this->fixture);
+    }
+
+    public function testSetParentWithParentOfSelfThrowsException(): void
+    {
+        $parent = $this->createConfiguredMock(
+            ContainerInterface::class,
+            ['getParent' => $this->fixture]
+        );
+
+        self::expectException(RecursionException::class);
+        self::expectExceptionMessage('A parent cannot contain a child reference to itself.');
+
+        $this->fixture->setParent($parent);
     }
 }

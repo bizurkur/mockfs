@@ -669,6 +669,74 @@ class MockFileSystemTest extends TestCase
         self::assertEquals($name, $actual->getName());
     }
 
+    /**
+     * @dataProvider sampleInvalidNames
+     */
+    public function testCreateFileInvalidName(array $config, string $name, string $expected): void
+    {
+        MockFileSystem::create('', null, [], $config);
+
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage($expected);
+
+        MockFileSystem::createFile($name);
+    }
+
+    public function sampleInvalidNames(): array
+    {
+        $config = [
+            'fileSeparator' => '/',
+            'partitionSeparator' => ':',
+            'blacklist' => [
+                '>',
+                'tab' => "\t",
+            ],
+        ];
+
+        return [
+            'dot' => [
+                'config' => $config,
+                'name' => '.',
+                'expected' => 'Name cannot be "." or ".."',
+            ],
+            'dotdot' => [
+                'config' => $config,
+                'name' => '..',
+                'expected' => 'Name cannot be "." or ".."',
+            ],
+            'no name' => [
+                'config' => $config,
+                'name' => '',
+                'expected' => 'Name cannot be empty.',
+            ],
+            'has fileSeparator' => [
+                'config' => $config,
+                'name' => 'test/ing',
+                'expected' => 'Name cannot contain a "/" character.',
+            ],
+            'has partitionSeparator' => [
+                'config' => $config,
+                'name' => 'test:ing',
+                'expected' => 'Name cannot contain a ":" character.',
+            ],
+            'has null character' => [
+                'config' => $config,
+                'name' => ".\0.",
+                'expected' => 'Name cannot contain a "null" character.',
+            ],
+            'has custom blacklist character, no index' => [
+                'config' => $config,
+                'name' => 'some>ting',
+                'expected' => 'Name cannot contain a ">" character.',
+            ],
+            'has custom blacklist character, named index' => [
+                'config' => $config,
+                'name' => "some\tting",
+                'expected' => 'Name cannot contain a "tab" character.',
+            ],
+        ];
+    }
+
     public function testCreateNestedFile(): void
     {
         $nameA = uniqid('a');
@@ -736,6 +804,19 @@ class MockFileSystemTest extends TestCase
         $actual = MockFileSystem::createBlock($name);
 
         self::assertEquals($name, $actual->getName());
+    }
+
+    /**
+     * @dataProvider sampleInvalidNames
+     */
+    public function testCreateBlockInvalidName(array $config, string $name, string $expected): void
+    {
+        MockFileSystem::create('', null, [], $config);
+
+        self::expectException(InvalidArgumentException::class);
+        self::expectExceptionMessage($expected);
+
+        MockFileSystem::createBlock($name);
     }
 
     public function testCreateNestedBlock(): void
@@ -867,6 +948,8 @@ class MockFileSystemTest extends TestCase
                 'd' => [
                     'e' => 'e',
                     '[f]' => 'f',
+                    '[g' => 'g',
+                    'h]' => 'h',
                 ],
             ],
         ];
@@ -878,6 +961,8 @@ class MockFileSystemTest extends TestCase
 
         self::assertEquals($structure, $actual);
         self::assertInstanceOf(Block::class, MockFileSystem::find('mfs:///b/d/f'));
+        self::assertInstanceOf(RegularFile::class, MockFileSystem::find('mfs:///b/d/[g'));
+        self::assertInstanceOf(RegularFile::class, MockFileSystem::find('mfs:///b/d/h]'));
     }
 
     /**

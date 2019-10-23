@@ -124,9 +124,7 @@ final class StreamWrapper
      */
     public function dir_closedir(): bool
     {
-        $fail = (bool) $this->getContextOption('closedir_fail', false);
-
-        return !$fail;
+        return !$this->getContextOption('closedir_fail', false);
     }
 
     /**

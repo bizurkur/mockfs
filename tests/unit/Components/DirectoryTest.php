@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace MockFileSystem\Tests\Components;
 
 use MockFileSystem\Components\AbstractFile;
+use MockFileSystem\Components\ContainerInterface;
 use MockFileSystem\Components\Directory;
 use MockFileSystem\Components\DirectoryInterface;
 use MockFileSystem\Components\FileInterface;
@@ -15,6 +16,7 @@ use MockFileSystem\Components\SummaryInterface;
 use MockFileSystem\Config\Config;
 use MockFileSystem\Exception\NoDiskSpaceException;
 use MockFileSystem\Exception\NotFoundException;
+use MockFileSystem\Exception\RecursionException;
 use MockFileSystem\Quota\QuotaManagerInterface;
 use MockFileSystem\Tests\Components\ComponentTestCase;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -357,7 +359,7 @@ class DirectoryTest extends ComponentTestCase
         self::assertEquals([], $this->fixture->getChildren());
     }
 
-    public function testGetChildrenUpdatesLastAccessedTime(): void
+    public function testGetChildrenUpdatesLastAccessTime(): void
     {
         $now = time();
         $this->fixture->setLastAccessTime(rand());
@@ -450,6 +452,19 @@ class DirectoryTest extends ComponentTestCase
         }
     }
 
+    public function testGetChildUpdatesLastAccessTime(): void
+    {
+        $name = uniqid();
+        $file = $this->createFile(['getName' => $name]);
+        $this->fixture->setConfig(new Config());
+        $this->fixture->addChild($file);
+        $this->fixture->setLastAccessTime(rand());
+
+        $this->fixture->getChild($name);
+
+        self::assertEqualsWithDelta(time(), $this->fixture->getLastAccessTime(), 1);
+    }
+
     /**
      * @dataProvider sampleChildCase
      */
@@ -470,6 +485,19 @@ class DirectoryTest extends ComponentTestCase
         $this->fixture->addChild($fileC);
 
         self::assertEquals($expected, $this->fixture->removeChild($searchName));
+    }
+
+    public function testRemoveChildUpdatesLastModifyTime(): void
+    {
+        $name = uniqid();
+        $file = $this->createFile(['getName' => $name]);
+        $this->fixture->setConfig(new Config());
+        $this->fixture->addChild($file);
+        $this->fixture->setLastModifyTime(rand());
+
+        $this->fixture->removeChild($name);
+
+        self::assertEqualsWithDelta(time(), $this->fixture->getLastModifyTime(), 1);
     }
 
     public function testHasChildWhenNoChildren(): void
@@ -772,6 +800,27 @@ class DirectoryTest extends ComponentTestCase
                 'expectedFileCount' => $countA + $countB + $countC + 2,
             ],
         ];
+    }
+
+    public function testSetParentWithSelfThrowsException(): void
+    {
+        self::expectException(RecursionException::class);
+        self::expectExceptionMessage('A parent cannot contain a child reference to itself.');
+
+        $this->fixture->setParent($this->fixture);
+    }
+
+    public function testSetParentWithParentOfSelfThrowsException(): void
+    {
+        $parent = $this->createConfiguredMock(
+            ContainerInterface::class,
+            ['getParent' => $this->fixture]
+        );
+
+        self::expectException(RecursionException::class);
+        self::expectExceptionMessage('A parent cannot contain a child reference to itself.');
+
+        $this->fixture->setParent($parent);
     }
 
     /**

@@ -149,6 +149,9 @@ class StreamWrapperTest extends TestCase
         self::assertFalse($actual);
     }
 
+    /**
+     * @runInSeparateProcess
+     */
     public function testCloseDir(): void
     {
         $actual = $this->fixture->dir_closedir();
