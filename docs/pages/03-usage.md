@@ -25,7 +25,7 @@ chmod($file, 0600);
 ```
 
 
-## Creating the Filesystem
+## Creating the File System
 
 The starting point for all mockfs usage is the `mockfs::create()` method. This method allows you to set the name of the first partition, the permissions it has, and any configuration settings the file system should follow.
 
@@ -97,9 +97,9 @@ use MockFileSystem\MockFileSystem as mockfs;
 
 $root = mockfs::create('', null, ['ignoreCase' => true]);
 
-file_put_contents($root->getUrl().'test.txt'), 'some data');
+file_put_contents($root->getUrl().'test.txt', 'some data');
 
-$data = file_get_contents($root->getUrl().'TeST.txt'));
+$data = file_get_contents($root->getUrl().'TeST.txt');
 var_dump($data);
 // outputs "some data"
 ```
@@ -176,7 +176,82 @@ file_put_contents($file, uniqid());
 
 ## Setting File/Disk Quotas
 
-Soon...
+You can set quotas per partition to restrict the disk space used or the number of files allowed. Each quota can be applied to a user, group, both, or none (all users).
+
+
+### Basic Quota
+
+Here is a basic example in which we only allow the file system to contain one file:
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+use MockFileSystem\Quota\Quota;
+
+$size = Quota::UNLIMITED;
+$files = 1; // Only allow one file to exist
+
+$quota = new Quota($size, $files);
+
+$root = mockfs::create();
+$root->setQuota($quota);
+
+// This will work
+file_put_contents('mfs:///file1', uniqid());
+
+// This will fail because only one file is allowed
+file_put_contents('mfs:///file2', uniqid());
+```
+
+When creating a quota, there are four parameters: `$size`, `$fileCount`, `$user`, and `$group`:
+
+{:.table}
+| Parameter | Type | Description |
+| ----- | ---- | ----------- |
+| `$size` | `int` | Total number of bytes allowed to be used. Use `-1` (`Quota::UNLIMITED`) for unlimited bytes. |
+| `$fileCount` | `int` | Total number of files and directories allowed to be created. Use `-1` (`Quota::UNLIMITED`) for unlimited files. |
+| `$user` | `int|null` | The user ID to apply the quota to, or `null` to apply to all users. Defaults to `null`. |
+| `$group` | `int|null` | The group ID to apply the quota to, or `null` to apply to all groups. Defaults to `null`. |
+
+
+### Multiple Quotas
+
+You can also set multiple quotas using a quota collection:
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+use MockFileSystem\Quota\Collection;
+use MockFileSystem\Quota\Quota;
+
+$quotaA = new Quota(1024, Quota::UNLIMITED); // Only 1024 bytes allowed for all users
+$quotaB = new Quota(Quota::UNLIMITED, 1, 123); // User 123 is allowed one file
+
+$collection = new Collection([$quotaA]); // Add quotas in the constructor
+$collection->addQuota($quotaB); // Or add them individually
+
+$root = mockfs::create();
+$root->setQuota($collection);
+```
+
+
+### Custom Quotas
+
+If you need to do anything more complex, you can create your own quota with whatever specific rules you need by implementing `MockFileSystem\Quota\QuotaInterface`.
+
+```php
+use MockFileSystem\MockFileSystem as mockfs;
+use MockFileSystem\Quota\QuotaInterface;
+
+class MyQuota implements QuotaInterface
+{
+    // ...
+}
+
+$root = mockfs::create();
+$root->setQuota(new MyQuota());
+
+```
+
+
 
 
 ## Testing Complex Failure
