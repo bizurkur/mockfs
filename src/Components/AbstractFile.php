@@ -26,21 +26,21 @@ abstract class AbstractFile implements FileInterface
      *
      * @var int
      */
-    protected $lastAccessTime = 0;
+    private $lastAccessTime = 0;
 
     /**
      * Last modify time.
      *
      * @var int
      */
-    protected $lastModifyTime = 0;
+    private $lastModifyTime = 0;
 
     /**
      * Last change time.
      *
      * @var int
      */
-    protected $lastChangeTime = 0;
+    private $lastChangeTime = 0;
 
     /**
      * @var ConfigInterface
