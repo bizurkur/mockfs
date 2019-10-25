@@ -237,10 +237,12 @@ abstract class RegularFileTestCase extends ComponentTestCase
         self::assertEqualsWithDelta(time(), $this->fixture->getLastModifyTime(), 1);
     }
 
-    public function testTruncateUpWhenLimitedDiskSpaceNotEnoughSpace(): void
+    /**
+     * @dataProvider sampleTruncateNotEnoughDiskSpace
+     */
+    public function testTruncateUpWhenLimitedDiskSpaceNotEnoughSpace(int $remaining): void
     {
-        $remaining = rand(1, 9);
-        $size = $remaining * 2;
+        $size = $remaining * 2 + 1;
         $this->setUpQuotaManager($remaining);
 
         $content = $this->createContent(['getSize' => 0]);
@@ -251,6 +253,15 @@ abstract class RegularFileTestCase extends ComponentTestCase
         $actual = $this->fixture->truncate($size);
 
         self::assertFalse($actual);
+    }
+
+    public function sampleTruncateNotEnoughDiskSpace(): array
+    {
+        return [
+            [0],
+            [1],
+            [2],
+        ];
     }
 
     public function testTruncateUpWhenLimitedDiskSpaceHasEnoughSpace(): void

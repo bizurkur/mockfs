@@ -164,6 +164,11 @@ class FileSystemTest extends TestCase
                 'path' => null,
                 'expected' => '',
             ],
+            'needs trim path' => [
+                'options' => [],
+                'path' => '  /foo  ',
+                'expected' => '/foo',
+            ],
             'absolute, single' => [
                 'options' => [],
                 'path' => '/foo',
@@ -246,8 +251,8 @@ class FileSystemTest extends TestCase
 
     public function testAddChildNormalizesName(): void
     {
-        $partitionA = $this->createPartition(['getName' => 'some name']);
-        $partitionB = $this->createPartition(['getName' => 'SoMe NaMe']);
+        $partitionA = $this->createPartition(['getName' => 'Τάχιστη']);
+        $partitionB = $this->createPartition(['getName' => mb_strtoupper('Τάχιστη')]);
 
         $this->fixture = new FileSystem(new Config(['ignoreCase' => true]));
         $this->fixture->addChild($partitionA);
@@ -261,8 +266,8 @@ class FileSystemTest extends TestCase
 
     public function testAddChildDoesNotNormalizeNames(): void
     {
-        $partitionA = $this->createPartition(['getName' => 'some name']);
-        $partitionB = $this->createPartition(['getName' => 'SoMe NaMe']);
+        $partitionA = $this->createPartition(['getName' => 'Τάχιστη']);
+        $partitionB = $this->createPartition(['getName' => mb_strtoupper('Τάχιστη')]);
 
         $this->fixture = new FileSystem(new Config(['ignoreCase' => false]));
         $this->fixture->addChild($partitionA);

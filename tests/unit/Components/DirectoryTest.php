@@ -210,8 +210,8 @@ class DirectoryTest extends ComponentTestCase
 
     public function testAddChildNormalizesName(): void
     {
-        $fileA = $this->createFile(['getName' => 'some name']);
-        $fileB = $this->createFile(['getName' => 'SoMe NaMe']);
+        $fileA = $this->createFile(['getName' => 'Τάχιστη']);
+        $fileB = $this->createFile(['getName' => mb_strtoupper('Τάχιστη')]);
 
         $config = new Config(['ignoreCase' => true]);
         $this->fixture->setConfig($config);
@@ -227,8 +227,8 @@ class DirectoryTest extends ComponentTestCase
 
     public function testAddChildDoesNotNormalizeNames(): void
     {
-        $fileA = $this->createFile(['getName' => 'some name']);
-        $fileB = $this->createFile(['getName' => 'SoMe NaMe']);
+        $fileA = $this->createFile(['getName' => 'Τάχιστη']);
+        $fileB = $this->createFile(['getName' => mb_strtoupper('Τάχιστη')]);
 
         $config = new Config(['ignoreCase' => false]);
         $this->fixture->setConfig($config);
