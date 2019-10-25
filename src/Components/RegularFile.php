@@ -124,7 +124,6 @@ class RegularFile extends AbstractFile implements RegularFileInterface
     {
         $remaining = $this->getFreeDiskSpace();
         if ($remaining >= 0
-            && $size > $this->content->getSize()
             && ($size - $this->content->getSize()) > $remaining
         ) {
             return false;
