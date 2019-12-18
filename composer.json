@@ -16,9 +16,9 @@
     "require-dev": {
         "bizurkur/coding-standard": "^1.0",
         "codacy/coverage": "^1.4",
+        "ergebnis/composer-normalize": "^2.0.1",
         "infection/infection": "^0.14.0",
         "jakub-onderka/php-parallel-lint": "^1.0",
-        "localheinz/composer-normalize": "^1.1",
         "phing/phing": "^2.16",
         "phpstan/phpstan": "^0.11.15",
         "phpstan/phpstan-deprecation-rules": "^0.11.2",
