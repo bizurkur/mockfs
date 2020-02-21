@@ -1,49 +1,55 @@
 name: Unit Tests
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
+    push:
+        branches:
+            - master
+    pull_request:
 
 jobs:
-  build:
-    name: PHP ${{ matrix.php-version }}, ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        php-version: ['7.2', '7.3', '7.4']
-        os: [ubuntu-latest, macos-latest, windows-latest]
+    build:
+        name: PHP ${{ matrix.php-version }}, ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                php-version: ['7.2', '7.3', '7.4']
+                os: [ubuntu-latest, macos-latest, windows-latest]
 
-    steps:
-      - uses: actions/checkout@v2
+        steps:
+            - uses: actions/checkout@v2
 
-      # composer cache
-      # https://github.com/actions/cache/blob/master/examples.md#php---composer
-      - name: Get Composer Cache Directory
-        id: composer-cache
-        run: |
-          echo "::set-output name=dir::$(composer config cache-files-dir)"
+            # https://github.com/shivammathur/setup-php
+            -
+                name: Set up PHP ${{ matrix.php-version }}
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php-version }}
+                    extensions: mbstring
 
-      - name: Cache dependencies
-        uses: actions/cache@v1
-        with:
-          path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
-          restore-keys: ${{ runner.os }}-composer-
+            -
+                name: Validate composer.json and composer.lock
+                run: composer validate
 
-      # https://github.com/shivammathur/setup-php
-      - name: Set up PHP ${{ matrix.php-version }}
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-version }}
-          extensions: mbstring
+            # composer cache
+            # https://github.com/actions/cache/blob/master/examples.md#php---composer
+            -
+                name: Get Composer Cache Directory
+                id: composer-cache
+                run: |
+                    echo "::set-output name=dir::$(composer config cache-files-dir)"
 
-      - name: Validate composer.json and composer.lock
-        run: composer validate
+            -
+                name: Cache dependencies
+                uses: actions/cache@v1
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-composer-
 
-      - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+            -
+                name: Install dependencies
+                run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: Run test suite
-        run: vendor/bin/phpunit
+            -
+                name: Run test suite
+                run: vendor/bin/phpunit
