@@ -21,6 +21,7 @@ jobs:
                     php-version: '7.4'
                     extensions: mbstring
                     tools: cs2pr
+                    coverage: pcov
 
             -
                 name: Validate composer.json and composer.lock
@@ -167,10 +168,12 @@ jobs:
     mutation:
         name: Mutation Testing
         runs-on: ubuntu-latest
-        needs: tests
 
         steps:
-            - uses: actions/checkout@v2
+            -
+                uses: actions/checkout@v2
+                with:
+                    fetch-depth: 0
 
             -
                 name: Set up PHP
@@ -179,6 +182,7 @@ jobs:
                     php-version: '7.4'
                     extensions: mbstring
                     tools: cs2pr
+                    coverage: pcov
 
             -
                 name: Validate composer.json and composer.lock
@@ -204,4 +208,11 @@ jobs:
 
             -
                 name: Mutation Testing
-                run: phpdbq -qrr -d memory_limit=-1 vendor/bin/infection --threads=4 --min-msi=80 --min-covered-msi=80
+                run: |
+                    git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+                    CHANGED_FILES=$(git diff --diff-filter=AM --name-only origin/${{ github.base_ref }}..${{ github.sha }} | grep src/ | paste -sd "," -);
+                    if [ -n "$CHANGED_FILES" ]; then
+                        php -d memory_limit=-1 vendor/bin/infection --threads=4 --filter=${CHANGED_FILES} --only-covered --min-msi=80 --min-covered-msi=80 --ignore-msi-with-no-mutations
+                    else
+                        echo "No source files changed"
+                    fi
