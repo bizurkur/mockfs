@@ -24,8 +24,11 @@
     verbose="false"
 >
     <testsuites>
-        <testsuite name="Test Suite">
-            <directory>tests/</directory>
+        <testsuite name="Unit Tests">
+            <directory>tests/unit</directory>
+        </testsuite>
+        <testsuite name="End-to-End Tests">
+            <directory>tests/e2e</directory>
         </testsuite>
     </testsuites>
 
