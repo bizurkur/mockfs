@@ -6,6 +6,7 @@ namespace MockFileSystem\Tests;
 
 use MockFileSystem\Components\Block;
 use MockFileSystem\Components\Directory;
+use MockFileSystem\Components\FileInterface;
 use MockFileSystem\Components\FileSystem;
 use MockFileSystem\Components\Partition;
 use MockFileSystem\Components\RegularFile;
@@ -21,6 +22,7 @@ use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\MockFileSystem;
 use MockFileSystem\StreamWrapper;
+use MockFileSystem\Visitor\VisitorInterface;
 use PHPUnit\Framework\Error\Warning;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -998,6 +1000,34 @@ class MockFileSystemTest extends TestCase
 
         $root = MockFileSystem::create();
         MockFileSystem::addStructure([uniqid() => null], $root);
+    }
+
+    public function testVisitCallsVisitorVisitWithFile(): void
+    {
+        /** @var VisitorInterface&MockObject $visitor */
+        $visitor = $this->createMock(VisitorInterface::class);
+        $file = $this->createMock(FileInterface::class);
+
+        $visitor->expects(self::once())
+            ->method('visit')
+            ->with($file);
+
+        MockFileSystem::visit($file, $visitor);
+    }
+
+    public function testVisitCallsVisitorVisitWithFileSystem(): void
+    {
+        MockFileSystem::create();
+
+        /** @var VisitorInterface&MockObject $visitor */
+        $visitor = $this->createMock(VisitorInterface::class);
+        $expected = MockFileSystem::getFileSystem();
+
+        $visitor->expects(self::once())
+            ->method('visitFileSystem')
+            ->with($expected);
+
+        MockFileSystem::visit(null, $visitor);
     }
 
     /**
