@@ -168,6 +168,16 @@ class Directory extends AbstractFile implements DirectoryInterface
     /**
      * {@inheritDoc}
      */
+    public function isDot(): bool
+    {
+        $name = $this->getName();
+
+        return $name === '.' || $name === '..';
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     public function getSummary(?int $user = null, ?int $group = null): SummaryInterface
     {
         $count = 0;
