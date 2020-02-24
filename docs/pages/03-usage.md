@@ -10,6 +10,8 @@ guide: true
 An example of the most basic usage:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 // Create the file system
@@ -37,6 +39,8 @@ The starting point for all mockfs usage is the `mockfs::create()` method. This m
 The default mockfs partition is nameless and equates to `/` as the path. However, if for some reason you want to use a different name you can:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 $root = mockfs::create();
@@ -55,6 +59,8 @@ $root = mockfs::create('c:');
 Partitions default to using permissions `0777` (readable and writable to everyone). The `create()` method allows you to override that:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 $root = mockfs::create('', 0750);
@@ -63,6 +69,8 @@ $root = mockfs::create('', 0750);
 This can be useful if you need to make a simple "not readable" or "not writable" test:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 mockfs::create('', 0000);
@@ -93,6 +101,8 @@ You can change the configuration settings by either passing in an instance of `M
 In this example, we tell mockfs to ignore the case of the filename. This means if you have a file named `test.txt` you can access it using `test.txt`, `TEST.TXT`, or `TesT.tXt`.
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 $root = mockfs::create('', null, ['ignoreCase' => true]);
@@ -138,6 +148,8 @@ For example, if you prefer to use Windows-style defaults there's a pre-built con
 - It does not matter if you use `\` or `/`
 
 ```php
+<?php
+
 use MockFileSystem\Config\WindowsConfig;
 use MockFileSystem\MockFileSystem as mockfs;
 
@@ -151,6 +163,8 @@ mockfs::create('', null, new WindowsConfig());
 When blacklisting characters in filenames, you can use the array keys to provide a more descriptive meaning to what the character is. This is especially useful for non-printable or whitespace characters. If no string is given as the array key, it will try to display the character itself in the exception that gets thrown.
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 
 $config = [
@@ -184,6 +198,8 @@ You can set quotas per partition to restrict the disk space used or the number o
 Here is a basic example in which we only allow the file system to contain one file:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 use MockFileSystem\Quota\Quota;
 
@@ -218,6 +234,8 @@ When creating a quota, there are four parameters: `$size`, `$fileCount`, `$user`
 You can also set multiple quotas using a quota collection:
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 use MockFileSystem\Quota\Collection;
 use MockFileSystem\Quota\Quota;
@@ -238,6 +256,8 @@ $root->setQuota($collection);
 If you need to do anything more complex, you can create your own quota with whatever specific rules you need by implementing `MockFileSystem\Quota\QuotaInterface`.
 
 ```php
+<?php
+
 use MockFileSystem\MockFileSystem as mockfs;
 use MockFileSystem\Quota\QuotaInterface;
 
@@ -248,10 +268,7 @@ class MyQuota implements QuotaInterface
 
 $root = mockfs::create();
 $root->setQuota(new MyQuota());
-
 ```
-
-
 
 
 ## Testing Complex Failure
@@ -398,3 +415,48 @@ The following context options are available to force different types of failures
 | `touch_message` | `string|null` | The user warning to trigger on failure. This has no effect unless `touch_fail` is set to `true` |
 | `unlink_fail` | `bool` | Force calls to `unlink()` to fail
 | `unlink_message` | `string|null` | The user warning to trigger on failure. This has no effect unless `unlink_fail` is set to `true` |
+
+
+## Browsing the File Structure
+
+If for any reason you need to view/browse the file structure, you can call `mockfs::visit()`. It defaults to using a `MockFileSystem\Visitor\TreeVisitor` to print the file system contents to `STDOUT`.
+
+```php
+<?php
+
+mockfs::create('/', null ['bar' => ['baz' => ''], 'foo' => '']);
+
+mockfs::visit();
+// mfs://
+// └── /
+//     ├── bar
+//     │   └── baz
+//     └── foo
+```
+
+If you only want to browse part of the file system, you can pass in a file as the first parameter:
+
+```php
+<?php
+
+mockfs::create('/', null ['bar' => ['baz' => ''], 'foo' => '']);
+$file = mockfs::find('/bar');
+
+mockfs::visit($file);
+// /bar
+// └── baz
+```
+
+If you only want to do something other than print the tree to the screen, you can create a custom visitor by implementing `MockFileSystem\Visitor\VisitorInterface` and pass that in as the second parameter.
+
+```php
+<?php
+
+use MockFileSystem\Visitor\VisitorInterface;
+
+mockfs::create('/', null ['bar' => ['baz' => ''], 'foo' => '']);
+
+/** @var VisitorInterface $visitor */
+$visitor = ...;
+mockfs::visit(null, $visitor);
+```

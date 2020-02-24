@@ -22,6 +22,8 @@ use MockFileSystem\Content\ZeroContent;
 use MockFileSystem\Exception\InvalidArgumentException;
 use MockFileSystem\Exception\RuntimeException;
 use MockFileSystem\StreamWrapper;
+use MockFileSystem\Visitor\TreeVisitor;
+use MockFileSystem\Visitor\VisitorInterface;
 
 /**
  * Class to create the mock file system and register it as a stream.
@@ -262,6 +264,28 @@ final class MockFileSystem
         $block->setConfig($config);
 
         return $block;
+    }
+
+    /**
+     * Visits a file using the given visitor.
+     *
+     * If a file is not given (null), then it visits the entire mock file system.
+     * If a visitor is not given (null), then it defaults to using a TreeVisitor.
+     *
+     * @param FileInterface|null $file
+     * @param VisitorInterface|null $visitor
+     */
+    public static function visit(?FileInterface $file = null, ?VisitorInterface $visitor = null): void
+    {
+        if ($visitor === null) {
+            $visitor = new TreeVisitor();
+        }
+
+        if ($file === null) {
+            $visitor->visitFileSystem(self::getFileSystem());
+        } else {
+            $visitor->visit($file);
+        }
     }
 
     /**

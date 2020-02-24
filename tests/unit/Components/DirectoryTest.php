@@ -824,6 +824,44 @@ class DirectoryTest extends ComponentTestCase
     }
 
     /**
+     * @dataProvider sampleIsDot
+     */
+    public function testIsDot(string $name, bool $expected): void
+    {
+        $fixture = new Directory($name);
+
+        $actual = $fixture->isDot();
+
+        self::assertEquals($expected, $actual);
+    }
+
+    public function sampleIsDot(): array
+    {
+        return [
+            'single dot' => [
+                'name' => '.',
+                'expected' => true,
+            ],
+            'double dot' => [
+                'name' => '..',
+                'expected' => true,
+            ],
+            'triple dot' => [
+                'name' => '...',
+                'expected' => false,
+            ],
+            'starts with dot' => [
+                'name' => '.'.uniqid(),
+                'expected' => false,
+            ],
+            'no dot' => [
+                'name' => uniqid(),
+                'expected' => false,
+            ],
+        ];
+    }
+
+    /**
      * @return FileInterface&MockObject
      */
     private function createFile(array $methods = []): FileInterface

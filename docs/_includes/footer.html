@@ -3,9 +3,6 @@
         <div class="row">
             <div class="col-md-6">
                 <ul class="site-footer-links">
-                    {% if site.project.version %}
-                        <li>Currently v{{ site.project.version }}</li>
-                    {% endif %}
                     {% for link in site.links.footer %}
                         <li>
                             <a href="{{ link.url }}">{{ link.title }}</a>

@@ -10,7 +10,7 @@ use MockFileSystem\Components\FileInterface;
 /**
  * Represents a single directory.
  */
-interface DirectoryInterface extends ContainerInterface, FileInterface
+interface DirectoryInterface extends ContainerInterface, FileInterface, \IteratorAggregate
 {
     /**
      * Gets the total number of files (children) in this directory only.
@@ -27,4 +27,11 @@ interface DirectoryInterface extends ContainerInterface, FileInterface
      * @return \Iterator
      */
     public function getIterator(): \Iterator;
+
+    /**
+     * Checks if this directory is a dot file.
+     *
+     * @return bool True if directory name is "." or ".."
+     */
+    public function isDot(): bool;
 }
