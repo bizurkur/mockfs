@@ -4,7 +4,6 @@ title: mockfs
 description: Mock file system for PHP
 
 project:
-    version: 0.1.0
     download_url: https://github.com/bizurkur/mockfs/releases
 
 license:
