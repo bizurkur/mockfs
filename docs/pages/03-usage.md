@@ -417,9 +417,9 @@ The following context options are available to force different types of failures
 | `unlink_message` | `string|null` | The user warning to trigger on failure. This has no effect unless `unlink_fail` is set to `true` |
 
 
-## Browsing the File Structure
+## Browsing the File System
 
-If for any reason you need to view/browse the file structure, you can call `mockfs::visit()`. It defaults to using a `MockFileSystem\Visitor\TreeVisitor` to print the file system contents to `STDOUT`.
+If for any reason you need to view/browse the file system, you can call `mockfs::visit()`. It defaults to using a `MockFileSystem\Visitor\TreeVisitor` to print the file system contents to `STDOUT`.
 
 ```php
 <?php
@@ -447,7 +447,7 @@ mockfs::visit($file);
 // └── baz
 ```
 
-If you only want to do something other than print the tree to the screen, you can create a custom visitor by implementing `MockFileSystem\Visitor\VisitorInterface` and pass that in as the second parameter.
+If you want to do something other than print the tree to the screen, you can create a custom visitor by implementing `MockFileSystem\Visitor\VisitorInterface` and pass that in as the second parameter.
 
 ```php
 <?php
