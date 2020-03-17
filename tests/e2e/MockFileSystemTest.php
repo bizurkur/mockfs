@@ -30,6 +30,11 @@ use PHPUnit\Framework\TestCase;
 // phpcs:disable Generic.PHP.NoSilencedErrors.Discouraged
 class MockFileSystemTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        $this->tearDown();
+    }
+
     protected function tearDown(): void
     {
         parent::tearDown();

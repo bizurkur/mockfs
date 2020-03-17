@@ -127,6 +127,12 @@ class FileSystemTest extends TestCase
      */
     public function testGetPath(array $options, ?string $path, string $expected): void
     {
+        if (isset($options['getFileSeparator'])
+            && empty($options['getFileSeparator'])
+            && version_compare(PHP_VERSION, '7.9.9', '>=')
+        ) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $config = $this->createConfiguredMock(
             ConfigInterface::class,
             $options + ['getFileSeparator' => '/']
@@ -143,6 +149,12 @@ class FileSystemTest extends TestCase
      */
     public function testGetUrl(array $options, ?string $path, string $expected): void
     {
+        if (isset($options['getFileSeparator'])
+            && empty($options['getFileSeparator'])
+            && version_compare(PHP_VERSION, '7.9.9', '>=')
+        ) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $config = $this->createConfiguredMock(
             ConfigInterface::class,
             $options + ['getFileSeparator' => '/']

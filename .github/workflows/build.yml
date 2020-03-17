@@ -77,6 +77,7 @@ jobs:
                 with:
                     php-version: ${{ matrix.php-version }}
                     extensions: mbstring
+                    coverage: pcov
                     tools: cs2pr
 
             -
@@ -123,6 +124,60 @@ jobs:
                 env:
                     CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
                 run: vendor/bin/codacycoverage clover coverage.xml
+
+    # This step is safe to fail
+    nightly_tests:
+        name: PHP ${{ matrix.php-version }}, ${{ matrix.os }}
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                php-version: ['8.0']
+                # os: [ubuntu-latest, macos-latest, windows-latest]
+                os: [ubuntu-latest]
+
+        steps:
+            - uses: actions/checkout@v2
+
+            -
+                name: Set up PHP ${{ matrix.php-version }}
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php-version }}
+                    extensions: mbstring
+                    coverage: pcov
+                    tools: cs2pr
+
+            -
+                name: Setup Problem Matchers for PHP
+                run: |
+                    echo "::add-matcher::${{ runner.tool_cache }}/php.json"
+                    echo "::add-matcher::${{ runner.tool_cache }}/phpunit.json"
+
+            -
+                name: Validate composer.json and composer.lock
+                run: composer validate
+
+            -
+                name: Get Composer Cache Directory
+                id: composer-cache
+                run: |
+                    echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+            -
+                name: Cache dependencies
+                uses: actions/cache@v1
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+                    restore-keys: ${{ runner.os }}-composer-
+
+            -
+                name: Install dependencies
+                run: composer install --prefer-dist --no-progress --no-suggest --ignore-platform-reqs
+
+            -
+                name: PHPUnit
+                run: vendor/bin/phpunit
 
     analysis:
         name: Static Analysis

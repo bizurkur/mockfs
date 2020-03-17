@@ -59,6 +59,11 @@ class FinderTest extends TestCase
      */
     public function testFileSystemCallsHasChild(string $path, string $separator, string $expected): void
     {
+        if (empty($separator)
+            && version_compare(PHP_VERSION, '7.9.9', '>=')
+        ) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $config = $this->createConfig($separator);
         $this->setUpDependencies($config, $path);
 
@@ -74,6 +79,11 @@ class FinderTest extends TestCase
      */
     public function testFileSystemCallsGetChild(string $path, string $separator, string $expected): void
     {
+        if (empty($separator)
+            && version_compare(PHP_VERSION, '7.9.9', '>=')
+        ) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $config = $this->createConfig($separator);
         $this->setUpDependencies($config, $path);
 

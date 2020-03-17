@@ -230,7 +230,7 @@ class ConfigTest extends TestCase
 
     public function testGetFileSeparatorWhenSet(): void
     {
-        $separator = substr(uniqid(), rand(1, 3), 1);
+        $separator = chr(rand(65, 90));
 
         $config = new Config(['fileSeparator' => $separator]);
 
