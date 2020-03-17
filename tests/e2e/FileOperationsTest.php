@@ -50,7 +50,11 @@ class FileOperationsTest extends AbstractTestCase
         $this->cleanup($url);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, 'r');
     }
@@ -75,7 +79,11 @@ class FileOperationsTest extends AbstractTestCase
         file_put_contents($url, uniqid());
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, $mode);
     }
@@ -112,7 +120,11 @@ class FileOperationsTest extends AbstractTestCase
         chmod($url, 0200);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, $mode);
     }
@@ -152,7 +164,11 @@ class FileOperationsTest extends AbstractTestCase
         chmod($url, 0500);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, $mode);
     }
@@ -450,7 +466,11 @@ class FileOperationsTest extends AbstractTestCase
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_').'/'.uniqid();
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, 'w');
     }
@@ -474,7 +494,11 @@ class FileOperationsTest extends AbstractTestCase
         mkdir($base, 0500);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         fopen($url, 'w');
     }
@@ -484,7 +508,11 @@ class FileOperationsTest extends AbstractTestCase
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectExceptionMessage('fopen('.$url.'): Failed to open stream');
+        } else {
+            self::expectExceptionMessage('fopen('.$url.'): failed to open stream');
+        }
 
         $quota = new Quota(-1, 0);
         $partition = MockFileSystem::getFileSystem()->getChild('/');
@@ -832,6 +860,9 @@ class FileOperationsTest extends AbstractTestCase
 
     public function testStreamCastCreatesError(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
 
         $handle = fopen($url, 'w');
@@ -852,6 +883,9 @@ class FileOperationsTest extends AbstractTestCase
 
     public function testStreamCastResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $url = StreamWrapper::PROTOCOL.':///'.uniqid('mfs_');
 
         $handle = fopen($url, 'w');

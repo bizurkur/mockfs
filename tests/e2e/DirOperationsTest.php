@@ -28,7 +28,9 @@ class DirOperationsTest extends AbstractTestCase
         $url = $prefix.'/'.uniqid('mfs_');
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: No such file or directory');
+        self::expectExceptionMessageMatches(
+            '/opendir\('.preg_quote($url, '/').'\): [Ff]ailed to open dir(?:ectory)?: No such file or directory/'
+        );
 
         opendir($url);
     }
@@ -55,7 +57,9 @@ class DirOperationsTest extends AbstractTestCase
         mkdir($url, 0000);
 
         self::expectException(Warning::class);
-        self::expectExceptionMessage('opendir('.$url.'): failed to open dir: Permission denied');
+        self::expectExceptionMessageMatches(
+            '/opendir\('.preg_quote($url, '/').'\): [Ff]ailed to open dir(?:ectory)?: Permission denied/'
+        );
 
         opendir($url);
     }

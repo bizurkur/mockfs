@@ -6,7 +6,7 @@ namespace MockFileSystem\Tests;
 
 use MockFileSystem\Config\WindowsConfig;
 use MockFileSystem\MockFileSystem;
-use PHPStan\Testing\TestCase;
+use PHPUnit\Framework\TestCase;
 
 /**
  * Test different configuration settings

@@ -89,7 +89,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture = new StreamContent($stream);
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('fread(): supplied resource is not a valid stream resource');
 
         self::assertEquals('', $this->fixture->read(5));
@@ -97,6 +101,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testReadOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -118,7 +125,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture = new StreamContent($stream);
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('fwrite(): supplied resource is not a valid stream resource');
 
         self::assertEquals(0, $this->fixture->write(uniqid()));
@@ -126,6 +137,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testWriteOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -145,7 +159,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture = new StreamContent($stream);
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('ftruncate(): supplied resource is not a valid stream resource');
 
         self::assertFalse($this->fixture->truncate(rand(1, 100)));
@@ -153,6 +171,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testTruncateOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -172,7 +193,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture = new StreamContent($stream);
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('feof(): supplied resource is not a valid stream resource');
 
         self::assertFalse($this->fixture->isEof());
@@ -180,6 +205,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testIsEofOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -199,7 +227,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture = new StreamContent($stream);
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('fstat(): supplied resource is not a valid stream resource');
 
         self::assertEquals(0, $this->fixture->getSize());
@@ -207,6 +239,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testGetSizeOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -227,7 +262,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture->write(uniqid());
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('fseek(): supplied resource is not a valid stream resource');
 
         self::assertFalse($this->fixture->seek(3));
@@ -235,6 +274,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testSeekOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
@@ -256,7 +298,11 @@ class StreamContentTest extends ContentTestCase
         $this->fixture->write(uniqid());
         fclose($stream);
 
-        self::expectException(Warning::class);
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::expectException(\TypeError::class);
+        } else {
+            self::expectException(Warning::class);
+        }
         self::expectExceptionMessage('ftell(): supplied resource is not a valid stream resource');
 
         self::assertEquals(0, $this->fixture->tell());
@@ -264,6 +310,9 @@ class StreamContentTest extends ContentTestCase
 
     public function testTellOnClosedHandleResponse(): void
     {
+        if (version_compare(PHP_VERSION, '7.9.9', '>=')) {
+            self::markTestSkipped('This test only applies to PHP < 8.0');
+        }
         $stream = fopen('php://temp', 'w+');
         if ($stream === false) {
             self::fail('Failed to open handle');
