@@ -1,0 +1,75 @@
+---
+layout: default
+---
+
+<div class="container">
+    <div class="row">
+        <div class="{% if page.disable_sidebar %}col-md-12{% else %}col-md-9{% endif %}" role="main">
+            <div class="bs-docs-section">
+                {{ content }}
+
+                {%- if page.guide -%}
+                    {%- assign prev_page = nil -%}
+                    {%- assign next_page = nil -%}
+                    {%- assign stop_loop = false -%}
+                    {%- assign sorted_pages = site.pages | sort: "name" -%}
+                    {%- for link in site.pages -%}
+                        {%- if link.hide != true and link.guide and link.title -%}
+                            {%- if stop_loop -%}
+                                {%- assign next_page = link -%}
+                                {%- break -%}
+                            {%- endif -%}
+                            {%- if page.title == link.title -%}
+                                {%- assign stop_loop = true -%}
+                            {%- else -%}
+                                {%- assign prev_page = link -%}
+                            {%- endif -%}
+                        {%- endif -%}
+                    {%- endfor -%}
+
+                    {%- if prev_page or next_page -%}
+                        <div class="row guide-pagination-links">
+                            <div class="col-xs-6">
+                                {%- if prev_page -%}
+                                    <a href="{{ prev_page.url | relative_url }}">
+                                        &larr; {{ prev_page.title }}
+                                    </a>
+                                {%- endif -%}
+                            </div>
+                            <div class="col-xs-6 text-right">
+                                {%- if next_page -%}
+                                    <a href="{{ next_page.url | relative_url }}">
+                                        {{ next_page.title }} &rarr;
+                                    </a>
+                                {%- endif -%}
+                            </div>
+                        </div>
+                    {%- endif -%}
+                {%- endif -%}
+            </div>
+        </div>
+
+        {% unless page.sidebar == false %}
+            <div class="col-md-3 bs-docs-sidebar hidden-print" role="complementary">
+                <ul class="nav bs-docs-sidenav">
+                    {% assign sorted_pages = site.pages | sort: "name" %}
+                    {%- for link in site.pages -%}
+                        {%- if link.guide -%}
+                            <li {% if page.title == link.title %}class="active"{% endif %}>
+                                <a href="{{ link.url | relative_url }}">{{ link.title }}</a>
+                                {%- if page.title == link.title -%}
+                                    {% include toc.html html=content h_min=2 h_max=2 class='nav' %}
+                                {%- endif -%}
+                            </li>
+                        {%- endif -%}
+                    {%- endfor -%}
+                </ul>
+
+                <a class="back-to-top" href="#top">
+                    <i class="fa fa-angle-up"></i>
+                    Back to top
+                </a>
+            </div>
+        {% endunless %}
+    </div>
+</div>

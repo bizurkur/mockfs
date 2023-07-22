@@ -1,0 +1,65 @@
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
+    - vendor/phpstan/phpstan-phpunit/rules.neon
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+
+parameters:
+    level: 9
+    paths:
+        - src
+        - tests
+
+    checkMissingIterableValueType: false
+
+    ignoreErrors:
+        -
+            message: '/Parameter #1 \$handle of class MockFileSystem\\Visitor\\TreeVisitor constructor expects resource\|null, mixed given\./'
+            path: tests/unit/Visitor/TreeVisitorTest.php
+        -
+            message: '/Parameter #1 \$stream of class MockFileSystem\\Content\\StreamContent constructor expects resource\|string, int<0, max> given\./'
+            path: tests/unit/Content/StreamContentTest.php
+        -
+            message: '/Parameter #3 \$content of class MockFileSystem\\Components\\RegularFile constructor expects MockFileSystem\\Content\\ContentInterface\|string\|null, int<0, max> given\./'
+            path: tests/unit/Components/RegularFileTest.php
+        -
+            message: '/Parameter #\d \$\w+ of static method MockFileSystem\\MockFileSystem::\w+\(\) expects .*, .*? given\./'
+            path: tests/e2e/MockFileSystemTest.php
+
+# some of the strict rules
+services:
+    -
+        class: PHPStan\Rules\DisallowedConstructs\DisallowedImplicitArrayCreationRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\Functions\MissingFunctionParameterTypehintRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\Functions\MissingFunctionReturnTypehintRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\Methods\MissingMethodParameterTypehintRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\Methods\MissingMethodReturnTypehintRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\Methods\WrongCaseOfInheritedMethodRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\StrictCalls\DynamicCallOnStaticMethodsRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\StrictCalls\StrictFunctionCallsRule
+        tags:
+            - phpstan.rules.rule
+    -
+        class: PHPStan\Rules\SwitchConditions\MatchingTypeInSwitchCaseConditionRule
+        tags:
+            - phpstan.rules.rule

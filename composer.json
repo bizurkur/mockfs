@@ -1,0 +1,50 @@
+{
+    "name": "bizurkur/mockfs",
+    "description": "Mock filesystem for PHP",
+    "license": "MIT",
+    "type": "library",
+    "require": {
+        "php": ">=7.4.0",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "ergebnis/composer-normalize": "^2.28",
+        "infection/infection": "^0.21.5",
+        "phing/phing": "^2.17",
+        "php-parallel-lint/php-parallel-lint": "^1.0",
+        "phpstan/phpstan": "^1.10",
+        "phpstan/phpstan-deprecation-rules": "^1.1",
+        "phpstan/phpstan-phpunit": "^1.3",
+        "phpstan/phpstan-strict-rules": "^1.5",
+        "phpunit/phpunit": "<9.6",
+        "roave/security-advisories": "dev-latest",
+        "slevomat/coding-standard": "^8.13",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "MockFileSystem\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "MockFileSystem\\Tests\\": [
+                "tests/unit/",
+                "tests/e2e/"
+            ]
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/package-versions-deprecated": true,
+            "infection/extension-installer": false,
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "ocramius/package-versions": true
+        },
+        "platform": {
+            "php": "7.4.0"
+        }
+    }
+}

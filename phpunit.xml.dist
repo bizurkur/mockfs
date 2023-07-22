@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.5/phpunit.xsd"
+    bootstrap="vendor/autoload.php"
+    backupGlobals="false"
+    backupStaticAttributes="false"
+    beStrictAboutTestsThatDoNotTestAnything="true"
+    beStrictAboutChangesToGlobalState="true"
+    beStrictAboutOutputDuringTests="true"
+    colors="true"
+    cacheResult="false"
+    executionOrder="random"
+    resolveDependencies="true"
+    convertErrorsToExceptions="true"
+    convertNoticesToExceptions="true"
+    convertWarningsToExceptions="true"
+    processIsolation="false"
+    stopOnError="false"
+    stopOnFailure="false"
+    stopOnIncomplete="false"
+    stopOnSkipped="false"
+    stopOnRisky="false"
+    verbose="false"
+>
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>tests/unit/</directory>
+        </testsuite>
+        <testsuite name="End-to-End Tests">
+            <directory>tests/e2e/</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory>src/</directory>
+        </include>
+    </coverage>
+
+    <groups>
+        <exclude>
+            <group>disabled</group>
+        </exclude>
+    </groups>
+
+    <php>
+        <ini name="memory_limit" value="-1" />
+        <ini name="error_reporting" value="-1" />
+    </php>
+</phpunit>

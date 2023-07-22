@@ -1,0 +1,23 @@
+{% if page.homepage %}
+    <div class="bs-docs-masthead" id="jumbotron-header">
+        <div class="container">
+            <h1>{{ site.title }}</h1>
+            <p class="lead">{{ site.description }}</p>
+            <p class="lead">
+                <a href="{{ '/overview' | relative_url }}" class="btn btn-outline-inverse btn-lg btn-download">
+                    <i class="fa fa-book"></i> Read the Docs
+                </a>
+                <a href="{{ site.repository }}" class="btn btn-outline-inverse btn-lg btn-download">
+                    <i class="fa fa-github"></i> View on GitHub
+                </a>
+            </p>
+        </div>
+    </div>
+{% else %}
+    <div class="bs-docs-header" id="jumbotron-header">
+        <div class="container">
+            <h1>{{ page.title }}</h1>
+            <p>{{ page.description }}</p>
+        </div>
+    </div>
+{% endif %}

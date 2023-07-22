@@ -1,0 +1,183 @@
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:100,400,700');
+@import "rouge-github";
+@import "variables";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+    padding: 0;
+    margin: 0;
+    font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    color: $body-text-color;
+}
+body, blockquote {
+    font-size: 1.5rem;
+}
+
+#jumbotron-header {
+    position:relative;
+    background: $main-900;
+    background: linear-gradient(135deg, $main-900, $main-600);
+
+    .home-title {
+        margin-bottom: 10px;
+    }
+
+    &:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        height: 50px;
+        width: 30%;
+        background: linear-gradient(135deg, transparent 50px, white 50px);
+    }
+}
+
+.bs-docs-nav {
+    .navbar-brand {
+        font-weight: bold;
+    }
+}
+
+.bs-docs-masthead {
+    padding-top: 50px;
+    padding-bottom: 40px;
+    margin-bottom: 20px;
+
+    .version {
+        color: #fff;
+    }
+}
+
+.bs-docs-header h1,
+.bs-docs-header p {
+    margin-right: 0;
+}
+.bs-docs-section {
+    h2 {
+        margin-top: 5rem;
+        padding-top: 5rem;
+        border-top: 1px solid $gray-300;
+
+        &:first-child {
+            margin-top: 20px;
+            padding-top: 0;
+            border-top: none;
+        }
+    }
+    h3 {
+        margin-top: 3rem;
+    }
+    h4 {
+        margin-top: 2.5rem;
+    }
+}
+
+.bs-docs-section,
+.site-footer {
+    a {
+        color: $main-300;
+        border-bottom: 1px dashed $main-300;
+
+        &:hover,
+        &:focus {
+            color: $main-600;
+            text-decoration: none;
+        }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        .content-anchor {
+            display: none;
+            color: $gray-300;
+            border-bottom: none;
+        }
+
+        &:hover .content-anchor {
+            display: inline;
+
+            &:hover {
+                color: $main-300;
+            }
+        }
+    }
+}
+
+.guide-pagination-links {
+    margin-top: 10rem;
+}
+
+.bs-docs-sidebar {
+    display: block;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 20px;
+
+    .nav > li > a {
+        font-size: 15px;
+
+        .nav > li > a {
+            font-size: 14px;
+        }
+    }
+
+    .back-top-top {
+        font-size: 13px;
+    }
+}
+
+.feature {
+    .feature-header {
+        font-size: 3rem;
+        padding-bottom: 1rem;
+        border-bottom: 3px solid $main-300;
+    }
+    .feature-text {
+        font-size: 2rem;
+    }
+}
+
+.site-footer {
+    padding-top: 2rem;
+    margin-top: 10rem;
+    margin-bottom: 2rem;
+    border-top: solid 1px $hr-border-color;
+
+    .site-footer-links {
+        margin: 0;
+        padding: 0;
+        padding-bottom: 3rem;
+
+        li {
+            display: inline;
+            white-space: nowrap;
+
+            &::after {
+                content: " \00b7";
+                margin: 0 .5rem;
+            }
+            &:last-child::after {
+                content: none;
+            }
+        }
+
+        @media screen and (min-width: map-get($grid-breakpoints, 'lg')) {
+            padding-bottom: 0;
+        }
+    }
+    .site-footer-credit {
+        font-size: 1.2rem;
+
+        p {
+            margin-bottom: .2rem;
+        }
+
+        @media screen and (min-width: map-get($grid-breakpoints, 'lg')) {
+            text-align: right;
+        }
+    }
+}
